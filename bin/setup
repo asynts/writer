@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+
+sudo pacman -S --needed \
+    python \
+    python-virtualenv
+
+virtualenv venv
+source venv/bin/activate
+pip install --requirement requirements.txt
