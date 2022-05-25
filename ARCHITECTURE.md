@@ -1,6 +1,7 @@
 ### Model Tree
 
 The model tree represents the document in memory at a very high level of abstraction.
+
 It has the following structure:
 
 -   *DocumentNode*
@@ -35,3 +36,13 @@ The layout tree describes how the model tree is rendered.
 -   There can be multiple layout nodes for a single model node, for example the dot used by a list, or the headers and footers on each page.
 
 -   In some cases, we need to fill in some information like page numbers that are abstracted in the model.
+
+It has the following structure:
+
+-   *PageNode*
+
+-   *BlockLayoutNode*
+
+-   *InlineLayoutNode*
+
+    -   *WordChunkNode*
