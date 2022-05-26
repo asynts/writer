@@ -36,12 +36,14 @@ class PageLayoutNode(LayoutNode):
         result += " " * indent
         result += prefix + self.to_string_header() + "\n"
 
-        result += self.header_node.to_string(indent=indent + 1, prefix="<header> ")
+        if self.header_node is not None:
+            result += self.header_node.to_string(indent=indent + 1, prefix="<header> ")
 
         for child in self.content_nodes:
             result += child.to_string(indent=indent + 1, prefix="<content> ")
 
-        result += self.footer_node.to_string(indent=indent + 1, prefix="<footer> ")
+        if self.footer_node is not None:
+            result += self.footer_node.to_string(indent=indent + 1, prefix="<footer> ")
 
         return result
 

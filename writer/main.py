@@ -1,19 +1,23 @@
 import model
 import layout
+import engine
 
 document = model.DocumentModelNode()
 
-document.footer_node.append_child(model.TextChunkModelNode(text="Page "))
-document.footer_node.append_child(model.FieldChunkModelNode(field="page_number"))
+footer_node_1 = document.set_footer_node(model.ParagraphModelNode())
 
-paragraph_1 = document.append_child(model.ParagraphModelNode())
+footer_node_1.append_child(model.TextChunkModelNode(text="Page "))
+footer_node_1.append_child(model.FieldChunkModelNode(field="page_number"))
+
+paragraph_1 = document.add_content_node(model.ParagraphModelNode())
 paragraph_1.append_child(model.TextChunkModelNode(text="Hello, "))
 paragraph_1.append_child(model.TextChunkModelNode(text="world"))
 paragraph_1.append_child(model.TextChunkModelNode(text="!"))
 
-paragraph_2 = document.append_child(model.ParagraphModelNode())
+paragraph_2 = document.add_content_node(model.ParagraphModelNode())
 paragraph_2.append_child(model.TextChunkModelNode(text="This is another paragraph."))
 
+print("MODEL:")
 print(document, end="")
 
 layout_page_1 = layout.PageLayoutNode()
@@ -40,4 +44,10 @@ layout_block_2 = layout_page_1.add_content_node(layout.BlockLayoutNode())
 layout_block_2.append_child(layout.TextLayoutNode(text="This is another"))
 layout_block_2.append_child(layout.TextLayoutNode(text="paragraph."))
 
+print("EXPECTED LAYOUT:")
 print(layout_page_1, end="")
+
+print("ACTUAL LAYOUT:")
+output_layout_tree = engine.generate_layout_tree(document)
+assert len(output_layout_tree) == 1
+print(output_layout_tree[0], end="")

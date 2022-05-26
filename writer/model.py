@@ -1,3 +1,4 @@
+from ast import Mod
 from common import Node 
 
 class ModelNode(Node):
@@ -9,14 +10,42 @@ class DocumentModelNode(ModelNode):
     def __init__(self):
         super().__init__("Document")
 
-        self.header_node = ParagraphModelNode()
-        self.footer_node = ParagraphModelNode()
+        self.header_node = None
+        self.footer_node = None
+        self.content_nodes = []
+
+    def add_content_node(self, node: ModelNode):
+        self.append_child(node)
+        self.content_nodes.append(node)
+        return node
+
+    def set_header_node(self, node: ModelNode):
+        assert self.header_node is None
+        self.append_child(node)
+        self.header_node = node
+        return node
+
+    def set_footer_node(self, node: ModelNode):
+        assert self.footer_node is None
+        self.append_child(node)
+        self.footer_node = node
+        return node
 
     def to_string(self, *, indent=0, prefix=""):
-        result = super().to_string(indent=indent, prefix=prefix)
-        result += self.header_node.to_string(indent=indent + 1, prefix="<header> ")
-        result += self.footer_node.to_string(indent=indent + 1, prefix="<footer> ")
-    
+        result = ""
+
+        result += " " * indent
+        result += prefix + self.to_string_header() + "\n"
+
+        if self.header_node is not None:
+            result += self.header_node.to_string(indent=indent + 1, prefix="<header> ")
+
+        for child in self.content_nodes:
+            result += child.to_string(indent=indent + 1, prefix="<content> ")
+
+        if self.footer_node is not None:
+            result += self.footer_node.to_string(indent=indent + 1, prefix="<footer> ")
+
         return result
 
 class ParagraphModelNode(ModelNode):
