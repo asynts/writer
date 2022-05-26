@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+
+~/dev/scripts/backup.rb \
+    --name "writer-prototype" \
+    --url "git@github.com:asynts/writer" \
+    --upload "s3://backup.asynts.com/git/writer-prototype"
