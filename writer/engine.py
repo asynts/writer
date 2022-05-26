@@ -3,9 +3,10 @@ import layout
 
 class LayoutTreeGenerator:
     def __init__(self, document: model.DocumentModelNode):
-        self.document = document
-        self.pages = []
+        self.model_tree = document
+        self.layout_tree = layout.BlockLayoutNode()
 
+        self.pages = []
         self.current_page = None
         self.current_region = None
 
@@ -19,25 +20,41 @@ class LayoutTreeGenerator:
         # FIXME: We should generalize this somehow, for header and footer.
         #        In that case we want to return none, but not sure, how to approach this.
 
+        if self.current_page.main_region is not None:
+            self.next_page()
+
         self.current_region = self.current_page.add_content_node(layout.BlockLayoutNode())
+        self.current_page.main_region = self.current_region
+
+        self.current_region.relative_y = self.current_page.header_node.fixed_height
+
+        self.current_region.fixed_height = self.current_page.fixed_height \
+            - self.current_page.footer_node.fixed_height \
+            - self.current_page.header_node.fixed_height
+
         return self.current_region
 
     def next_page(self):
-        new_page = layout.PageLayoutNode()
+        new_page: layout.PageLayoutNode = self.layout_tree.append_child(layout.PageLayoutNode())
+
+        if self.current_page is not None:
+            new_page.relative_y = self.current_page.relative_y + self.current_page.fixed_height
+
         self.pages.append(new_page)
         self.current_page = new_page
 
-        if self.document.header_node is not None:
-            layout_header_node = self.current_page.set_header_node(layout.HeaderLayoutNode())
+        # Generate the header node.
+        layout_header_node = self.current_page.set_header_node(layout.HeaderLayoutNode())
 
-            assert isinstance(self.document.header_node, model.ParagraphModelNode)
-            self.add_paragraph(self.document.header_node, region=layout_header_node)
+        assert isinstance(self.model_tree.header_node, model.ParagraphModelNode)
+        self.add_paragraph(self.model_tree.header_node, region=layout_header_node)
 
-        if self.document.footer_node is not None:
-            layout_footer_node = self.current_page.set_footer_node(layout.FooterLayoutNode())
+        # Generate the footer node.
+        layout_footer_node = self.current_page.set_footer_node(layout.FooterLayoutNode())
+        layout_footer_node.relative_y = self.current_page.fixed_height - layout_footer_node.fixed_height
 
-            assert isinstance(self.document.footer_node, model.ParagraphModelNode)
-            self.add_paragraph(self.document.footer_node, region=layout_footer_node)
+        assert isinstance(self.model_tree.footer_node, model.ParagraphModelNode)
+        self.add_paragraph(self.model_tree.footer_node, region=layout_footer_node)
 
         return self.current_page
 
@@ -73,9 +90,14 @@ class LayoutTreeGenerator:
                     nonlocal current_block_node
                     nonlocal region
 
+                    # FIXME: Split words if necessary.
+                    assert word_width <= current_block_node.max_width()
+
                     # Try to add the word in the current line.
                     if offset_x + word_width <= current_block_node.max_width():
                         # Add the word to the current line.
+
+                        print(f"Adding word in current line {offset_x=} {offset_y=}")
 
                         text_node = layout.TextLayoutNode(text=word)
                         text_node.relative_x = offset_x
@@ -88,6 +110,8 @@ class LayoutTreeGenerator:
 
                         offset_x = 0
                         offset_y += layout.font_height
+
+                        print(f"Adding word in next line {offset_x=} {offset_y=}")
 
                         # Try to put the next line into the same block.
                         if offset_y + layout.font_height <= current_block_node.max_height():
@@ -104,8 +128,15 @@ class LayoutTreeGenerator:
                             if region == self.current_region:
                                 # Create a new block in another region.
 
+                                print(f"Creating new region {word=}")
+
                                 region = self.next_region()
+
+                                print(f"Creating new region (MIDDLE)")
+
                                 current_block_node = region.append_child(layout.BlockLayoutNode())
+
+                                print(f"Creating new region (AFTER)")
 
                                 offset_x = 0
                                 offset_y = 0
@@ -113,6 +144,8 @@ class LayoutTreeGenerator:
                                 try_place_word()
                             else:
                                 # Overflow can not be handled.
+                                print("Overflow, unhandled")
+
                                 return
                     
                 try_place_word()
@@ -124,4 +157,14 @@ def generate_layout_tree(document: model.DocumentModelNode):
         assert isinstance(child_node, model.ParagraphModelNode)
         generator.add_paragraph(child_node)
 
-    return generator.pages
+    # FIXME: Move this somewhere else.
+    offset_y = 0
+    layout_tree = layout.BlockLayoutNode()
+    for page in generator.pages:
+        page.relative_y = offset_y
+        layout_tree.append_child(page)
+
+        offset_y += page.fixed_height
+        offset_y += 20
+
+    return layout_tree

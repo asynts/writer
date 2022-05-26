@@ -11,6 +11,8 @@ COLOR_RED = (255, 0, 0)
 def create_model_tree():
     document = model.DocumentModelNode()
 
+    header_node_1 = document.set_header_node(model.ParagraphModelNode())
+
     footer_node_1 = document.set_footer_node(model.ParagraphModelNode())
 
     footer_node_1.append_child(model.TextChunkModelNode(text="Page "))
@@ -28,9 +30,7 @@ def create_model_tree():
     return document
 
 def create_layout_tree(document: model.DocumentModelNode):
-    output_layout_tree = engine.generate_layout_tree(document)
-    assert len(output_layout_tree) == 1
-    return output_layout_tree[0]
+    return engine.generate_layout_tree(document)
 
 def draw_layout_node(screen: pygame.Surface, layout_node: layout.LayoutNode):
     if isinstance(layout_node, layout.TextLayoutNode):
@@ -41,9 +41,13 @@ def draw_layout_node(screen: pygame.Surface, layout_node: layout.LayoutNode):
 
         text_surface = layout.normal_font.render(layout_node.text, False, COLOR_BLACK)
         screen.blit(text_surface, (x, y))
-    else:
-        for child_node in layout_node.children:
-            draw_layout_node(screen, child_node)
+    elif isinstance(layout_node, layout.BlockLayoutNode):
+        # FIXME: How do we get the width/height here?
+        #        We need to measure the width of the text at some point.
+        pass
+
+    for child_node in layout_node.children:
+        draw_layout_node(screen, child_node)
 
 def main():
     pygame.display.init()
