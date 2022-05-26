@@ -31,12 +31,33 @@ class LayoutTreeGenerator:
             layout_footer_node = self.current_page.set_footer_node(layout.BlockLayoutNode())
             self.add_block_model_node(self.document.footer_node, region=layout_footer_node)
 
+    # FIXME: I don't think we can just have a method to deal with an inline node without considering the paragraph node around.
     def add_inline_model_node(self, node: model.ModelNode, *, container_node: layout.BlockLayoutNode):
         # FIXME: We have to be able to split paragraphs here.
 
         if isinstance(node, model.TextChunkModelNode):
-            # FIXME: Implement text wrapping here.
-            container_node.append_child(layout.TextLayoutNode(text=node.text))
+            # FIXME: We need to keep track of this on a paragraph level.
+            offset_x = 0
+            offset_y = 0
+
+            current_text_node = layout.TextLayoutNode(text="")
+            container_node.append_child(current_text_node)
+            for word in node.text.split():
+                # FIXME: We do not always need the '+1', only if this isn't the first word.
+                if offset_x + (len(word) + 1) * layout.FONT_CHARACTER_WIDTH <= container_node.max_width():
+                    # We are able to fit this word into this line.
+                    if len(current_text_node.text) >= 1:
+                        current_text_node.text += " "
+                    current_text_node.text += word
+
+                    offset_x += (len(word) + 1) * layout.FONT_CHARACTER_WIDTH
+                else:
+                    # We need to put this onto another line.
+                    current_text_node = layout.TextLayoutNode(text=word)
+                    container_node.append_child(current_text_node)
+
+                    offset_y += layout.FONT_CHARACTER_HEIGHT
+                    offset_x = 0
         elif isinstance(node, model.FieldChunkModelNode):
             if node.field == "page_number":
                 container_node.append_child(layout.TextLayoutNode(text=str(len(self.pages))))

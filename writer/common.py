@@ -2,9 +2,11 @@ class Node:
     def __init__(self, name: str):
         self.name = name
         self.children = []
+        self.parent = None
 
     def append_child(self, child: "Node"):
         self.children.append(child)
+        child.parent = self
         return child
     
     def to_string_header(self):

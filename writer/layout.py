@@ -1,9 +1,19 @@
 from common import Node
 
+# FIXME: Setup some rendering thing with actual fonts.
+FONT_CHARACTER_WIDTH = 3
+FONT_CHARACTER_HEIGHT = 5
+
 class LayoutNode(Node):
+    def __init__(self, name: str):
+        super().__init__(name)
+
     def append_child(self, child: "LayoutNode"):
         assert isinstance(child, LayoutNode)
         return super().append_child(child)
+
+    def max_width(self):
+        return None
 
 class PageLayoutNode(LayoutNode):
     def __init__(self):
@@ -12,6 +22,9 @@ class PageLayoutNode(LayoutNode):
         self.header_node = None
         self.footer_node = None
         self.content_nodes = []
+
+    def max_width(self):
+        return 60
 
     def set_header_node(self, node: LayoutNode):
         assert self.header_node is None
@@ -50,6 +63,12 @@ class PageLayoutNode(LayoutNode):
 class BlockLayoutNode(LayoutNode):
     def __init__(self):
         super().__init__("Block")
+    
+    def max_width(self):
+        if self.parent is None:
+            return None
+        else:
+            return self.parent.max_width()
 
 class TextLayoutNode(LayoutNode):
     def __init__(self, *, text: str):

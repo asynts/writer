@@ -5,7 +5,7 @@ class ModelNode(Node):
     def append_child(self, child: "ModelNode"):
         assert isinstance(child, ModelNode)
         return super().append_child(child)
-    
+
 class DocumentModelNode(ModelNode):
     def __init__(self):
         super().__init__("Document")
