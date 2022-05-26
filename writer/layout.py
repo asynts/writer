@@ -75,5 +75,8 @@ class TextLayoutNode(LayoutNode):
         super().__init__("Text")
         self.text = text
 
+        self.relative_x = None
+        self.relative_y = None
+
     def to_string_header(self):
-        return f"{self.name}(text={repr(self.text)})"
+        return f"{self.name}(text={repr(self.text)}, x={self.relative_x}, y={self.relative_y})"

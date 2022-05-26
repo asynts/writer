@@ -25,64 +25,72 @@ class LayoutTreeGenerator:
 
         if self.document.header_node is not None:
             layout_header_node = self.current_page.set_header_node(layout.BlockLayoutNode())
-            self.add_block_model_node(self.document.header_node, region=layout_header_node)
+
+            assert isinstance(self.document.header_node, model.ParagraphModelNode)
+            self.add_paragraph(self.document.header_node, region=layout_header_node)
 
         if self.document.footer_node is not None:
             layout_footer_node = self.current_page.set_footer_node(layout.BlockLayoutNode())
-            self.add_block_model_node(self.document.footer_node, region=layout_footer_node)
 
-    # FIXME: I don't think we can just have a method to deal with an inline node without considering the paragraph node around.
-    def add_inline_model_node(self, node: model.ModelNode, *, container_node: layout.BlockLayoutNode):
-        # FIXME: We have to be able to split paragraphs here.
+            assert isinstance(self.document.footer_node, model.ParagraphModelNode)
+            self.add_paragraph(self.document.footer_node, region=layout_footer_node)
 
-        if isinstance(node, model.TextChunkModelNode):
-            # FIXME: We need to keep track of this on a paragraph level.
-            offset_x = 0
-            offset_y = 0
-
-            current_text_node = layout.TextLayoutNode(text="")
-            container_node.append_child(current_text_node)
-            for word in node.text.split():
-                # FIXME: We do not always need the '+1', only if this isn't the first word.
-                if offset_x + (len(word) + 1) * layout.FONT_CHARACTER_WIDTH <= container_node.max_width():
-                    # We are able to fit this word into this line.
-                    if len(current_text_node.text) >= 1:
-                        current_text_node.text += " "
-                    current_text_node.text += word
-
-                    offset_x += (len(word) + 1) * layout.FONT_CHARACTER_WIDTH
-                else:
-                    # We need to put this onto another line.
-                    current_text_node = layout.TextLayoutNode(text=word)
-                    container_node.append_child(current_text_node)
-
-                    offset_y += layout.FONT_CHARACTER_HEIGHT
-                    offset_x = 0
-        elif isinstance(node, model.FieldChunkModelNode):
-            if node.field == "page_number":
-                container_node.append_child(layout.TextLayoutNode(text=str(len(self.pages))))
-            else:
-                raise NotImplementedError
-        else:
-            raise NotImplementedError
-
-    def add_block_model_node(self, node: model.ModelNode, *, region: layout.LayoutNode = None):
+    def add_paragraph(self, model_node: model.ParagraphModelNode, region: layout.LayoutNode = None):
         if region is None:
             region = self.current_region
 
-        if isinstance(node, model.ParagraphModelNode):
-            paragraph_node = layout.BlockLayoutNode()
-            region.append_child(paragraph_node)
+        current_block_node = layout.BlockLayoutNode()
+        region.append_child(current_block_node)
 
-            for child_node in node.children:
-                self.add_inline_model_node(child_node, container_node=paragraph_node)
-        else:
-            raise NotImplementedError
+        offset_x = 0
+        offset_y = 0
+
+        for inline_node in model_node.children:
+            # Compute what text we want to add.
+            if isinstance(inline_node, model.TextChunkModelNode):
+                text = inline_node.text
+            elif isinstance(inline_node, model.FieldChunkModelNode):
+                if inline_node.field == "page_number":
+                    text = str(len(self.pages))
+                else:
+                    raise NotImplementedError
+            else:
+                raise NotImplementedError
+
+            # Break the text into words.
+            for word in text.split():
+                word_width = (len(word) + 1) * layout.FONT_CHARACTER_WIDTH
+
+                # Try to add the word in the current line.
+                if offset_x + word_width <= current_block_node.max_width():
+                    # Add the word to the current line.
+
+                    text_node = layout.TextLayoutNode(text=word)
+                    text_node.relative_x = offset_x
+                    text_node.relative_y = offset_y
+                    current_block_node.append_child(text_node)
+
+                    offset_x += word_width
+                else:
+                    # Put the word on the next line.
+
+                    offset_x = 0
+                    offset_y += layout.FONT_CHARACTER_HEIGHT
+
+                    # FIXME: Split the paragraph here, if necessary.
+
+                    text_node = layout.TextLayoutNode(text=word)
+                    text_node.relative_x = offset_x
+                    text_node.relative_y = offset_y
+                    current_block_node.append_child(text_node)
+
+                    offset_x += word_width
 
 def generate_layout_tree(document: model.DocumentModelNode):
     generator = LayoutTreeGenerator(document)
 
     for child_node in document.content_nodes:
-        generator.add_block_model_node(child_node)
+        assert isinstance(child_node, model.ParagraphModelNode)
+        generator.add_paragraph(child_node)
 
     return generator.pages
