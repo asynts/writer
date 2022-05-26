@@ -8,6 +8,7 @@ footer_node_1 = document.set_footer_node(model.ParagraphModelNode())
 
 footer_node_1.append_child(model.TextChunkModelNode(text="Page "))
 footer_node_1.append_child(model.FieldChunkModelNode(field="page_number"))
+footer_node_1.append_child(model.TextChunkModelNode(text="more text that will hopefully overflow the footer."))
 
 paragraph_1 = document.add_content_node(model.ParagraphModelNode())
 paragraph_1.append_child(model.TextChunkModelNode(text="Hello, "))
@@ -29,9 +30,9 @@ layout_page_1 = layout.PageLayoutNode()
 # If that node overflows, we can ask the current page for a new layout region.
 # By doing this, we can easily create new pages or even work with multi-column layouts.
 
-layout_header_1 = layout_page_1.set_header_node(layout.BlockLayoutNode())
+layout_header_1 = layout_page_1.set_header_node(layout.HeaderLayoutNode())
 
-layout_footer_1 = layout_page_1.set_footer_node(layout.BlockLayoutNode())
+layout_footer_1 = layout_page_1.set_footer_node(layout.FooterLayoutNode())
 layout_footer_1.append_child(layout.TextLayoutNode(text="Page "))
 layout_footer_1.append_child(layout.TextLayoutNode(text="1"))
 

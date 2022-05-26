@@ -14,6 +14,9 @@ class LayoutNode(Node):
 
     def max_width(self):
         return None
+    
+    def max_height(self):
+        return None
 
 class PageLayoutNode(LayoutNode):
     def __init__(self):
@@ -24,16 +27,21 @@ class PageLayoutNode(LayoutNode):
         self.content_nodes = []
 
     def max_width(self):
-        return 60
+        return FONT_CHARACTER_HEIGHT * 10
+    
+    def max_height(self):
+        return FONT_CHARACTER_HEIGHT * 2
 
     def set_header_node(self, node: LayoutNode):
         assert self.header_node is None
+        assert isinstance(node, HeaderLayoutNode)
         self.append_child(node)
         self.header_node = node
         return node
 
     def set_footer_node(self, node: LayoutNode):
         assert self.footer_node is None
+        assert isinstance(node, FooterLayoutNode)
         self.append_child(node)
         self.footer_node = node
         return node
@@ -61,14 +69,34 @@ class PageLayoutNode(LayoutNode):
         return result
 
 class BlockLayoutNode(LayoutNode):
-    def __init__(self):
-        super().__init__("Block")
+    def __init__(self, name="Block"):
+        super().__init__(name)
     
     def max_width(self):
         if self.parent is None:
             return None
         else:
             return self.parent.max_width()
+
+    def max_height(self):
+        if self.parent is None:
+            return None
+        else:
+            return self.parent.max_height()
+
+class FooterLayoutNode(BlockLayoutNode):
+    def __init__(self):
+        super().__init__("Footer")
+
+    def max_height(self):
+        return FONT_CHARACTER_HEIGHT * 1
+
+class HeaderLayoutNode(BlockLayoutNode):
+    def __init__(self):
+        super().__init__("Footer")
+
+    def max_height(self):
+        return FONT_CHARACTER_HEIGHT * 1
 
 class TextLayoutNode(LayoutNode):
     def __init__(self, *, text: str):
