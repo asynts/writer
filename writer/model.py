@@ -1,41 +1,21 @@
-class ModelNode:
-    def __init__(self, name: str):
-        self.name = name
-        self.children = []
+from common import Node 
 
+class ModelNode(Node):
     def append_child(self, child: "ModelNode"):
         assert isinstance(child, ModelNode)
-        self.children.append(child)
-        return child
+        return super().append_child(child)
     
-    def to_string_header(self):
-        return f"{self.name}()"
-
-    def to_string(self, *, indent=0, prefix=""):
-        result = ""
-
-        result += " " * (indent * 2)
-        result += prefix + self.to_string_header() + "\n"
-
-        for child in self.children:
-            result += child.to_string(indent=indent + 1, prefix="<child> ")
-        
-        return result
-
-    def __str__(self):
-        return self.to_string()
-
 class DocumentModelNode(ModelNode):
     def __init__(self):
         super().__init__("Document")
 
-        self.header = ParagraphModelNode()
-        self.footer = ParagraphModelNode()
+        self.header_node = ParagraphModelNode()
+        self.footer_node = ParagraphModelNode()
 
     def to_string(self, *, indent=0, prefix=""):
         result = super().to_string(indent=indent, prefix=prefix)
-        result += self.header.to_string(indent=indent + 1, prefix="<header> ")
-        result += self.footer.to_string(indent=indent + 1, prefix="<footer> ")
+        result += self.header_node.to_string(indent=indent + 1, prefix="<header> ")
+        result += self.footer_node.to_string(indent=indent + 1, prefix="<footer> ")
     
         return result
 

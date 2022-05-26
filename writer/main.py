@@ -1,9 +1,10 @@
 import model
+import layout
 
 document = model.DocumentModelNode()
 
-document.footer.append_child(model.TextChunkModelNode(text="Page "))
-document.footer.append_child(model.FieldChunkModelNode(field="page_number"))
+document.footer_node.append_child(model.TextChunkModelNode(text="Page "))
+document.footer_node.append_child(model.FieldChunkModelNode(field="page_number"))
 
 paragraph_1 = document.append_child(model.ParagraphModelNode())
 paragraph_1.append_child(model.TextChunkModelNode(text="Hello, "))
@@ -38,3 +39,5 @@ layout_block_1.append_child(layout.TextLayoutNode(text="!"))
 layout_block_2 = layout_page_1.add_content_node(layout.BlockLayoutNode())
 layout_block_2.append_child(layout.TextLayoutNode(text="This is another"))
 layout_block_2.append_child(layout.TextLayoutNode(text="paragraph."))
+
+print(layout_page_1, end="")
