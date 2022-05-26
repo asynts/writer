@@ -3,9 +3,10 @@ import layout
 
 class LayoutTreeGenerator:
     def __init__(self, document: model.DocumentModelNode):
-        self.document = document
-        self.pages = []
+        self.model_tree = document
+        self.layout_tree = layout.BlockLayoutNode()
 
+        self.pages = []
         self.current_page = None
         self.current_region = None
 
@@ -19,25 +20,41 @@ class LayoutTreeGenerator:
         # FIXME: We should generalize this somehow, for header and footer.
         #        In that case we want to return none, but not sure, how to approach this.
 
+        if self.current_page.main_region is not None:
+            self.next_page()
+
         self.current_region = self.current_page.add_content_node(layout.BlockLayoutNode())
+        self.current_page.main_region = self.current_region
+
+        self.current_region.relative_y = self.current_page.header_node.fixed_height
+
+        self.current_region.fixed_height = self.current_page.fixed_height \
+            - self.current_page.footer_node.fixed_height \
+            - self.current_page.header_node.fixed_height
+
         return self.current_region
 
     def next_page(self):
-        new_page = layout.PageLayoutNode()
+        new_page: layout.PageLayoutNode = self.layout_tree.append_child(layout.PageLayoutNode())
+
+        if self.current_page is not None:
+            new_page.relative_y = self.current_page.relative_y + self.current_page.fixed_height
+
         self.pages.append(new_page)
         self.current_page = new_page
 
-        if self.document.header_node is not None:
-            layout_header_node = self.current_page.set_header_node(layout.HeaderLayoutNode())
+        # Generate the header node.
+        layout_header_node = self.current_page.set_header_node(layout.HeaderLayoutNode())
 
-            assert isinstance(self.document.header_node, model.ParagraphModelNode)
-            self.add_paragraph(self.document.header_node, region=layout_header_node)
+        assert isinstance(self.model_tree.header_node, model.ParagraphModelNode)
+        self.add_paragraph(self.model_tree.header_node, region=layout_header_node)
 
-        if self.document.footer_node is not None:
-            layout_footer_node = self.current_page.set_footer_node(layout.FooterLayoutNode())
+        # Generate the footer node.
+        layout_footer_node = self.current_page.set_footer_node(layout.FooterLayoutNode())
+        layout_footer_node.relative_y = self.current_page.fixed_height - layout_footer_node.fixed_height
 
-            assert isinstance(self.document.footer_node, model.ParagraphModelNode)
-            self.add_paragraph(self.document.footer_node, region=layout_footer_node)
+        assert isinstance(self.model_tree.footer_node, model.ParagraphModelNode)
+        self.add_paragraph(self.model_tree.footer_node, region=layout_footer_node)
 
         return self.current_page
 
