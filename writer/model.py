@@ -29,13 +29,13 @@ class DocumentModelNode(ModelNode):
     def __init__(self):
         super().__init__("Document")
 
-        self.header_node = ParagraphModelNode()
-        self.footer_node = ParagraphModelNode()
+        self.header = ParagraphModelNode()
+        self.footer = ParagraphModelNode()
 
     def to_string(self, *, indent=0, prefix=""):
         result = super().to_string(indent=indent, prefix=prefix)
-        result += self.header_node.to_string(indent=indent + 1, prefix="<header> ")
-        result += self.footer_node.to_string(indent=indent + 1, prefix="<footer> ")
+        result += self.header.to_string(indent=indent + 1, prefix="<header> ")
+        result += self.footer.to_string(indent=indent + 1, prefix="<footer> ")
     
         return result
 
