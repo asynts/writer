@@ -1,12 +1,18 @@
 from common import Node
 
-# FIXME: Setup some rendering thing with actual fonts.
-FONT_CHARACTER_WIDTH = 3
-FONT_CHARACTER_HEIGHT = 5
+import pygame
+
+normal_font: pygame.font.Font = None
+
+font_width: int = None
+font_height: int = None
 
 class LayoutNode(Node):
     def __init__(self, name: str):
         super().__init__(name)
+
+        self.relative_x = 0
+        self.relative_y = 0
 
     def append_child(self, child: "LayoutNode"):
         assert isinstance(child, LayoutNode)
@@ -18,6 +24,18 @@ class LayoutNode(Node):
     def max_height(self):
         return None
 
+    def absolute_x(self):
+        if self.parent is None:
+            return self.relative_x
+        else:
+            return self.relative_x + self.parent.absolute_x()
+
+    def absolute_y(self):
+        if self.parent is None:
+            return self.relative_y
+        else:
+            return self.relative_y + self.parent.absolute_y()
+
 class PageLayoutNode(LayoutNode):
     def __init__(self):
         super().__init__("Page")
@@ -27,10 +45,11 @@ class PageLayoutNode(LayoutNode):
         self.content_nodes = []
 
     def max_width(self):
-        return FONT_CHARACTER_HEIGHT * 10
+        width, height = normal_font.size("x")
+        return 10 * font_width
     
     def max_height(self):
-        return FONT_CHARACTER_HEIGHT * 2
+        return 3 * font_height
 
     def set_header_node(self, node: LayoutNode):
         assert self.header_node is None
@@ -89,22 +108,19 @@ class FooterLayoutNode(BlockLayoutNode):
         super().__init__("Footer")
 
     def max_height(self):
-        return FONT_CHARACTER_HEIGHT * 1
+        return 1 * font_height
 
 class HeaderLayoutNode(BlockLayoutNode):
     def __init__(self):
         super().__init__("Footer")
 
     def max_height(self):
-        return FONT_CHARACTER_HEIGHT * 1
+        return 1 * font_height
 
 class TextLayoutNode(LayoutNode):
     def __init__(self, *, text: str):
         super().__init__("Text")
         self.text = text
-
-        self.relative_x = None
-        self.relative_y = None
 
     def to_string_header(self):
         return f"{self.name}(text={repr(self.text)}, x={self.relative_x}, y={self.relative_y})"

@@ -65,7 +65,7 @@ class LayoutTreeGenerator:
 
             # Break the text into words.
             for word in text.split():
-                word_width = (len(word) + 1) * layout.FONT_CHARACTER_WIDTH
+                word_width = (len(word) + 1) * layout.font_width
 
                 def try_place_word():
                     nonlocal offset_x
@@ -87,10 +87,10 @@ class LayoutTreeGenerator:
                         # Put the word on the next line.
 
                         offset_x = 0
-                        offset_y += layout.FONT_CHARACTER_HEIGHT
+                        offset_y += layout.font_height
 
                         # Try to put the next line into the same block.
-                        if offset_y + layout.FONT_CHARACTER_HEIGHT <= current_block_node.max_height():
+                        if offset_y + layout.font_height <= current_block_node.max_height():
                             # Put the next line in the same block
 
                             text_node = layout.TextLayoutNode(text=word)
