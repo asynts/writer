@@ -1,5 +1,4 @@
-from common import Node
-
+import typing
 import pygame
 import enum
 
@@ -7,6 +6,11 @@ normal_font: pygame.font.Font = None
 
 font_width: int = None
 font_height: int = None
+
+COLOR_WHITE = (255, 255, 255)
+COLOR_RED = (255, 0, 0)
+COLOR_GREEN = (0, 255, 0)
+COLOR_BLUE = (0, 0, 255)
 
 # FIXME: Use '__' for members in some cases to hide them.
 
@@ -20,8 +24,10 @@ class OverflowStrategy(enum.Enum):
     # Do not render any child elements that overflow.
     DISCARD = 0
 
+Color = typing.Tuple[int, int, int]
+
 class LayoutNode:
-    def __init__(self, *, name: str, fixed_width: int = None, fixed_height: int = None):
+    def __init__(self, *, name: str, fixed_width: int = None, fixed_height: int = None, background_color: Color):
         # Name of the node.
         # This is usually the name of the class.
         self._name = name
@@ -47,6 +53,12 @@ class LayoutNode:
 
         # Defines what happens if child elements do not fit.
         self._overflow_strategy = OverflowStrategy.DISCARD
+
+        # The background color of this layout node.
+        self._background_color = background_color
+
+    def get_background_color(self) -> Color:
+        return self._background_color
 
     def on_placed_in_node(self, parent_node: "LayoutNode", *, relative_x: int, relative_y: int):
         assert self._parent_node is None
@@ -112,8 +124,13 @@ class LayoutNode:
         return []
 
 class BlockLayoutNode(LayoutNode):
-    def __init__(self, *, name="BlockLayoutNode", fixed_width: int = None, fixed_height: int = None):
-        super().__init__(name=name, fixed_width=fixed_width, fixed_height=fixed_height)
+    def __init__(self, *, name="BlockLayoutNode", fixed_width: int = None, fixed_height: int = None, background_color: Color = None):
+        super().__init__(
+            name=name,
+            fixed_width=fixed_width,
+            fixed_height=fixed_height,
+            background_color=background_color
+        )
 
         self._children: list[LayoutNode] = []
 
@@ -162,20 +179,25 @@ class PageLayoutNode(BlockLayoutNode):
         super().__init__(
             name="PageLayoutNode",
             fixed_width=15 * font_width,
-            fixed_height=5 * font_height)
+            fixed_height=5 * font_height,
+            background_color=COLOR_WHITE
+        )
 
         self._header_node = BlockLayoutNode(
             fixed_height=1 * font_height,
+            background_color=COLOR_GREEN,
         )
         self.place_block_node(self._header_node)
 
         self._content_node = BlockLayoutNode(
             fixed_height=3 * font_height,
+            background_color=COLOR_BLUE,
         )
         self.place_block_node(self._content_node)
 
         self._footer_node = BlockLayoutNode(
             fixed_height=1 * font_height,
+            background_color=COLOR_RED,
         )
         self.place_block_node(self._footer_node)
 

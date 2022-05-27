@@ -7,6 +7,7 @@ import pygame
 COLOR_WHITE = (255, 255, 255)
 COLOR_BLACK = (0, 0, 0)
 COLOR_RED = (255, 0, 0)
+COLOR_GRAY = (200, 200, 200)
 
 def create_model_tree():
     document = model.DocumentModelNode()
@@ -44,12 +45,15 @@ def create_layout_tree_2():
     return layout_tree
 
 def draw_layout_node(screen: pygame.Surface, layout_node: layout.LayoutNode):
-    x = layout_node.get_absolute_x()
-    y = layout_node.get_absolute_y()
-    width = layout_node.get_width()
-    height = layout_node.get_height()
+    rect = (
+        layout_node.get_absolute_x(),
+        layout_node.get_absolute_y(),
+        layout_node.get_width(),
+        layout_node.get_height(),
+    )
 
-    pygame.draw.rect(screen, COLOR_RED, (x, y, width, height), width=1)
+    if layout_node.get_background_color() is not None:
+        screen.fill(layout_node.get_background_color(), rect)
 
     for child_node in layout_node.get_children():
         draw_layout_node(screen=screen, layout_node=child_node)
@@ -71,7 +75,7 @@ def main():
                 pygame.display.quit()
                 return
 
-        screen.fill(COLOR_WHITE)
+        screen.fill(COLOR_GRAY)
 
         draw_layout_node(screen, layout_tree)
 

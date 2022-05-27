@@ -8,3 +8,13 @@ I didn't know where else to put it after removing it from the code.
 -   When we are deciding where the next node should go, we always have a 'layout_region_node' that will keep track of the node we are currently filling.
     If that node overflows, we can ask the current page for a new layout region.
     By doing this, we can easily create new pages or even work with multi-column layouts.
+
+-   When porting this to C++, the following roadmap could be used:
+
+    -   Create trivial block layout node.
+
+    -   Render trivial block layout node.
+
+    -   Get block layout nodes working mostly.
+
+    -   Prioritize getting background color working.
