@@ -29,6 +29,9 @@ def draw_layout_node(screen: pygame.Surface, layout_node: layout.LayoutNode):
     if layout_node.get_background_color() is not None:
         screen.fill(layout_node.get_background_color(), rect)
 
+    if layout_node.get_border_color() is not None:
+        pygame.draw.rect(screen, layout_node.get_border_color(), rect, width=1)
+
     for child_node in layout_node.get_children():
         draw_layout_node(screen=screen, layout_node=child_node)
 
