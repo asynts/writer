@@ -1,9 +1,9 @@
 import typing
 import pygame
-import enum
 
+# Initialized by 'writer.__main__.main'.
+# FIXME: Find a better way to achieve this.
 normal_font: pygame.font.Font = None
-
 font_width: int = None
 font_height: int = None
 
@@ -12,63 +12,63 @@ COLOR_RED = (255, 0, 0)
 COLOR_GREEN = (0, 255, 0)
 COLOR_BLUE = (0, 0, 255)
 
-# FIXME: Use '__' for members in some cases to hide them.
-
-# The idea is that, if we want to change the model, we delete all the layout nodes that correspond to that model node and all the following layout nodes.
-# Then, we can just recompute these.
-# Even simpler would be, if we just discard the whole layout tree.
-
-# FIXME: Keep track of which values are constant on initialization and what needs to be updated.
-
-class OverflowStrategy(enum.Enum):
-    # Do not render any child elements that overflow.
-    DISCARD = 0
-
 Color = typing.Tuple[int, int, int]
 
+# Properties must not be changed, unless this is explicitly allowed.
 class LayoutNode:
-    def __init__(self, *, name: str, fixed_width: int = None, fixed_height: int = None, background_color: Color):
-        # Name of the node.
-        # This is usually the name of the class.
-        self._name = name
+    def __init__(self, *, name: str, fixed_width: int = None, fixed_height: int = None, background_color: Color = None):
+        # Name of the node for debugging.
+        # Constant.
+        # Assigned during initialization.
+        self.__name = name
 
-        # Reference to parent node.
-        # Assigned when inserting into parent node.
-        self._parent_node: LayoutNode = None
+        # References parent node.
+        # Constant.
+        # Assigned when inserted into parent node.
+        self.__parent_node: LayoutNode = None
 
         # Position in parent node.
-        # Assigned when inserting into parent node.
+        # Variable.
+        # Assigned when inserted into parent node.
+        # FIXME: Assigned when rebuilding layout tree.
         self._relative_x: int = None
         self._relative_y: int = None
 
         # How much space is needed to fit all children.
-        # Updated as nodes are inserted.
+        # Variable.
+        # Assigned when children are added.
         self._width_of_children = 0
         self._height_of_children = 0
 
-        # The exact width and height of this node.
-        # May be overwritten in inheriting classes.
-        self._fixed_width = fixed_width
-        self._fixed_height = fixed_height
+        # Some nodes define their exact width independent of other nodes.
+        # Variable.
+        # Assigned during initialization.
+        # FIXME: Assigned when rebuilding layout tree.
+        self.__fixed_width = fixed_width
+        self.__fixed_height = fixed_height
 
-        # Defines what happens if child elements do not fit.
-        self._overflow_strategy = OverflowStrategy.DISCARD
+        # The background color of this node.
+        # Constant.
+        # Assigned during initialization.
+        self.__background_color = background_color
 
-        # The background color of this layout node.
-        self._background_color = background_color
-
-    def get_background_color(self) -> Color:
-        return self._background_color
-
+    # Child nodes must not be changed after they are placed in their parent node.
+    # FIXME: When the parent node updates it's layout, it can update the children, but that is the only exception.
     def on_placed_in_node(self, parent_node: "LayoutNode", *, relative_x: int, relative_y: int):
-        assert self._parent_node is None
-        self._parent_node = parent_node
+        assert self.__parent_node is None
+        self.__parent_node = parent_node
 
         assert self._relative_x is None
         self._relative_x = relative_x
 
         assert self._relative_y is None
         self._relative_y = relative_y
+
+    def get_background_color(self) -> Color:
+        return self.__background_color
+
+    def get_parent_node(self) -> "LayoutNode":
+        return self.__parent_node
 
     def get_relative_x(self) -> float:
         assert self._relative_x is not None
@@ -79,47 +79,41 @@ class LayoutNode:
         return self._relative_y
 
     def get_absolute_x(self) -> float:
-        if self._parent_node is None:
+        if self.__parent_node is None:
             assert self._relative_x is None
             return 0
         else:
             assert self._relative_x is not None
-            return self._parent_node.get_absolute_x() + self._relative_x
+            return self.__parent_node.get_absolute_x() + self._relative_x
 
     def get_absolute_y(self) -> float:
-        if self._parent_node is None:
+        if self.__parent_node is None:
             assert self._relative_y is None
             return 0
         else:
             assert self._relative_y is not None
-            return self._parent_node.get_absolute_y() + self._relative_y
-
-    # FIXME: Rename 'get_min_*' methods.
-
-    def get_min_width(self) -> float:
-        return self._width_of_children
-
-    def get_min_height(self) -> float:
-        return self._height_of_children
+            return self.__parent_node.get_absolute_y() + self._relative_y
 
     def get_fixed_width(self) -> float:
-        return self._fixed_width
+        return self.__fixed_width
 
     def get_fixed_height(self) -> float:
-        return self._fixed_height
+        return self.__fixed_height
 
+    # Virtual.
     def get_width(self) -> float:
-        if self.get_fixed_width() is not None:
-            return self.get_fixed_width()
+        if self.__fixed_width is not None:
+            return self.__fixed_height
         else:
-            return self.get_min_width()
+            return self._width_of_children
 
     def get_height(self) -> float:
-        if self.get_fixed_height() is not None:
-            return self.get_fixed_height()
+        if self.__fixed_height is not None:
+            return self.__fixed_height
         else:
-            return self.get_min_height()
+            return self._height_of_children
 
+    # Virtual.
     def get_children(self):
         return []
 
@@ -136,29 +130,31 @@ class BlockLayoutNode(LayoutNode):
 
     def get_max_width(self) -> float:
         if self.get_fixed_width() is None:
-            assert isinstance(self._parent_node, BlockLayoutNode)
-            return self._parent_node.get_max_width()
+            assert isinstance(self.get_parent_node(), BlockLayoutNode)
+            return self.get_parent_node().get_max_width()
         else:
             return self.get_fixed_width()
 
     def get_max_height(self) -> float:
         if self.get_fixed_height() is None:
-            assert isinstance(self._parent_node, BlockLayoutNode)
-            return self._parent_node.get_max_height()
+            assert isinstance(self.get_parent_node(), BlockLayoutNode)
+            return self.get_parent_node().get_max_height()
         else:
             return self.get_fixed_height()
 
+    # Override.
     def get_width(self) -> float:
         if self.get_fixed_width():
             return self.get_fixed_width()
         else:
             return self.get_max_width()
 
-    # This method assumes that the node that is being inserted will not change.
     def place_block_node(self, child_node: "BlockLayoutNode"):
-        child_node._parent_node = self
-        child_node._relative_x = 0
-        child_node._relative_y = self._height_of_children
+        child_node.on_placed_in_node(
+            self,
+            relative_x=0,
+            relative_y=self._height_of_children
+        )
         self._height_of_children += child_node.get_height()
 
         self._children.append(child_node)
@@ -167,6 +163,7 @@ class BlockLayoutNode(LayoutNode):
     def place_inline_node(self, child_node: "InlineLayoutNode"):
         pass
 
+    # Override.
     def get_children(self):
         return self._children
 
@@ -183,29 +180,29 @@ class PageLayoutNode(BlockLayoutNode):
             background_color=COLOR_WHITE
         )
 
-        self._header_node = BlockLayoutNode(
+        self.__header_node = BlockLayoutNode(
             fixed_height=1 * font_height,
             background_color=COLOR_GREEN,
         )
-        self.place_block_node(self._header_node)
+        self.place_block_node(self.__header_node)
 
-        self._content_node = BlockLayoutNode(
+        self.__content_node = BlockLayoutNode(
             fixed_height=3 * font_height,
             background_color=COLOR_BLUE,
         )
-        self.place_block_node(self._content_node)
+        self.place_block_node(self.__content_node)
 
-        self._footer_node = BlockLayoutNode(
+        self.__footer_node = BlockLayoutNode(
             fixed_height=1 * font_height,
             background_color=COLOR_RED,
         )
-        self.place_block_node(self._footer_node)
+        self.place_block_node(self.__footer_node)
 
     def get_header_node(self):
-        return self._header_node
+        return self.__header_node
 
     def get_content_node(self):
-        return self._content_node
+        return self.__content_node
 
     def get_footer_node(self):
-        return self._footer_node
+        return self.__footer_node

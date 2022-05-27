@@ -18,3 +18,7 @@ I didn't know where else to put it after removing it from the code.
     -   Get block layout nodes working mostly.
 
     -   Prioritize getting background color working.
+
+-   The idea is that, if we want to change the model, we delete all the layout nodes that correspond to that model node and all the following layout nodes.
+    Then, we can just recompute these.
+    Even simpler would be, if we just discard the whole layout tree.
