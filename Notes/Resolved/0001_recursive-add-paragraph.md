@@ -40,3 +40,8 @@
 
 -   We are adding to `document.content_nodes` and thus the for loop in `generate_layout_tree` continues for ever.
     My understanding is, that we are adding the region node in the wrong place.
+
+### Conclusion
+
+-   The problem was that the word `paragraph.` didn't fit on an entire page, the layout engine would therefore created
+    pages and continue to do so until a stack overflow occured.
