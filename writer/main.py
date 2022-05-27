@@ -29,25 +29,30 @@ def create_model_tree():
 
     return document
 
-def create_layout_tree(document: model.DocumentModelNode):
+def create_layout_tree_1(document: model.DocumentModelNode):
     return engine.generate_layout_tree(document)
 
+def create_layout_tree_2():
+    layout_tree = layout.PageLayoutNode()
+
+    # FIXME: Get actual paragraphs working.
+    paragraph_1 = layout.BlockLayoutNode(
+        fixed_height=1 * layout.font_height
+    )
+    layout_tree.get_content_node().place_block_node(paragraph_1)
+
+    return layout_tree
+
 def draw_layout_node(screen: pygame.Surface, layout_node: layout.LayoutNode):
-    if isinstance(layout_node, layout.TextLayoutNode):
-        x, y = layout_node.absolute_x(), layout_node.absolute_y()
-        width, height = layout.normal_font.size(layout_node.text)
+    x = layout_node.get_absolute_x()
+    y = layout_node.get_absolute_y()
+    width = layout_node.get_width()
+    height = layout_node.get_height()
 
-        pygame.draw.rect(screen, COLOR_RED, (x, y, width, height), width=1)
+    pygame.draw.rect(screen, COLOR_RED, (x, y, width, height), width=1)
 
-        text_surface = layout.normal_font.render(layout_node.text, False, COLOR_BLACK)
-        screen.blit(text_surface, (x, y))
-    elif isinstance(layout_node, layout.BlockLayoutNode):
-        # FIXME: How do we get the width/height here?
-        #        We need to measure the width of the text at some point.
-        pass
-
-    for child_node in layout_node.children:
-        draw_layout_node(screen, child_node)
+    for child_node in layout_node.get_children():
+        draw_layout_node(screen=screen, layout_node=child_node)
 
 def main():
     pygame.display.init()
@@ -56,14 +61,7 @@ def main():
     layout.normal_font = pygame.font.SysFont("monospace", 12)
     layout.font_width, layout.font_height = layout.normal_font.size("x")
 
-    model_tree = create_model_tree()
-    layout_tree = create_layout_tree(model_tree)
-
-    print("MODEL:")
-    print(model_tree, end="")
-
-    print("LAYOUT:")
-    print(layout_tree, end="")
+    layout_tree = create_layout_tree_2()
 
     screen = pygame.display.set_mode([ 500, 500 ])
 

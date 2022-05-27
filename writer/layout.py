@@ -16,8 +16,7 @@ font_height: int = None
 
 # FIXME: Keep track of which values are constant on initialization and what needs to be updated.
 
-@enum.Enum
-class OverflowStrategy:
+class OverflowStrategy(enum.Enum):
     # Do not render any child elements that overflow.
     DISCARD = 0
 
@@ -68,14 +67,20 @@ class LayoutNode:
         return self._relative_y
 
     def get_absolute_x(self) -> float:
-        assert self._parent_node is not None
-        assert self._relative_x is not None
-        return self._parent_node.get_absolute_x() + self._relative_x
+        if self._parent_node is None:
+            assert self._relative_x is None
+            return 0
+        else:
+            assert self._relative_x is not None
+            return self._parent_node.get_absolute_x() + self._relative_x
 
     def get_absolute_y(self) -> float:
-        assert self._parent_node is not None
-        assert self._relative_y is not None
-        return self._parent_node.get_absolute_y() + self._relative_y
+        if self._parent_node is None:
+            assert self._relative_y is None
+            return 0
+        else:
+            assert self._relative_y is not None
+            return self._parent_node.get_absolute_y() + self._relative_y
 
     # FIXME: Rename 'get_min_*' methods.
 
@@ -86,10 +91,10 @@ class LayoutNode:
         return self._height_of_children
 
     def get_fixed_width(self) -> float:
-        return self.__fixed_width
+        return self._fixed_width
 
     def get_fixed_height(self) -> float:
-        return self.__fixed_height
+        return self._fixed_height
 
     def get_width(self) -> float:
         if self.get_fixed_width() is not None:
@@ -103,6 +108,9 @@ class LayoutNode:
         else:
             return self.get_min_height()
 
+    def get_children(self):
+        return []
+
 class BlockLayoutNode(LayoutNode):
     def __init__(self, *, name="BlockLayoutNode", fixed_width: int = None, fixed_height: int = None):
         super().__init__(name=name, fixed_width=fixed_width, fixed_height=fixed_height)
@@ -110,12 +118,18 @@ class BlockLayoutNode(LayoutNode):
         self._children: list[LayoutNode] = []
 
     def get_max_width(self) -> float:
-        assert isinstance(self._parent_node, BlockLayoutNode)
-        return self._parent_node.get_max_width()
+        if self.get_fixed_width() is None:
+            assert isinstance(self._parent_node, BlockLayoutNode)
+            return self._parent_node.get_max_width()
+        else:
+            return self.get_fixed_width()
 
     def get_max_height(self) -> float:
-        assert isinstance(self._parent_node, BlockLayoutNode)
-        return self._parent_node.get_max_height()
+        if self.get_fixed_height() is None:
+            assert isinstance(self._parent_node, BlockLayoutNode)
+            return self._parent_node.get_max_height()
+        else:
+            return self.get_fixed_height()
 
     def get_width(self) -> float:
         if self.get_fixed_width():
@@ -125,6 +139,8 @@ class BlockLayoutNode(LayoutNode):
 
     # This method assumes that the node that is being inserted will not change.
     def place_block_node(self, child_node: "BlockLayoutNode"):
+        child_node._parent_node = self
+        child_node._relative_x = 0
         child_node._relative_y = self._height_of_children
         self._height_of_children += child_node.get_height()
 
@@ -133,6 +149,9 @@ class BlockLayoutNode(LayoutNode):
     # FIXME: Implement this.
     def place_inline_node(self, child_node: "InlineLayoutNode"):
         pass
+
+    def get_children(self):
+        return self._children
 
 # FIXME: Implement this.
 class InlineLayoutNode(LayoutNode):
@@ -168,12 +187,3 @@ class PageLayoutNode(BlockLayoutNode):
 
     def get_footer_node(self):
         return self._footer_node
-
-class TextLayoutNode(BlockLayoutNode):
-    def __init__(self, text: str, font: pygame.font.Font):
-        super().__init__(name="TextLayoutNode")
-
-        self._text = text
-        self._font = font
-
-        self._fixed_width, self._fixed_height = font.size(text)
