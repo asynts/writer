@@ -1,11 +1,130 @@
 from common import Node
 
 import pygame
+import enum
 
 normal_font: pygame.font.Font = None
 
 font_width: int = None
 font_height: int = None
+
+@enum.Enum
+class OverflowStrategy:
+    TRUNCATE = 0
+
+class LayoutNode:
+    def __init__(self, *, name: str):
+        # Name of the node.
+        # This is usually the name of the class.
+        self._name = name
+
+        # Reference to parent node.
+        # Assigned when inserting into parent node.
+        self._parent_node: LayoutNode = None
+
+        # Position in parent node.
+        # Assigned when inserting into parent node.
+        self._relative_x: int = None
+        self._relative_y: int = None
+
+        # How much space is needed to fit all children.
+        # Updated as nodes are inserted.
+        self._width_of_children = 0
+        self._height_of_children = 0
+
+        # FIXME: Documentation
+        self._overflow_strategy = OverflowStrategy.TRUNCATE
+
+    def on_placed_in_node(self, parent_node: "LayoutNode", *, relative_x: int, relative_y: int):
+        assert self._parent_node is None
+        self._parent_node = parent_node
+
+        assert self._relative_x is None
+        self._relative_x = relative_x
+
+        assert self._relative_y is None
+        self._relative_y = relative_y
+
+    def get_relative_x(self) -> float:
+        assert self._relative_x is not None
+        return self._relative_x
+
+    def get_relative_y(self) -> float:
+        assert self._relative_y is not None
+        return self._relative_y
+
+    def get_absolute_x(self) -> float:
+        assert self._parent_node is not None
+        assert self._relative_x is not None
+        return self._parent_node.get_absolute_x() + self._relative_x
+
+    def get_absolute_y(self) -> float:
+        assert self._parent_node is not None
+        assert self._relative_y is not None
+        return self._parent_node.get_absolute_y() + self._relative_y
+
+    def get_min_width(self) -> float:
+        return self._width_of_children
+
+    def get_min_height(self) -> float:
+        return self._height_of_children
+
+    def get_width(self) -> float:
+        return self.get_min_width()
+
+    def get_height(self) -> float:
+        return self.get_min_height()
+
+class BlockLayoutNode(LayoutNode):
+    def get_max_width(self) -> float:
+        assert isinstance(self._parent_node, BlockLayoutNode)
+        return self._parent_node.get_max_width()
+
+    def get_max_height(self) -> float:
+        assert isinstance(self._parent_node, BlockLayoutNode)
+        return self._parent_node.get_max_height()
+
+    def get_width(self) -> float:
+        return self.get_max_width()
+
+    # FIXME: place_node
+
+# FIXME: Make it possible to define constraints on block nodes and then remove these specialized nodes.
+#        Maybe, there can be a page layout node that just generates the children itself (that have constraints)
+#        and then makes them accessible via getter methods?
+
+# FIXME: Generalize this to ConstraintLayoutNode or something like that.
+class PageBlockLayoutNode(BlockLayoutNode):
+    def __init__(self):
+        super().__init__(name="PageBlockLayoutNode")
+
+    def get_min_width(self) -> float:
+        return 15 * font_width
+    
+    def get_min_height(self) -> float:
+        return 5 * font_height
+
+    def get_max_width(self) -> float:
+        return self.get_min_width()
+
+    def get_max_height(self) -> float:
+        return self.get_min_height()
+
+    # FIXME: footer, header.
+
+# This is used to model header and footer nodes.
+# FIXME: It would be better to just have a normal block that is constrained by the page block node.
+class DecorationBlockLayoutNode(BlockLayoutNode):
+    def __init__(self):
+        super().__init__(name="DecorationBlockLayoutNode")
+    
+    def get_min_height(self) -> float:
+        return 1 * font_height
+
+    def get_max_height(self) -> float:
+        return self.get_min_height()
+
+# FIXME: Integrate the remaining stuff.
 
 class LayoutNode(Node):
     def __init__(self, name: str):
