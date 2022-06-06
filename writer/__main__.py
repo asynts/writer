@@ -28,9 +28,35 @@ def draw_layout_node(painter: QtGui.QPainter, layout_node: layout.LayoutNode):
         painter.fillRect(rect, layout_node.get_background_color())
 
     if layout_node.get_border_color() is not None:
-        # FIXME: Draw the four sides individually.
-        painter.setPen(layout_node.get_border_color())
-        painter.drawRect(rect)
+        border = layout_node.get_border_spacing()
+
+        painter.fillRect(QtCore.QRectF(
+            rect.x(),
+            rect.y(),
+            rect.width(),
+            border.top,
+        ), layout_node.get_border_color())
+
+        painter.fillRect(QtCore.QRectF(
+            rect.x(),
+            rect.y() + rect.height() - border.bottom,
+            rect.width(),
+            border.bottom,
+        ), layout_node.get_border_color())
+
+        painter.fillRect(QtCore.QRectF(
+            rect.x(),
+            rect.y(),
+            border.left,
+            rect.height(),
+        ), layout_node.get_border_color())
+
+        painter.fillRect(QtCore.QRectF(
+            rect.x() + rect.width() - border.right,
+            rect.y(),
+            border.right,
+            rect.height(),
+        ), layout_node.get_border_color())
 
     for child_node in layout_node.get_children():
         draw_layout_node(painter=painter, layout_node=child_node)
