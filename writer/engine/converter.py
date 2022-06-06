@@ -11,6 +11,8 @@ def generate_layout_tree(model_tree: model.DocumentModelNode) -> layout.LayoutNo
             fixed_height=20,
         )
 
+        new_layout_node.place_inline_node(layout.InlineTextChunkLayoutNode(text=paragraph._text))
+
         layout_tree.get_content_node().place_block_node(new_layout_node)
 
     return layout_tree

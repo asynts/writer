@@ -1,6 +1,6 @@
 import dataclasses
 
-from PyQt6 import QtGui
+from PyQt6 import QtGui, QtCore
 from PyQt6.QtGui import QColor
 
 normal_font = QtGui.QFont("monospace", 12)
@@ -11,6 +11,10 @@ COLOR_BLACK = QColor(0, 0, 0)
 COLOR_RED = QColor(255, 0, 0)
 COLOR_GREEN = QColor(0, 255, 0)
 COLOR_BLUE = QColor(0, 0, 255)
+
+def cm_to_pixel(value: float):
+    # This is a bit arbitrary, since this depends on the display resolution.
+    return 37.795275591 * value / 2
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
 class Spacing:
@@ -129,7 +133,7 @@ class LayoutNode:
     # Virtual.
     def get_width(self) -> float:
         if self.__fixed_width is not None:
-            return self.__fixed_height
+            return self.__fixed_width
         else:
             return self._width_of_children \
                 + self.__padding_spacing.left + self.__padding_spacing.right \
@@ -225,17 +229,17 @@ class BlockLayoutNode(LayoutNode):
             relative_y=self.get_border_spacing().top + self.get_padding_spacing().top + self._height_of_children \
                 + child_node.get_margin_spacing().top,
         )
-        self._height_of_children += child_node.get_height()
+        self._height_of_children += child_node.get_height() + child_node.get_margin_spacing().top + child_node.get_margin_spacing().bottom
 
         self._children.append(child_node)
+
+    def place_inline_node(self, child_node: "InlineLayoutNode"):
+        # FIXME: What kind of special behaviour do we need here?
+        self.place_block_node(child_node)
 
     # Override.
     def get_children(self):
         return self._children
-
-def cm_to_pixel(value: float):
-    # This is a bit arbitrary, since this depends on the display resolution.
-    return 37.795275591 * value / 2
 
 class PageLayoutNode(BlockLayoutNode):
     def __init__(self):
@@ -280,3 +284,28 @@ class PageLayoutNode(BlockLayoutNode):
 
     def get_footer_node(self):
         return self.__footer_node
+
+class InlineLayoutNode(LayoutNode):
+    pass
+
+class InlineTextChunkLayoutNode(InlineLayoutNode):
+    def __init__(self, *, text: str):
+        rendered_size = normal_font_metrics.size(0, text)
+
+        print(rendered_size)
+
+        super().__init__(
+            name="InlineTextChunkLayoutNode",
+
+            # The fixed size includes the border, therefor, the odd calculation.
+            fixed_width=rendered_size.width() + 2,
+            fixed_height=rendered_size.height() + 2,
+            border_spacing=Spacing(left=1, right=1, top=1, bottom=1),
+
+            border_color=COLOR_RED,
+        )
+
+        self._text = text
+    
+    def get_text(self):
+        return self._text

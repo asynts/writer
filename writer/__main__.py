@@ -11,6 +11,7 @@ def create_model_tree():
     model_tree = model.DocumentModelNode()
 
     model_tree.add_child(model.ParagraphModelNode(text="Hello, world"))
+    model_tree.add_child(model.ParagraphModelNode(text="This is another paragraph."))
 
     return model_tree
 
@@ -58,6 +59,18 @@ def draw_layout_node(painter: QtGui.QPainter, layout_node: layout.LayoutNode):
             border.right,
             rect.height(),
         ), layout_node.get_border_color())
+
+    if isinstance(layout_node, layout.InlineTextChunkLayoutNode):
+        # Remember to subtract the border here.
+        rect = rect.adjusted(
+            layout_node.get_border_spacing().left,
+            layout_node.get_border_spacing().top,
+            layout_node.get_border_spacing().left + layout_node.get_border_spacing().right,
+            layout_node.get_border_spacing().top + layout_node.get_border_spacing().bottom,
+        )
+
+        painter.setFont(layout.normal_font)
+        painter.drawText(rect, layout_node.get_text());
 
     for child_node in layout_node.get_children():
         draw_layout_node(painter=painter, layout_node=child_node)
