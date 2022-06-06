@@ -4,17 +4,18 @@ import math
 from PyQt6 import QtWidgets, QtGui, QtCore
 
 import writer.engine.layout as layout
+import writer.engine.model as model
+import writer.engine.converter
 
-def create_layout_tree():
-    layout_tree = layout.PageLayoutNode()
+def create_model_tree():
+    model_tree = model.DocumentModelNode()
 
-    # FIXME: Get actual paragraphs working.
-    paragraph_1 = layout.BlockLayoutNode(
-        fixed_height=1 * layout.normal_font_metrics.height()
-    )
-    layout_tree.get_content_node().place_block_node(paragraph_1)
+    model_tree.add_child(model.ParagraphModelNode(text="Hello, world"))
 
-    return layout_tree
+    return model_tree
+
+def create_layout_tree(model_tree: model.DocumentModelNode):
+    return writer.engine.converter.generate_layout_tree(model_tree)
 
 def draw_layout_node(painter: QtGui.QPainter, layout_node: layout.LayoutNode):
     rect = QtCore.QRectF(
@@ -67,15 +68,16 @@ class WriterWidget(QtWidgets.QWidget):
 
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.MinimumExpanding)
 
-        self._layout_node = create_layout_tree()
+        self._model_tree = create_model_tree()
+        self._layout_tree = create_layout_tree(self._model_tree)
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
 
-        draw_layout_node(painter, self._layout_node)
+        draw_layout_node(painter, self._layout_tree)
 
     def sizeHint(self):
-        return QtCore.QSize(math.ceil(self._layout_node.get_width()), math.ceil(self._layout_node.get_height()))
+        return QtCore.QSize(math.ceil(self._layout_tree.get_width()), math.ceil(self._layout_tree.get_height()))
 
 class Window(QtWidgets.QMainWindow):
     def __init__(self):
