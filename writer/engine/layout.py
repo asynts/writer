@@ -54,7 +54,8 @@ class LayoutNode:
         # Assigned when inserted into parent node.
         self.__parent_node: LayoutNode = None
 
-        # Position in parent node.
+        # Position relative to parent node.
+        # Includes the padding and border of the parent node.
         # Variable.
         # Assigned when inserted into parent node.
         # FIXME: Assigned when rebuilding layout tree.
@@ -68,7 +69,7 @@ class LayoutNode:
         self._height_of_children = 0
 
         # Some nodes define their exact width independent of other nodes.
-        # Variable.
+        # Constant.
         # Assigned during initialization.
         # FIXME: Assigned when rebuilding layout tree.
         self.__fixed_width = fixed_width
@@ -111,6 +112,7 @@ class LayoutNode:
     def get_absolute_x(self) -> float:
         if self.__parent_node is None:
             assert self._relative_x is None
+            assert self.get_margin_spacing().left == 0
             return 0
         else:
             assert self._relative_x is not None
@@ -119,6 +121,7 @@ class LayoutNode:
     def get_absolute_y(self) -> float:
         if self.__parent_node is None:
             assert self._relative_y is None
+            assert self.get_margin_spacing().top == 0
             return 0
         else:
             assert self._relative_y is not None
@@ -130,14 +133,17 @@ class LayoutNode:
     def get_fixed_height(self) -> float:
         return self.__fixed_height
 
-    # Virtual.
-    def get_width(self) -> float:
+    def get_min_width(self) -> float:
         if self.__fixed_width is not None:
             return self.__fixed_width
         else:
             return self._width_of_children \
                 + self.__padding_spacing.left + self.__padding_spacing.right \
                 + self.__border_spacing.left + self.__border_spacing.right
+
+    # Virtual.
+    def get_width(self) -> float:
+        return self.get_min_width()
 
     def get_min_height(self) -> float:
         if self.__fixed_height is not None:
@@ -207,7 +213,7 @@ class BlockLayoutNode(LayoutNode):
             return self.get_fixed_width()
 
     def get_max_height(self):
-        if self.get_fixed_width() is None:
+        if self.get_fixed_height() is None:
             assert isinstance(self.get_parent_node(), BlockLayoutNode)
             return self.get_parent_node().get_max_inner_height()
         else:
@@ -230,6 +236,11 @@ class BlockLayoutNode(LayoutNode):
                 + child_node.get_margin_spacing().top,
         )
         self._height_of_children += child_node.get_height() + child_node.get_margin_spacing().top + child_node.get_margin_spacing().bottom
+
+        self._width_of_children = max(
+            self._width_of_children,
+            child_node.get_width() + child_node.get_margin_spacing().left + child_node.get_margin_spacing().right
+        )
 
         self._children.append(child_node)
 
@@ -292,12 +303,10 @@ class InlineTextChunkLayoutNode(InlineLayoutNode):
     def __init__(self, *, text: str):
         rendered_size = normal_font_metrics.size(0, text)
 
-        print(rendered_size)
-
         super().__init__(
             name="InlineTextChunkLayoutNode",
 
-            # The fixed size includes the border, therefor, the odd calculation.
+            # The fixed size includes the border, therefore, the odd calculation.
             fixed_width=rendered_size.width() + 2,
             fixed_height=rendered_size.height() + 2,
             border_spacing=Spacing(left=1, right=1, top=1, bottom=1),
