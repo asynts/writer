@@ -1,20 +1,16 @@
 import dataclasses
-import typing
-import pygame
 
-# Initialized by 'writer.__main__.main'.
-# FIXME: Find a better way to achieve this.
-normal_font: pygame.font.Font = None
-font_width: int = None
-font_height: int = None
+from PyQt6 import QtGui
+from PyQt6.QtGui import QColor
 
-COLOR_WHITE = (255, 255, 255)
-COLOR_BLACK = (0, 0, 0)
-COLOR_RED = (255, 0, 0)
-COLOR_GREEN = (0, 255, 0)
-COLOR_BLUE = (0, 0, 255)
+normal_font = QtGui.QFont("monospace", 12)
+normal_font_metrics = QtGui.QFontMetricsF(normal_font)
 
-Color = typing.Tuple[int, int, int]
+COLOR_WHITE = QColor(255, 255, 255)
+COLOR_BLACK = QColor(0, 0, 0)
+COLOR_RED = QColor(255, 0, 0)
+COLOR_GREEN = QColor(0, 255, 0)
+COLOR_BLUE = QColor(0, 0, 255)
 
 @dataclasses.dataclass(kw_only=True, frozen=True)
 class Spacing:
@@ -31,8 +27,8 @@ class LayoutNode:
         name: str,
         fixed_width: int = None,
         fixed_height: int = None,
-        background_color: Color = None,
-        border_color: Color = None,
+        background_color: QColor = None,
+        border_color: QColor = None,
         border_spacing: Spacing = None,
         padding_spacing: Spacing = None,
         margin_spacing: Spacing = None):
@@ -99,7 +95,7 @@ class LayoutNode:
         assert self._relative_y is None
         self._relative_y = relative_y
 
-    def get_background_color(self) -> Color:
+    def get_background_color(self) -> QColor:
         return self.__background_color
 
     def get_parent_node(self) -> "LayoutNode":
@@ -250,8 +246,8 @@ class PageLayoutNode(BlockLayoutNode):
     def __init__(self):
         super().__init__(
             name="PageLayoutNode",
-            fixed_width=40 * font_width,
-            fixed_height=20 * font_height,
+            fixed_width=40 * normal_font_metrics.averageCharWidth(),
+            fixed_height=20 * normal_font_metrics.height(),
             background_color=COLOR_WHITE,
             padding_spacing=Spacing(left=10, right=10, top=20, bottom=20),
             border_spacing=Spacing(left=1, right=1, top=1, bottom=1),
@@ -259,19 +255,19 @@ class PageLayoutNode(BlockLayoutNode):
         )
 
         self.__header_node = BlockLayoutNode(
-            fixed_height=1 * font_height,
+            fixed_height=1 * normal_font_metrics.height(),
             background_color=COLOR_GREEN,
         )
         self.place_block_node(self.__header_node)
 
         self.__content_node = BlockLayoutNode(
-            fixed_height=self.get_max_inner_height() - 2 * font_height,
+            fixed_height=self.get_max_inner_height() - 2 * normal_font_metrics.height(),
             background_color=COLOR_BLUE,
         )
         self.place_block_node(self.__content_node)
 
         self.__footer_node = BlockLayoutNode(
-            fixed_height=1 * font_height,
+            fixed_height=1 * normal_font_metrics.height(),
             background_color=COLOR_RED,
         )
         self.place_block_node(self.__footer_node)
