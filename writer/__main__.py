@@ -81,8 +81,16 @@ class Window(QtWidgets.QMainWindow):
 
         self._writerWidget = WriterWidget()
 
+        containerLayout = QtWidgets.QHBoxLayout()
+
+        containerLayout = QtWidgets.QHBoxLayout()
+        containerLayout.addStretch()
+        containerLayout.addWidget(self._writerWidget)
+        containerLayout.addStretch()
+
         self._scrollArea = QtWidgets.QScrollArea()
-        self._scrollArea.setWidget(self._writerWidget)
+        self._scrollArea.setLayout(containerLayout)
+
         self.setCentralWidget(self._scrollArea)
 
         self.setWindowTitle("Writer")
