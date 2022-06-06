@@ -88,6 +88,14 @@ class LayoutNode:
         self.__margin_spacing = margin_spacing
         self.__padding_spacing = padding_spacing
 
+    def to_string(self, *, indent=0):
+        result = f"{indent*' '}{self.__name}(relative_x={self._relative_x}, relative_y={self._relative_y})\n"
+
+        for child in self.get_children():
+            result += child.to_string(indent=indent+1)
+        
+        return result
+
     # Child nodes must not be changed after they are placed in their parent node.
     # Some parents will call this several times, if the layout changes based on other siblings.
     def on_placed_in_node(self, parent_node: "LayoutNode", *, relative_x: int, relative_y: int):
@@ -183,11 +191,13 @@ class BlockLayoutNode(LayoutNode):
 
     def get_max_inner_width(self) -> float:
         if self.get_fixed_width() is None:
-            assert isinstance(self.get_parent_node(), BlockLayoutNode)
-            return self.get_parent_node().get_max_inner_width() \
-                - self.get_padding_spacing().left - self.get_padding_spacing().right \
-                - self.get_border_spacing().left - self.get_border_spacing().right \
-                - self.get_margin_spacing().left - self.get_margin_spacing().right
+            if isinstance(self.get_parent_node(), BlockLayoutNode):
+                return self.get_parent_node().get_max_inner_width() \
+                    - self.get_padding_spacing().left - self.get_padding_spacing().right \
+                    - self.get_border_spacing().left - self.get_border_spacing().right \
+                    - self.get_margin_spacing().left - self.get_margin_spacing().right
+            else:
+                return None
         else:
             return self.get_fixed_width() \
                 - self.get_padding_spacing().left - self.get_padding_spacing().right \
@@ -195,11 +205,13 @@ class BlockLayoutNode(LayoutNode):
 
     def get_max_inner_height(self) -> float:
         if self.get_fixed_height() is None:
-            assert isinstance(self.get_parent_node(), BlockLayoutNode)
-            return self.get_parent_node().get_max_inner_height() \
-                - self.get_padding_spacing().top - self.get_padding_spacing().bottom \
-                - self.get_border_spacing().top - self.get_border_spacing().bottom \
-                - self.get_margin_spacing().top - self.get_margin_spacing().bottom
+            if isinstance(self.get_parent_node(), BlockLayoutNode):
+                return self.get_parent_node().get_max_inner_height() \
+                    - self.get_padding_spacing().top - self.get_padding_spacing().bottom \
+                    - self.get_border_spacing().top - self.get_border_spacing().bottom \
+                    - self.get_margin_spacing().top - self.get_margin_spacing().bottom
+            else:
+                return None
         else:
             return self.get_fixed_height() \
                 - self.get_padding_spacing().top - self.get_padding_spacing().bottom \
@@ -250,9 +262,22 @@ class BlockLayoutNode(LayoutNode):
 
         self._children.append(child_node)
 
+    # FIXME: Maybe this shouldn't belong to a 'BlocklayoutNode' but instead to something else?
     def place_inline_node(self, child_node: "InlineLayoutNode"):
-        # FIXME: What kind of special behaviour do we need here?
-        self.place_block_node(child_node)
+        child_node.on_placed_in_node(
+            self,
+            relative_x=self.get_border_spacing().left + self.get_padding_spacing().left + child_node.get_margin_spacing().left \
+                + self._width_of_children,
+            relative_y=self.get_border_spacing().top + self.get_padding_spacing().top + child_node.get_margin_spacing().top
+        )
+        self._width_of_children += child_node.get_width() + child_node.get_margin_spacing().left + child_node.get_margin_spacing().right
+
+        self._height_of_children = max(
+            self._height_of_children,
+            child_node.get_height() + child_node.get_margin_spacing().top + child_node.get_margin_spacing().bottom
+        )
+
+        self._children.append(child_node)
 
     # Override.
     def get_children(self):

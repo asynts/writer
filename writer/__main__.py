@@ -10,6 +10,7 @@ import writer.engine.converter
 def create_model_tree():
     model_tree = model.DocumentModelNode()
 
+    model_tree.add_child(model.ParagraphModelNode(text="This is a very, very long paragraph which does not fit on a single line. It will have to be wrapped into the next line, possibly multiple times."))
     model_tree.add_child(model.ParagraphModelNode(text="Hello, world"))
     model_tree.add_child(model.ParagraphModelNode(text="This is another paragraph."))
 
@@ -83,6 +84,8 @@ class WriterWidget(QtWidgets.QWidget):
 
         self._model_tree = create_model_tree()
         self._layout_tree = create_layout_tree(self._model_tree)
+
+        print(self._layout_tree.to_string(), end="")
 
     def paintEvent(self, event):
         painter = QtGui.QPainter(self)
