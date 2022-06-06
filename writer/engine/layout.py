@@ -207,15 +207,19 @@ class BlockLayoutNode(LayoutNode):
 
     def get_max_width(self):
         if self.get_fixed_width() is None:
-            assert isinstance(self.get_parent_node(), BlockLayoutNode)
-            return self.get_parent_node().get_max_inner_width()
+            if isinstance(self.get_parent_node(), BlockLayoutNode):
+                return self.get_parent_node().get_max_inner_width()
+            else:
+                return None
         else:
             return self.get_fixed_width()
 
     def get_max_height(self):
         if self.get_fixed_height() is None:
-            assert isinstance(self.get_parent_node(), BlockLayoutNode)
-            return self.get_parent_node().get_max_inner_height()
+            if isinstance(self.get_parent_node(), BlockLayoutNode):
+                return self.get_parent_node().get_max_inner_height()
+            else:
+                return None
         else:
             return self.get_fixed_height()
 
@@ -223,8 +227,10 @@ class BlockLayoutNode(LayoutNode):
     def get_width(self) -> float:
         if self.get_fixed_width():
             return self.get_fixed_width()
-        else:
+        elif self.get_max_width() is not None:
             return self.get_max_width()
+        else:
+            return self.get_min_width()
 
     # Virtual.
     def place_block_node(self, child_node: "BlockLayoutNode"):
@@ -261,6 +267,7 @@ class PageLayoutNode(BlockLayoutNode):
 
             background_color=COLOR_WHITE,
             border_spacing=Spacing(left=1, right=1, top=1, bottom=1),
+            margin_spacing=Spacing(top=10, bottom=10),
             border_color=COLOR_BLACK,
         )
 
