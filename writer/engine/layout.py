@@ -31,7 +31,8 @@ class LayoutNode:
         border_color: QColor = None,
         border_spacing: Spacing = None,
         padding_spacing: Spacing = None,
-        margin_spacing: Spacing = None):
+        margin_spacing: Spacing = None,
+        grow_in_flexible_parent: bool = False):
 
         if border_spacing is None:
             border_spacing = Spacing()
@@ -76,24 +77,31 @@ class LayoutNode:
         self.__background_color = background_color
         self.__border_color = border_color
         
-        # Spacing of this noce.
+        # Spacing of this node.
         # Constant.
         # Assigned during initialization.
         self.__border_spacing = border_spacing
         self.__margin_spacing = margin_spacing
         self.__padding_spacing = padding_spacing
 
+        # When placed in a flexible layout node, eat up the space.
+        # Only one node can have this set.
+        # Assigned during initialization.
+        self.__grow_in_flexible_parent = grow_in_flexible_parent
+
     # Child nodes must not be changed after they are placed in their parent node.
-    # FIXME: When the parent node updates it's layout, it can update the children, but that is the only exception.
+    # Some parents will call this several times, if the layout changes based on other siblings.
     def on_placed_in_node(self, parent_node: "LayoutNode", *, relative_x: int, relative_y: int):
-        assert self.__parent_node is None
         self.__parent_node = parent_node
-
-        assert self._relative_x is None
         self._relative_x = relative_x
-
-        assert self._relative_y is None
         self._relative_y = relative_y
+
+    def get_grow_in_flexible_parent(self) -> bool:
+        return self.__grow_in_flexible_parent
+
+    # Virtual.
+    def get_flexible_space(self) -> int:
+        return None
 
     def get_background_color(self) -> QColor:
         return self.__background_color
@@ -140,13 +148,26 @@ class LayoutNode:
                 + self.__padding_spacing.left + self.__padding_spacing.right \
                 + self.__border_spacing.left + self.__border_spacing.right
 
-    def get_height(self) -> float:
+    def get_min_height(self) -> float:
         if self.__fixed_height is not None:
             return self.__fixed_height
         else:
             return self._height_of_children \
                 + self.__padding_spacing.top + self.__padding_spacing.bottom \
                 + self.__border_spacing.top + self.__border_spacing.bottom
+
+    def get_height(self) -> float:
+        if self.__fixed_height is not None:
+            return self.__fixed_height
+        else:
+            additional_space = 0
+            if self.get_parent_node() is not None:
+                additional_space = self.get_parent_node().get_flexible_space() or 0
+
+            return self._height_of_children \
+                + self.__padding_spacing.top + self.__padding_spacing.bottom \
+                + self.__border_spacing.top + self.__border_spacing.bottom \
+                + additional_space
 
     def get_margin_spacing(self):
         return self.__margin_spacing
@@ -218,6 +239,7 @@ class BlockLayoutNode(LayoutNode):
         else:
             return self.get_max_width()
 
+    # Virtual.
     def place_block_node(self, child_node: "BlockLayoutNode"):
         child_node.on_placed_in_node(
             self,
@@ -230,19 +252,47 @@ class BlockLayoutNode(LayoutNode):
 
         self._children.append(child_node)
 
-    # FIXME: Implement this.
-    def place_inline_node(self, child_node: "InlineLayoutNode"):
-        pass
-
     # Override.
     def get_children(self):
         return self._children
 
-# FIXME: Implement this.
-class InlineLayoutNode(LayoutNode):
-    pass
+class FlexibleLayoutNode(BlockLayoutNode):
+    def __init__(self, *, name="FlexibleLayoutNode", **kwargs):
+        super().__init__(name=name, **kwargs)
 
-class PageLayoutNode(BlockLayoutNode):
+    # Override.
+    def get_flexible_space(self) -> int:
+        assert self.get_fixed_height() is not None
+        remaining_space = self.get_max_inner_height() - self._height_of_children
+        assert remaining_space >= 0
+        return remaining_space
+
+    # Override.
+    def place_block_node(self, child_node: "BlockLayoutNode"):
+        # This type of layout node only makes sense, if the height is fixed.
+        assert self.get_fixed_height() is not None
+
+        self._children.append(child_node)
+        self._height_of_children += child_node.get_height()
+
+        # Replace all nodes in this layout node.
+        space_used_by_previous_children = 0
+        for existing_child_node in self._children:
+            existing_child_node.on_placed_in_node(
+                self,
+                relative_x=self.get_border_spacing().left + self.get_padding_spacing().left \
+                    + existing_child_node.get_margin_spacing().left,
+                relative_y=self.get_border_spacing().top + self.get_padding_spacing().top \
+                    + existing_child_node.get_margin_spacing().top + space_used_by_previous_children
+            )
+
+            space_used_by_previous_children += existing_child_node.get_min_height()
+
+            # One child node can take up all the remaining space.
+            if existing_child_node.get_grow_in_flexible_parent():
+                space_used_by_previous_children += self.get_flexible_space()
+
+class PageLayoutNode(FlexibleLayoutNode):
     def __init__(self):
         super().__init__(
             name="PageLayoutNode",
@@ -255,20 +305,22 @@ class PageLayoutNode(BlockLayoutNode):
         )
 
         self.__header_node = BlockLayoutNode(
-            fixed_height=1 * normal_font_metrics.height(),
+            fixed_height=40,
             background_color=COLOR_GREEN,
+            grow_in_flexible_parent=False,
         )
         self.place_block_node(self.__header_node)
 
         self.__content_node = BlockLayoutNode(
-            fixed_height=self.get_max_inner_height() - 2 * normal_font_metrics.height(),
             background_color=COLOR_BLUE,
+            grow_in_flexible_parent=True,
         )
         self.place_block_node(self.__content_node)
 
         self.__footer_node = BlockLayoutNode(
-            fixed_height=1 * normal_font_metrics.height(),
+            fixed_height=40,
             background_color=COLOR_RED,
+            grow_in_flexible_parent=False,
         )
         self.place_block_node(self.__footer_node)
 
