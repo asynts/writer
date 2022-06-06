@@ -65,6 +65,8 @@ class WriterWidget(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
 
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.MinimumExpanding)
+
         self._layout_node = create_layout_tree()
 
     def paintEvent(self, event):
@@ -81,15 +83,18 @@ class Window(QtWidgets.QMainWindow):
 
         self._writerWidget = WriterWidget()
 
-        containerLayout = QtWidgets.QHBoxLayout()
+        horizontalCenterLayout = QtWidgets.QHBoxLayout()
+        horizontalCenterLayout.addStretch()
+        horizontalCenterLayout.addWidget(self._writerWidget)
+        horizontalCenterLayout.addStretch()
 
-        containerLayout = QtWidgets.QHBoxLayout()
-        containerLayout.addStretch()
-        containerLayout.addWidget(self._writerWidget)
-        containerLayout.addStretch()
+        scrollAreaContent = QtWidgets.QWidget()
+        scrollAreaContent.setLayout(horizontalCenterLayout)
+        scrollAreaContent.setStyleSheet("background-color: lightgrey;")
 
         self._scrollArea = QtWidgets.QScrollArea()
-        self._scrollArea.setLayout(containerLayout)
+        self._scrollArea.setWidget(scrollAreaContent)
+        self._scrollArea.setWidgetResizable(True)
 
         self.setCentralWidget(self._scrollArea)
 
