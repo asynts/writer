@@ -46,3 +46,21 @@ It has the following structure:
 -   *InlineLayoutNode*
 
     -   *WordChunkNode*
+
+### Layout Phases
+
+Not all of the layout operation can be performed in a single step.
+We need to place child nodes before we can place the parent since we don't know the height of the parent before the children are placed.
+Therefore, there are two phases:
+
+-   In the first phase, a temporary parent is assigned that can be changed.
+    The parent doesn't know about this at this point.
+    No space is reserved and no position is assigned.
+
+-   In the second phase, the parent is permanently assigned and can no longer be changed.
+    The parent now knows about this child.
+    Space is reserved and a position relative to the parent is assigned.
+
+-   The third phase currently doesn't exist but is likely necessary.
+    Essentially, we will have to compute the absolute positions of everything and cache it in the nodes.
+    Otherwise, lookups would take forever.

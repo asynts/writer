@@ -3,8 +3,7 @@ from . import model, layout
 # Returns the words that did not fit into this parent node.
 def generate_layout_nodes_for_words_helper(*, parent_node: layout.BlockLayoutNode, words: list[str]):
     # We do add the node here, but we might never place it, that is fine.
-    new_layout_node = layout.BlockLayoutNode()
-    new_layout_node.on_added_to_node(parent_node=parent_node)
+    new_layout_node = layout.BlockLayoutNode(parent_node=parent_node)
 
     def place_node_into_parent():
         remaining_space = parent_node.get_max_remaining_height()
@@ -46,8 +45,7 @@ def generate_layout_nodes_for_words_helper(*, parent_node: layout.BlockLayoutNod
                 return words[:]
 
         # Create a new text layout node for this word.
-        new_child_node = layout.InlineTextChunkLayoutNode(text=word)
-        new_child_node.on_added_to_node(new_layout_node)
+        new_child_node = layout.InlineTextChunkLayoutNode(text=word, parent_node=new_layout_node)
         new_layout_node.place_inline_node(new_child_node)
 
         # Advance.
@@ -60,8 +58,7 @@ def generate_layout_nodes_for_words_helper(*, parent_node: layout.BlockLayoutNod
 
 # Returns the words that did not fit into this parent node.
 def generate_layout_nodes_for_words(*, parent_node: layout.BlockLayoutNode, words: list[str]):
-    new_layout_node = layout.BlockLayoutNode()
-    new_layout_node.on_added_to_node(parent_node=parent_node)
+    new_layout_node = layout.BlockLayoutNode(parent_node=parent_node)
 
     # Break down the problem and treat each line recursively.
     # Returns the words that did not fit into this parent node.
@@ -72,10 +69,9 @@ def generate_layout_nodes_for_words(*, parent_node: layout.BlockLayoutNode, word
     return words
 
 def generate_layout_tree(model_tree: model.DocumentModelNode) -> layout.LayoutNode:
-    layout_tree = layout.BlockLayoutNode()
+    layout_tree = layout.BlockLayoutNode(parent_node=None)
 
-    current_page_node = layout.PageLayoutNode()
-    current_page_node.on_added_to_node(layout_tree)
+    current_page_node = layout.PageLayoutNode(parent_node=layout_tree)
 
     for paragraph in model_tree.children():
         assert isinstance(paragraph, model.ParagraphModelNode)
@@ -88,8 +84,7 @@ def generate_layout_tree(model_tree: model.DocumentModelNode) -> layout.LayoutNo
             # We had some overflow and need to create a new page to fit it.
 
             layout_tree.place_block_node(current_page_node)
-            current_page_node = layout.PageLayoutNode()
-            current_page_node.on_added_to_node(layout_tree)
+            current_page_node = layout.PageLayoutNode(parent_node=layout_tree)
 
             words = generate_layout_nodes_for_words(parent_node=current_page_node.get_content_node(), words=words)
 
