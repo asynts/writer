@@ -6,7 +6,6 @@ def generate_layout_nodes_for_words_helper(*, parent_node: layout.BlockLayoutNod
     print(parent_node.to_string(), end="")
     print("<<<")
 
-
     # We do add the node here, but we might never place it, that is fine.
     new_layout_node = layout.BlockLayoutNode(parent_node=parent_node)
 
@@ -18,7 +17,7 @@ def generate_layout_nodes_for_words_helper(*, parent_node: layout.BlockLayoutNod
         remaining_space = parent_node.get_max_remaining_height()
         assert remaining_space >= 0.0
 
-        occupied_space = new_layout_node.get_height() + new_layout_node.get_margin_spacing().top + new_layout_node.get_margin_spacing().bottom
+        occupied_space = new_layout_node.get_min_height() + new_layout_node.get_margin_spacing().y
 
         if occupied_space > remaining_space:
             # Not enough space to fit this node, overflow to next page.
@@ -102,5 +101,8 @@ def generate_layout_tree(model_tree: model.DocumentModelNode) -> layout.LayoutNo
             words = generate_layout_nodes_for_words(parent_node=current_page_node.get_content_node(), words=words)
 
     layout_tree.place_block_node(current_page_node)
+
+    # The top level node isn't really placed but we still need to change the phase.
+    layout_tree.on_placed_in_node(relative_x=0, relative_y=0)
 
     return layout_tree
