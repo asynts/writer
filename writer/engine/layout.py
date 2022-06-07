@@ -228,6 +228,22 @@ class BlockLayoutNode(LayoutNode):
                 - self.get_padding_spacing().top - self.get_padding_spacing().bottom \
                 - self.get_border_spacing().top - self.get_border_spacing().bottom
 
+    def get_max_remaining_height(self) -> float:
+        if self.get_fixed_height() is None:
+            if isinstance(self.get_parent_node(), BlockLayoutNode):
+                return self.get_parent_node().get_max_remaining_height() \
+                    - self.get_min_inner_height() \
+                    - self.get_margin_spacing().top - self.get_margin_spacing().bottom \
+                    - self.get_padding_spacing().top - self.get_padding_spacing().bottom \
+                    - self.get_border_spacing().top - self.get_border_spacing().bottom
+            else:
+                return None
+        else:
+            return self.get_fixed_height() \
+                - self.get_min_inner_height() \
+                - self.get_border_spacing().top - self.get_border_spacing().bottom \
+                - self.get_padding_spacing().top - self.get_padding_spacing().bottom
+
     def get_max_width(self):
         if self.get_fixed_width() is None:
             if isinstance(self.get_parent_node(), BlockLayoutNode):

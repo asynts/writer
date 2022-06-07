@@ -6,12 +6,10 @@ def generate_layout_nodes_for_words_helper(*, parent_node: layout.BlockLayoutNod
     new_layout_node.on_added_to_node(parent_node=parent_node)
 
     def place_node_into_parent():
-        remaining_space = parent_node.get_max_inner_height() - parent_node.get_min_inner_height()
+        remaining_space = parent_node.get_max_remaining_height()
         assert remaining_space >= 0.0
 
         occupied_space = new_layout_node.get_height() + new_layout_node.get_margin_spacing().top + new_layout_node.get_margin_spacing().bottom
-
-        print(f"placing: {remaining_space=} {occupied_space=}")
 
         if occupied_space > remaining_space:
             # Not enough space to fit this node, overflow to next page.
