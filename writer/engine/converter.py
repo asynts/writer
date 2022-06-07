@@ -2,10 +2,19 @@ from . import model, layout
 
 # Returns the words that did not fit into this parent node.
 def generate_layout_nodes_for_words_helper(*, parent_node: layout.BlockLayoutNode, words: list[str]):
+    print(f">>> generate_layout_nodes_for_words_helper: parent_node")
+    print(parent_node.to_string(), end="")
+    print("<<<")
+
+
     # We do add the node here, but we might never place it, that is fine.
     new_layout_node = layout.BlockLayoutNode(parent_node=parent_node)
 
     def place_node_into_parent():
+        print(">>> computing remaining_space")
+        print(parent_node.get_parent_node().to_string(), end="")
+        print("<<<")
+
         remaining_space = parent_node.get_max_remaining_height()
         assert remaining_space >= 0.0
 
@@ -58,6 +67,10 @@ def generate_layout_nodes_for_words_helper(*, parent_node: layout.BlockLayoutNod
 
 # Returns the words that did not fit into this parent node.
 def generate_layout_nodes_for_words(*, parent_node: layout.BlockLayoutNode, words: list[str]):
+    print(f">>> generate_layout_nodes_for_words: parent_node")
+    print(parent_node.to_string(), end="")
+    print("<<<")
+
     new_layout_node = layout.BlockLayoutNode(parent_node=parent_node)
 
     # Break down the problem and treat each line recursively.

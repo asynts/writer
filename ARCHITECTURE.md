@@ -57,10 +57,13 @@ Therefore, there are two phases:
     The parent doesn't know about this at this point.
     No space is reserved and no position is assigned.
 
+-   We might have to add another phase here.
+    Instead of placing children directly, we could reserve space and figure out the placement later.
+    That is needed for flexible containers where children can influence each other.
+
 -   In the second phase, the parent is permanently assigned and can no longer be changed.
     The parent now knows about this child.
     Space is reserved and a position relative to the parent is assigned.
 
--   The third phase currently doesn't exist but is likely necessary.
-    Essentially, we will have to compute the absolute positions of everything and cache it in the nodes.
-    Otherwise, lookups would take forever.
+-   We might have to add another phase here later.
+    At some point we need to cache the absolute position which should happen after all nodes completed the second phase.
