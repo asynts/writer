@@ -89,7 +89,7 @@ class LayoutNode:
         self.__padding_spacing = padding_spacing
 
     def to_string(self, *, indent=0):
-        result = f"{indent*' '}{self.__name}(relative_x={self._relative_x}, relative_y={self._relative_y}, id={id(self)})\n"
+        result = f"{indent*' '}{self.__name}(relative_x={self._relative_x}, relative_y={self._relative_y}, id={id(self)} height_of_children={self._height_of_children})\n"
 
         for child in self.get_children():
             result += child.to_string(indent=indent+1)
@@ -98,6 +98,7 @@ class LayoutNode:
 
     # We have to register the parent early, because we need it during the calculations for placing the child.
     # Children may be added to this node until it is placed for the first time.
+    # Adding a node makes no promise that it will be placed into that node.
     def on_added_to_node(self, parent_node: "LayoutNode"):
         self.__parent_node = parent_node
 
@@ -179,6 +180,12 @@ class LayoutNode:
 
     def get_border_color(self):
         return self.__border_color
+
+    def get_min_inner_height(self):
+        return self._height_of_children
+
+    def get_min_inner_width(self):
+        return self._width_of_children
 
     # FIXME: get_inner_spacing
     # FIXME: get_outer_spacing

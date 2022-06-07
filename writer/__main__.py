@@ -13,6 +13,9 @@ def create_model_tree():
     model_tree.add_child(model.ParagraphModelNode(text="This is a very, very long paragraph which does not fit on a single line. It will have to be wrapped into the next line, possibly multiple times."))
     model_tree.add_child(model.ParagraphModelNode(text="Hello, world"))
     model_tree.add_child(model.ParagraphModelNode(text="This is another paragraph."))
+    model_tree.add_child(model.ParagraphModelNode(text="By adding more and more long paragraphs, we eventually overflow the page and need to create a new one."))
+    model_tree.add_child(model.ParagraphModelNode(text="It seems that it takes quite a bit of text to achieve this, and I am running out of ideas what I could write about."))
+    model_tree.add_child(model.ParagraphModelNode(text="One more paragraph should overflow the page, if it is long enough. This paragraph should be the one that overflows the page. It is very long. I had to add this additional sentence, because it still wasn't long enough."))
 
     return model_tree
 

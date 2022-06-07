@@ -26,3 +26,7 @@ I didn't know where else to put it after removing it from the code.
 -   I think that there should be some `on_layout` method that does all the calculations that need to be done again and again.
 
     Currently, this is a bit too unstructured for my taste.
+
+-   I think the methods should be divided into multiple phases.
+
+    Something like `get_max_inner_height` only really makes sense before placement and `get_height` only makes sense after all the children are filled.

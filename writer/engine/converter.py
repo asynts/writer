@@ -1,8 +1,29 @@
 from . import model, layout
 
 def generate_layout_nodes_for_words_helper(*, parent_node: layout.BlockLayoutNode, words: list[str]):
+    # We do add the node here, but we might never place it, that is fine.
     new_layout_node = layout.BlockLayoutNode()
     new_layout_node.on_added_to_node(parent_node=parent_node)
+
+    def place_node_into_parent():
+        remaining_space = parent_node.get_max_inner_height() - parent_node.get_min_inner_height()
+        assert remaining_space >= 0.0
+
+        occupied_space = new_layout_node.get_height() + new_layout_node.get_margin_spacing().top + new_layout_node.get_margin_spacing().bottom
+
+        print(f"placing: {remaining_space=} {occupied_space=}")
+
+        if occupied_space > remaining_space:
+            # Not enough space to fit this node, overflow to next page.
+
+            # FIXME: Actually create a new page.
+            print("page overflow")
+            return False
+        else:
+            # We can safely place this node without causing overflow.
+
+            parent_node.place_block_node(new_layout_node)
+            return True
 
     offset_x = 0.0
 
@@ -22,9 +43,10 @@ def generate_layout_nodes_for_words_helper(*, parent_node: layout.BlockLayoutNod
             # FIXME: Find a better way to deal with words that don't fit.
             assert index != 0
 
-            parent_node.place_block_node(new_layout_node)
-            generate_layout_nodes_for_words_helper(parent_node=parent_node, words=words[index:])
-            return
+            if place_node_into_parent():
+                return generate_layout_nodes_for_words_helper(parent_node=parent_node, words=words[index:])
+            else:
+                return words[:]
 
         # Create a new text layout node for this word.
         new_child_node = layout.InlineTextChunkLayoutNode(text=word)
@@ -34,7 +56,10 @@ def generate_layout_nodes_for_words_helper(*, parent_node: layout.BlockLayoutNod
         # Advance.
         offset_x += new_child_node.get_width()
 
-    parent_node.place_block_node(new_layout_node)
+    if place_node_into_parent():
+        return []
+    else:
+        return words[:]
 
 def generate_layout_nodes_for_words(*, parent_node: layout.BlockLayoutNode, words: list[str]):
     new_layout_node = layout.BlockLayoutNode()
