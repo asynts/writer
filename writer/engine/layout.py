@@ -240,8 +240,6 @@ class BlockLayoutNode(LayoutNode):
         self._children: list[LayoutNode] = []
 
     def get_max_inner_width(self) -> float:
-        assert self.get_phase() == Phase.PHASE_1_CREATED
-
         if self.get_fixed_width() is None:
             if isinstance(self.get_parent_node(), BlockLayoutNode):
                 return self.get_parent_node().get_max_inner_width() - self.get_all_spacing().x
@@ -273,8 +271,6 @@ class BlockLayoutNode(LayoutNode):
             return self.get_fixed_height() - self.get_min_inner_height() - self.get_inner_spacing().y
 
     def get_max_width(self):
-        assert self.get_phase() == Phase.PHASE_1_CREATED
-
         if self.get_fixed_width() is None:
             if isinstance(self.get_parent_node(), BlockLayoutNode):
                 return self.get_parent_node().get_max_inner_width()
