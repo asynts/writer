@@ -89,17 +89,21 @@ class LayoutNode:
         self.__padding_spacing = padding_spacing
 
     def to_string(self, *, indent=0):
-        result = f"{indent*' '}{self.__name}(relative_x={self._relative_x}, relative_y={self._relative_y})\n"
+        result = f"{indent*' '}{self.__name}(relative_x={self._relative_x}, relative_y={self._relative_y}, id={id(self)})\n"
 
         for child in self.get_children():
             result += child.to_string(indent=indent+1)
         
         return result
 
+    # We have to register the parent early, because we need it during the calculations for placing the child.
+    # Children may be added to this node until it is placed for the first time.
+    def on_added_to_node(self, parent_node: "LayoutNode"):
+        self.__parent_node = parent_node
+
     # Child nodes must not be changed after they are placed in their parent node.
     # Some parents will call this several times, if the layout changes based on other siblings.
-    def on_placed_in_node(self, parent_node: "LayoutNode", *, relative_x: int, relative_y: int):
-        self.__parent_node = parent_node
+    def on_placed_in_node(self, *, relative_x: int, relative_y: int):
         self._relative_x = relative_x
         self._relative_y = relative_y
 
@@ -247,7 +251,6 @@ class BlockLayoutNode(LayoutNode):
     # Virtual.
     def place_block_node(self, child_node: "BlockLayoutNode"):
         child_node.on_placed_in_node(
-            self,
             relative_x=self.get_border_spacing().left + self.get_padding_spacing().left \
                 + child_node.get_margin_spacing().left,
             relative_y=self.get_border_spacing().top + self.get_padding_spacing().top + self._height_of_children \
@@ -265,7 +268,6 @@ class BlockLayoutNode(LayoutNode):
     # FIXME: Maybe this shouldn't belong to a 'BlocklayoutNode' but instead to something else?
     def place_inline_node(self, child_node: "InlineLayoutNode"):
         child_node.on_placed_in_node(
-            self,
             relative_x=self.get_border_spacing().left + self.get_padding_spacing().left + child_node.get_margin_spacing().left \
                 + self._width_of_children,
             relative_y=self.get_border_spacing().top + self.get_padding_spacing().top + child_node.get_margin_spacing().top
@@ -305,18 +307,21 @@ class PageLayoutNode(BlockLayoutNode):
             fixed_height=header_height,
             background_color=COLOR_GREEN,
         )
+        self.__header_node.on_added_to_node(self)
         self.place_block_node(self.__header_node)
 
         self.__content_node = BlockLayoutNode(
             fixed_height=content_height,
             background_color=COLOR_BLUE,
         )
+        self.__content_node.on_added_to_node(self)
         self.place_block_node(self.__content_node)
 
         self.__footer_node = BlockLayoutNode(
             fixed_height=footer_height,
             background_color=COLOR_RED,
         )
+        self.__footer_node.on_added_to_node(self)
         self.place_block_node(self.__footer_node)
 
     def get_header_node(self):

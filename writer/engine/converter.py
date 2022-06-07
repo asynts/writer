@@ -2,6 +2,7 @@ from . import model, layout
 
 def generate_layout_nodes_for_words_helper(*, parent_node: layout.BlockLayoutNode, words: list[str]):
     new_layout_node = layout.BlockLayoutNode()
+    new_layout_node.on_added_to_node(parent_node=parent_node)
 
     offset_x = 0.0
 
@@ -27,6 +28,7 @@ def generate_layout_nodes_for_words_helper(*, parent_node: layout.BlockLayoutNod
 
         # Create a new text layout node for this word.
         new_child_node = layout.InlineTextChunkLayoutNode(text=word)
+        new_child_node.on_added_to_node(new_layout_node)
         new_layout_node.place_inline_node(new_child_node)
 
         # Advance.
@@ -36,6 +38,7 @@ def generate_layout_nodes_for_words_helper(*, parent_node: layout.BlockLayoutNod
 
 def generate_layout_nodes_for_words(*, parent_node: layout.BlockLayoutNode, words: list[str]):
     new_layout_node = layout.BlockLayoutNode()
+    new_layout_node.on_added_to_node(parent_node=parent_node)
 
     # Break down the problem and treat each line recursively.
     generate_layout_nodes_for_words_helper(parent_node=new_layout_node, words=words)
@@ -46,6 +49,7 @@ def generate_layout_tree(model_tree: model.DocumentModelNode) -> layout.LayoutNo
     layout_tree = layout.BlockLayoutNode()
 
     current_page_node = layout.PageLayoutNode()
+    current_page_node.on_added_to_node(layout_tree)
 
     for paragraph in model_tree.children():
         assert isinstance(paragraph, model.ParagraphModelNode)
@@ -58,6 +62,7 @@ def generate_layout_tree(model_tree: model.DocumentModelNode) -> layout.LayoutNo
 
     # Let's add another page for testing.
     current_page_node = layout.PageLayoutNode()
+    current_page_node.on_added_to_node(layout_tree)
     layout_tree.place_block_node(current_page_node)
 
     return layout_tree

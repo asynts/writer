@@ -22,3 +22,7 @@ I didn't know where else to put it after removing it from the code.
 -   The idea is that, if we want to change the model, we delete all the layout nodes that correspond to that model node and all the following layout nodes.
     Then, we can just recompute these.
     Even simpler would be, if we just discard the whole layout tree.
+
+-   I think that there should be some `on_layout` method that does all the calculations that need to be done again and again.
+
+    Currently, this is a bit too unstructured for my taste.
