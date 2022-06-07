@@ -136,6 +136,7 @@ class LayoutNode:
         self.__parent_node = parent_node
 
     # Child nodes must not be changed after they are placed in their parent node.
+    # Virtual.
     def on_placed_in_node(self, *, relative_x: int, relative_y: int):
         assert self.__phase == Phase.PHASE_1_CREATED
         self.__phase = Phase.PHASE_2_PLACED
@@ -363,21 +364,28 @@ class PageLayoutNode(BlockLayoutNode):
             fixed_height=header_height,
             background_color=COLOR_GREEN,
         )
-        self.place_block_node(self.__header_node)
 
         self.__content_node = BlockLayoutNode(
             parent_node=self,
             fixed_height=content_height,
             background_color=COLOR_BLUE,
         )
-        self.place_block_node(self.__content_node)
 
         self.__footer_node = BlockLayoutNode(
             parent_node=self,
             fixed_height=footer_height,
             background_color=COLOR_RED,
         )
+
+    # Override.
+    def on_placed_in_node(self, *, relative_x: int, relative_y: int):
+        # We are not allowed to make modifications after placing nodes.
+        # But we want to be able to add nodes to the areas, therefore, we defer the placement.
+        self.place_block_node(self.__header_node)
+        self.place_block_node(self.__content_node)
         self.place_block_node(self.__footer_node)
+
+        super().on_placed_in_node(relative_x=relative_x, relative_y=relative_y)
 
     def get_header_node(self):
         return self.__header_node

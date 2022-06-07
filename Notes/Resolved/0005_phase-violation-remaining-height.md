@@ -44,3 +44,7 @@ Somehow, we are calling a method that assumes that the node can be changed when 
 ### Ideas
 
 -   The content node can not be placed, or there needs to be some edge case for things with fixed height.
+
+### Actions
+
+-   We now defer the placement of special nodes in the page node.
