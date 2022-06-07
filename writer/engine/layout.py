@@ -231,8 +231,82 @@ class LayoutNode:
         return self._width_of_children
 
     # Virtual.
-    def get_children(self):
+    def get_children(self) -> list["LayoutNode"]:
         return []
+
+    def get_qrect(self):
+        assert self.get_phase() == Phase.PHASE_2_PLACED
+
+        return QtCore.QRectF(
+            self.get_absolute_x(),
+            self.get_absolute_y(),
+            self.get_width(),
+            self.get_height(),
+        )
+
+    def get_inner_qrect(self):
+        assert self.get_phase() == Phase.PHASE_2_PLACED
+
+        return self.get_qrect().adjusted(
+            self.get_inner_spacing().left,
+            self.get_inner_spacing().top,
+            -self.get_inner_spacing().x,
+            -self.get_inner_spacing().y,
+        )
+
+    def paint_background(self, *, painter: QtGui.QPainter):
+        assert self.get_phase() == Phase.PHASE_2_PLACED
+
+        if self.get_background_color() is not None:
+            painter.fillRect(self.get_qrect(), self.get_background_color())
+
+    def paint_border(self, *, painter: QtGui.QPainter):
+        rect = self.get_qrect()
+
+        if self.get_border_color() is not None:
+            border = self.get_border_spacing()
+
+            painter.fillRect(QtCore.QRectF(
+                rect.x(),
+                rect.y(),
+                rect.width(),
+                border.top,
+            ), self.get_border_color())
+
+            painter.fillRect(QtCore.QRectF(
+                rect.x(),
+                rect.y() + rect.height() - border.bottom,
+                rect.width(),
+                border.bottom,
+            ), self.get_border_color())
+
+            painter.fillRect(QtCore.QRectF(
+                rect.x(),
+                rect.y(),
+                border.left,
+                rect.height(),
+            ), self.get_border_color())
+
+            painter.fillRect(QtCore.QRectF(
+                rect.x() + rect.width() - border.right,
+                rect.y(),
+                border.right,
+                rect.height(),
+            ), self.get_border_color())
+
+    # Virtual.
+    def paint_decoration(self, *, painter: QtGui.QPainter):
+        pass
+
+    def paint(self, *, painter: QtGui.QPainter):
+        assert self.get_phase() == Phase.PHASE_2_PLACED
+
+        self.paint_background(painter=painter)
+        self.paint_border(painter=painter)
+        self.paint_decoration(painter=painter)
+
+        for child in self.get_children():
+            child.paint(painter=painter)
 
 class BlockLayoutNode(LayoutNode):
     def __init__(self, *, name="BlockLayoutNode", **kwargs):
@@ -419,3 +493,10 @@ class InlineTextChunkLayoutNode(InlineLayoutNode):
     
     def get_text(self):
         return self._text
+
+    # Override.
+    def paint_decoration(self, *, painter: QtGui.QPainter):
+        super().paint_decoration(painter=painter)
+
+        painter.setFont(normal_font)
+        painter.drawText(self.get_inner_qrect(), self.get_text())
