@@ -23,6 +23,22 @@ class Spacing:
     top: int = 0
     bottom: int = 0
 
+    def __add__(self, other: "Spacing"):
+        return Spacing(
+            left=self.left + other.left,
+            right=self.right + other.right,
+            top=self.top + other.top,
+            bottom=self.bottom + other.bottom,
+        )
+
+    @property
+    def x(self):
+        return self.left + self.right
+    
+    @property
+    def y(self):
+        return self.top + self.bottom
+
 # Properties must not be changed, unless this is explicitly allowed.
 class LayoutNode:
     def __init__(
@@ -150,9 +166,7 @@ class LayoutNode:
         if self.__fixed_width is not None:
             return self.__fixed_width
         else:
-            return self._width_of_children \
-                + self.__padding_spacing.left + self.__padding_spacing.right \
-                + self.__border_spacing.left + self.__border_spacing.right
+            return self._width_of_children + self.get_inner_spacing().x
 
     # Virtual.
     def get_width(self) -> float:
@@ -162,9 +176,7 @@ class LayoutNode:
         if self.__fixed_height is not None:
             return self.__fixed_height
         else:
-            return self._height_of_children \
-                + self.__padding_spacing.top + self.__padding_spacing.bottom \
-                + self.__border_spacing.top + self.__border_spacing.bottom
+            return self._height_of_children + self.get_inner_spacing().y
 
     def get_height(self) -> float:
         return self.get_min_height()
@@ -178,6 +190,15 @@ class LayoutNode:
     def get_padding_spacing(self):
         return self.__padding_spacing
 
+    def get_inner_spacing(self):
+        return self.__border_spacing + self.__padding_spacing
+
+    def get_outer_spacing(self):
+        return self.__margin_spacing
+
+    def get_all_spacing(self):
+        return self.__border_spacing + self.__margin_spacing + self.__padding_spacing
+
     def get_border_color(self):
         return self.__border_color
 
@@ -186,9 +207,6 @@ class LayoutNode:
 
     def get_min_inner_width(self):
         return self._width_of_children
-
-    # FIXME: get_inner_spacing
-    # FIXME: get_outer_spacing
 
     # Virtual.
     def get_children(self):
@@ -203,46 +221,29 @@ class BlockLayoutNode(LayoutNode):
     def get_max_inner_width(self) -> float:
         if self.get_fixed_width() is None:
             if isinstance(self.get_parent_node(), BlockLayoutNode):
-                return self.get_parent_node().get_max_inner_width() \
-                    - self.get_padding_spacing().left - self.get_padding_spacing().right \
-                    - self.get_border_spacing().left - self.get_border_spacing().right \
-                    - self.get_margin_spacing().left - self.get_margin_spacing().right
+                return self.get_parent_node().get_max_inner_width() - self.get_all_spacing().x
             else:
                 return None
         else:
-            return self.get_fixed_width() \
-                - self.get_padding_spacing().left - self.get_padding_spacing().right \
-                - self.get_border_spacing().left - self.get_border_spacing().right
+            return self.get_fixed_width() - self.get_inner_spacing().x
 
     def get_max_inner_height(self) -> float:
         if self.get_fixed_height() is None:
             if isinstance(self.get_parent_node(), BlockLayoutNode):
-                return self.get_parent_node().get_max_inner_height() \
-                    - self.get_padding_spacing().top - self.get_padding_spacing().bottom \
-                    - self.get_border_spacing().top - self.get_border_spacing().bottom \
-                    - self.get_margin_spacing().top - self.get_margin_spacing().bottom
+                return self.get_parent_node().get_max_inner_height() - self.get_all_spacing().y
             else:
                 return None
         else:
-            return self.get_fixed_height() \
-                - self.get_padding_spacing().top - self.get_padding_spacing().bottom \
-                - self.get_border_spacing().top - self.get_border_spacing().bottom
+            return self.get_fixed_height() - self.get_inner_spacing().y
 
     def get_max_remaining_height(self) -> float:
         if self.get_fixed_height() is None:
             if isinstance(self.get_parent_node(), BlockLayoutNode):
-                return self.get_parent_node().get_max_remaining_height() \
-                    - self.get_min_inner_height() \
-                    - self.get_margin_spacing().top - self.get_margin_spacing().bottom \
-                    - self.get_padding_spacing().top - self.get_padding_spacing().bottom \
-                    - self.get_border_spacing().top - self.get_border_spacing().bottom
+                return self.get_parent_node().get_max_remaining_height() - self.get_min_inner_height() - self.get_all_spacing().y
             else:
                 return None
         else:
-            return self.get_fixed_height() \
-                - self.get_min_inner_height() \
-                - self.get_border_spacing().top - self.get_border_spacing().bottom \
-                - self.get_padding_spacing().top - self.get_padding_spacing().bottom
+            return self.get_fixed_height() - self.get_min_inner_height() - self.get_inner_spacing().y
 
     def get_max_width(self):
         if self.get_fixed_width() is None:
@@ -274,16 +275,14 @@ class BlockLayoutNode(LayoutNode):
     # Virtual.
     def place_block_node(self, child_node: "BlockLayoutNode"):
         child_node.on_placed_in_node(
-            relative_x=self.get_border_spacing().left + self.get_padding_spacing().left \
-                + child_node.get_margin_spacing().left,
-            relative_y=self.get_border_spacing().top + self.get_padding_spacing().top + self._height_of_children \
-                + child_node.get_margin_spacing().top,
+            relative_x=self.get_inner_spacing().left + child_node.get_outer_spacing().left,
+            relative_y=self.get_inner_spacing().top + child_node.get_outer_spacing().top + self._height_of_children,
         )
-        self._height_of_children += child_node.get_height() + child_node.get_margin_spacing().top + child_node.get_margin_spacing().bottom
+        self._height_of_children += child_node.get_height() + child_node.get_outer_spacing().y
 
         self._width_of_children = max(
             self._width_of_children,
-            child_node.get_width() + child_node.get_margin_spacing().left + child_node.get_margin_spacing().right
+            child_node.get_width() + child_node.get_outer_spacing().x,
         )
 
         self._children.append(child_node)
@@ -291,15 +290,14 @@ class BlockLayoutNode(LayoutNode):
     # FIXME: Maybe this shouldn't belong to a 'BlocklayoutNode' but instead to something else?
     def place_inline_node(self, child_node: "InlineLayoutNode"):
         child_node.on_placed_in_node(
-            relative_x=self.get_border_spacing().left + self.get_padding_spacing().left + child_node.get_margin_spacing().left \
-                + self._width_of_children,
-            relative_y=self.get_border_spacing().top + self.get_padding_spacing().top + child_node.get_margin_spacing().top
+            relative_x=self.get_inner_spacing().left + child_node.get_outer_spacing().left + self._width_of_children,
+            relative_y=self.get_inner_spacing().top + child_node.get_outer_spacing().top,
         )
-        self._width_of_children += child_node.get_width() + child_node.get_margin_spacing().left + child_node.get_margin_spacing().right
+        self._width_of_children += child_node.get_width() + child_node.get_outer_spacing().x
 
         self._height_of_children = max(
             self._height_of_children,
-            child_node.get_height() + child_node.get_margin_spacing().top + child_node.get_margin_spacing().bottom
+            child_node.get_height() + child_node.get_outer_spacing().y,
         )
 
         self._children.append(child_node)
