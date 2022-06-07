@@ -1,4 +1,5 @@
 import dataclasses
+import enum
 
 from PyQt6 import QtGui, QtCore
 from PyQt6.QtGui import QColor
@@ -39,12 +40,21 @@ class Spacing:
     def y(self):
         return self.top + self.bottom
 
+# There are several phases a layout node can be in.
+class Phase(enum.Enum):
+    # The node has been created and a temporary parent has been assigned.
+    PHASE_1_CREATED = 1
+
+    # The node has been permanently placed in a parent node and may not be moved.
+    PHASE_2_PLACED = 3
+
 # Properties must not be changed, unless this is explicitly allowed.
 class LayoutNode:
     def __init__(
         self,
         *,
         name: str,
+        parent_node: "LayoutNode",
         fixed_width: int = None,
         fixed_height: int = None,
         background_color: QColor = None,
@@ -59,68 +69,77 @@ class LayoutNode:
             padding_spacing = Spacing()
         if margin_spacing is None:
             margin_spacing = Spacing()
- 
-        # Name of the node for debugging.
-        # Constant.
-        # Assigned during initialization.
-        self.__name = name
+
+        # The phase in which the layout node is in.
+        # Some operations can only be performed in some phases.
+        # Variable (PHASE_1_CREATED).
+        # Constant (PHASE_2_PLACED).
+        # Assigned on initialization.
+        # Assigned during placed in parent.
+        self.__phase = Phase.PHASE_1_CREATED
 
         # References parent node.
+        # Variable (PHASE_1_CREATED).
+        # Constant (PHASE_2_PLACED).
+        self.__parent_node = parent_node
+
+        # Name of the node for debugging.
         # Constant.
-        # Assigned when inserted into parent node.
-        self.__parent_node: LayoutNode = None
+        self.__name = name
 
         # Position relative to parent node.
         # Includes the padding and border of the parent node.
-        # Variable.
-        # Assigned when inserted into parent node.
-        # FIXME: Assigned when rebuilding layout tree.
+        # Variable (PHASE_1_CREATED).
+        # Constant (PHASE_2_PLACED).
+        # Assigned when placed in parent node.
         self._relative_x: int = None
         self._relative_y: int = None
 
         # How much space is needed to fit all children.
-        # Variable.
+        # Variable (PHASE_1_CREATED).
+        # Constant (PHASE_2_PLACED).
         # Assigned when children are added.
         self._width_of_children = 0
         self._height_of_children = 0
 
         # Some nodes define their exact width independent of other nodes.
         # Constant.
-        # Assigned during initialization.
-        # FIXME: Assigned when rebuilding layout tree.
         self.__fixed_width = fixed_width
         self.__fixed_height = fixed_height
 
         # The colors of this node.
         # Constant.
-        # Assigned during initialization.
         self.__background_color = background_color
         self.__border_color = border_color
         
         # Spacing of this node.
         # Constant.
-        # Assigned during initialization.
         self.__border_spacing = border_spacing
         self.__margin_spacing = margin_spacing
         self.__padding_spacing = padding_spacing
 
+    def get_phase(self):
+        return self.__phase
+
     def to_string(self, *, indent=0):
-        result = f"{indent*' '}{self.__name}(relative_x={self._relative_x}, relative_y={self._relative_y}, id={id(self)} height_of_children={self._height_of_children})\n"
+        result = f"{indent*' '}{self.__name}(relative_x={self._relative_x}, relative_y={self._relative_y}, id={id(self)} phase={self.__phase})\n"
 
         for child in self.get_children():
             result += child.to_string(indent=indent+1)
         
         return result
 
-    # We have to register the parent early, because we need it during the calculations for placing the child.
-    # Children may be added to this node until it is placed for the first time.
-    # Adding a node makes no promise that it will be placed into that node.
-    def on_added_to_node(self, parent_node: "LayoutNode"):
+    # It is possible to assign a new parent node.
+    # This is useful if we find a node to be too large and want to put it elsewhere.
+    def set_parent(self, parent_node: "LayoutNode"):
+        assert self.get_phase() == Phase.PHASE_1_CREATED
         self.__parent_node = parent_node
 
     # Child nodes must not be changed after they are placed in their parent node.
-    # Some parents will call this several times, if the layout changes based on other siblings.
     def on_placed_in_node(self, *, relative_x: int, relative_y: int):
+        assert self.__phase == Phase.PHASE_1_CREATED
+        self.__phase = Phase.PHASE_2_PLACED
+
         self._relative_x = relative_x
         self._relative_y = relative_y
 
@@ -131,29 +150,29 @@ class LayoutNode:
         return self.__parent_node
 
     def get_relative_x(self) -> float:
-        assert self._relative_x is not None
+        assert self.get_phase() == Phase.PHASE_2_PLACED
         return self._relative_x
 
     def get_relative_y(self) -> float:
-        assert self._relative_y is not None
+        assert self.get_phase() == Phase.PHASE_2_PLACED
         return self._relative_y
 
     def get_absolute_x(self) -> float:
+        assert self.get_phase() == Phase.PHASE_2_PLACED
+
         if self.__parent_node is None:
-            assert self._relative_x is None
             assert self.get_margin_spacing().left == 0
             return 0
         else:
-            assert self._relative_x is not None
             return self.__parent_node.get_absolute_x() + self._relative_x
 
     def get_absolute_y(self) -> float:
+        assert self.get_phase() == Phase.PHASE_2_PLACED
+
         if self.__parent_node is None:
-            assert self._relative_y is None
             assert self.get_margin_spacing().top == 0
             return 0
         else:
-            assert self._relative_y is not None
             return self.__parent_node.get_absolute_y() + self._relative_y
 
     def get_fixed_width(self) -> float:
@@ -170,6 +189,7 @@ class LayoutNode:
 
     # Virtual.
     def get_width(self) -> float:
+        assert self.get_phase() == Phase.PHASE_2_PLACED
         return self.get_min_width()
 
     def get_min_height(self) -> float:
@@ -179,6 +199,7 @@ class LayoutNode:
             return self._height_of_children + self.get_inner_spacing().y
 
     def get_height(self) -> float:
+        assert self.get_phase() == Phase.PHASE_2_PLACED
         return self.get_min_height()
 
     def get_margin_spacing(self):
@@ -228,6 +249,8 @@ class BlockLayoutNode(LayoutNode):
             return self.get_fixed_width() - self.get_inner_spacing().x
 
     def get_max_inner_height(self) -> float:
+        assert self.get_phase() == Phase.PHASE_1_CREATED
+
         if self.get_fixed_height() is None:
             if isinstance(self.get_parent_node(), BlockLayoutNode):
                 return self.get_parent_node().get_max_inner_height() - self.get_all_spacing().y
@@ -237,6 +260,8 @@ class BlockLayoutNode(LayoutNode):
             return self.get_fixed_height() - self.get_inner_spacing().y
 
     def get_max_remaining_height(self) -> float:
+        assert self.get_phase() == Phase.PHASE_1_CREATED
+
         if self.get_fixed_height() is None:
             if isinstance(self.get_parent_node(), BlockLayoutNode):
                 return self.get_parent_node().get_max_remaining_height() - self.get_min_inner_height() - self.get_all_spacing().y
@@ -255,6 +280,8 @@ class BlockLayoutNode(LayoutNode):
             return self.get_fixed_width()
 
     def get_max_height(self):
+        assert self.get_phase() == Phase.PHASE_1_CREATED
+
         if self.get_fixed_height() is None:
             if isinstance(self.get_parent_node(), BlockLayoutNode):
                 return self.get_parent_node().get_max_inner_height()
@@ -265,6 +292,8 @@ class BlockLayoutNode(LayoutNode):
 
     # Override.
     def get_width(self) -> float:
+        assert self.get_phase() == Phase.PHASE_2_PLACED
+
         if self.get_fixed_width():
             return self.get_fixed_width()
         elif self.get_max_width() is not None:
@@ -274,6 +303,8 @@ class BlockLayoutNode(LayoutNode):
 
     # Virtual.
     def place_block_node(self, child_node: "BlockLayoutNode"):
+        assert self.get_phase() == Phase.PHASE_1_CREATED
+
         child_node.on_placed_in_node(
             relative_x=self.get_inner_spacing().left + child_node.get_outer_spacing().left,
             relative_y=self.get_inner_spacing().top + child_node.get_outer_spacing().top + self._height_of_children,
@@ -287,8 +318,10 @@ class BlockLayoutNode(LayoutNode):
 
         self._children.append(child_node)
 
-    # FIXME: Maybe this shouldn't belong to a 'BlocklayoutNode' but instead to something else?
+    # FIXME: Maybe this shouldn't belong to a 'BlockLayoutNode' but instead to something else?
     def place_inline_node(self, child_node: "InlineLayoutNode"):
+        assert self.get_phase() == Phase.PHASE_1_CREATED
+
         child_node.on_placed_in_node(
             relative_x=self.get_inner_spacing().left + child_node.get_outer_spacing().left + self._width_of_children,
             relative_y=self.get_inner_spacing().top + child_node.get_outer_spacing().top,
@@ -307,9 +340,10 @@ class BlockLayoutNode(LayoutNode):
         return self._children
 
 class PageLayoutNode(BlockLayoutNode):
-    def __init__(self):
+    def __init__(self, parent_node: "LayoutNode"):
         super().__init__(
             name="PageLayoutNode",
+            parent_node=parent_node,
             fixed_width=cm_to_pixel(21.0),
             fixed_height=cm_to_pixel(29.7),
 
@@ -325,24 +359,24 @@ class PageLayoutNode(BlockLayoutNode):
         content_height = total_height - header_height - footer_height
 
         self.__header_node = BlockLayoutNode(
+            parent_node=self,
             fixed_height=header_height,
             background_color=COLOR_GREEN,
         )
-        self.__header_node.on_added_to_node(self)
         self.place_block_node(self.__header_node)
 
         self.__content_node = BlockLayoutNode(
+            parent_node=self,
             fixed_height=content_height,
             background_color=COLOR_BLUE,
         )
-        self.__content_node.on_added_to_node(self)
         self.place_block_node(self.__content_node)
 
         self.__footer_node = BlockLayoutNode(
+            parent_node=self,
             fixed_height=footer_height,
             background_color=COLOR_RED,
         )
-        self.__footer_node.on_added_to_node(self)
         self.place_block_node(self.__footer_node)
 
     def get_header_node(self):
@@ -358,11 +392,12 @@ class InlineLayoutNode(LayoutNode):
     pass
 
 class InlineTextChunkLayoutNode(InlineLayoutNode):
-    def __init__(self, *, text: str):
+    def __init__(self, *, text: str, parent_node: LayoutNode):
         rendered_size = normal_font_metrics.size(0, text)
 
         super().__init__(
             name="InlineTextChunkLayoutNode",
+            parent_node=parent_node,
 
             # The fixed size includes the border, therefore, the odd calculation.
             fixed_width=rendered_size.width() + 2,
