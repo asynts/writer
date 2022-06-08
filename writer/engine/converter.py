@@ -1,3 +1,4 @@
+import string
 import typing
 from . import model, layout
 
@@ -22,7 +23,93 @@ class WordGroup:
         self.width = 0.0
         self.height = 0.0
 
+    def is_empty(self) -> bool:
+        return len(self.excerpts) >= 1
+
+# Replace all whitespace with spaces.
+# Removes adjacent whitespace.
+def normalize_whitespace(string_: str):
+    result = []
+    b_previous_character_was_whitespace = False
+    for ch in string_:
+        if ch in string.whitespace:
+            if not b_previous_character_was_whitespace:
+                result.append(" ")
+                b_previous_character_was_whitespace = True
+        else:
+            result.append(ch)
+            b_previous_character_was_whitespace = False
+
+    return "".join(result)
+
+# Wrapping text is more complicated than one might think at first.
+# The formatting can change in the middle of a word and one chunk of text can contain multiple words.
+# This function takes a paragraph and prepares word groups that should be wrapped together.
+def compute_word_groups_in_paragraph(paragraph_model_node: model.ParagraphModelNode) -> list[WordGroup]:
+    word_groups: list[WordGroup] = []
+
+    # FIXME: Prepare test cases before moving on.
+
+    # FIXME: What if the first text chunk starts with a space?
+    current_word_group = WordGroup()
+
+    for text_chunk_model_node in paragraph_model_node.get_children():
+        assert isinstance(text_chunk_model_node, model.TextChunkModelNode)
+
+        # The text in the chunk node is normalized such that it can be processed with 'str.partition'.
+        remaining = text_chunk_model_node.get_text()
+        remaining = normalize_whitespace(remaining)
+
+        # If the word starts with a whitespace, then a new word group is started.
+        # Otherwise, we keep adding to the previous group.
+        if remaining.startswith(" "):
+            word_groups.append(current_word_group)
+            current_word_group = WordGroup()
+            remaining = remaining.lstrip(" ")
+
+        # FIXME: The spaces need to appear in the output as well.
+
+        while len(remaining) >= 1:
+            text, separator, remaining = remaining.partition(" ")
+
+            if len(text) == 0:
+                # This can only happen on the first iteration.
+                # The remaining text started with the separator and thus a new word group is created.
+
+                assert separator == " "
+
+                if not current_word_group.is_empty():
+                    word_groups.append(current_word_group)
+                    current_word_group = WordGroup()
+
+                continue
+
+            # FIXME: Update width and height.
+
+            # This text chunk is added to the current word group.
+            current_word_group.excerpts.append(TextExcerpt(
+                text_chunk_model_node=text_chunk_model_node,
+                text=text,
+            ))
+
+            # If a separator was found, then a new word group is started.
+            if len(separator) >= 1:
+                assert separator == " "
+
+                if not current_word_group.is_empty():
+                    word_groups.append(current_word_group)
+                    current_word_group = WordGroup()
+
+    # Add the last word group if it ocontains something.
+    if not current_word_group.is_empty():
+        word_groups.append(current_word_group)
+
+    return word_groups
+
 def place_paragraph(paragraph_model_node: model.ParagraphModelNode):
+    # First, we construct a list of all the word groups in the paragraph.
+
+
     # This is the rough algorithm that I have in mind.
     # The idea is to construct word groups which represent the things being wrapped.
     # Maybe, we could even do this in advance and then just do the placement in a separate step. <-- THIS SEEMS GOOD
