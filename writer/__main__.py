@@ -16,10 +16,8 @@ def create_model_tree():
     paragraph_1.add_child(model.TextChunkModelNode(text="!"))
 
     # FIXME: The following doesn't work for some reason.
-    # paragraph_2 = model_tree.add_child(model.ParagraphModelNode())
-    # paragraph_2.add_child(model.TextChunkModelNode(text="Hello, "))
-    # paragraph_2.add_child(model.TextChunkModelNode(text="world"))
-    # paragraph_2.add_child(model.TextChunkModelNode(text="!"))
+    paragraph_2 = model_tree.add_child(model.ParagraphModelNode())
+    paragraph_2.add_child(model.TextChunkModelNode(text="foo"))
 
     return model_tree
 

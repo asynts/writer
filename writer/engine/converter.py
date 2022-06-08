@@ -25,6 +25,10 @@ class WordGroup:
         self.width = 0.0
         self.height = 0.0
 
+    @property
+    def text(self):
+        return "".join(excerpt.text for excerpt in self.excerpts)
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, WordGroup):
             return False
@@ -129,8 +133,6 @@ class Placer:
     def finalize(self):
         layout_tree = self.layout_tree
 
-        self.place_current_line()
-        self.place_current_paragraph()
         self.place_current_page()
 
         layout_tree.on_placed_in_node(relative_x=0, relative_y=0)
@@ -139,6 +141,8 @@ class Placer:
         return layout_tree
 
     def place_current_page(self):
+        assert self._current_paragraph is None
+
         self.layout_tree.place_block_node(self._current_page)
 
         self._current_page = None
@@ -150,6 +154,8 @@ class Placer:
         self._current_page = layout.PageLayoutNode(parent_node=self.layout_tree)
 
     def place_current_paragraph(self):
+        assert self._current_line is None
+
         content_node = self._current_page.get_content_node()
 
         assert content_node.get_max_remaining_height() >= self._current_paragraph.get_min_height() + self._current_paragraph.get_outer_spacing().y
@@ -158,8 +164,7 @@ class Placer:
         self._current_paragraph = None
 
     def create_new_paragraph(self):
-        if self._current_paragraph is not None:
-            self.place_current_paragraph()
+        assert self._current_paragraph is None
 
         content_node = self._current_page.get_content_node()
         self._current_paragraph = layout.BlockLayoutNode(parent_node=content_node)
@@ -188,12 +193,12 @@ class Placer:
             assert self.try_place_current_line()
 
     def create_new_line(self):
-        if self._current_line is not None:
-            self.place_current_line()
-
-        self._current_line = layout.BlockLayoutNode(parent_node=self._current_page.get_content_node())
+        assert self._current_line is None
+        self._current_line = layout.BlockLayoutNode(parent_node=self._current_paragraph)
 
     def place_word_group_in_current_line(self, word_group: WordGroup):
+        print(f"{self._current_line.get_max_remaining_width()=} {word_group.width=}")
+
         assert self._current_line.get_max_remaining_width() >= word_group.width
 
         for excerpt in word_group.excerpts:
@@ -211,6 +216,8 @@ class Placer:
     def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode):
         assert isinstance(paragraph_model_node, model.ParagraphModelNode)
 
+        print(f"place_paragraph: {self._current_page=} {self._current_paragraph=} {self._current_line=}")
+
         self.create_new_paragraph()
         self.create_new_line()
 
@@ -219,11 +226,17 @@ class Placer:
         for word_group in word_groups:
             if self._current_line.get_max_remaining_width() >= word_group.width:
                 # There is enough space to place this word group in the current line.
+                print("case 1: enough space")
                 self.place_word_group_in_current_line(word_group)
             else:
                 # There is not enough space in the current line to fit this word group, create a new line.
+                print(f"case 2: not enough space, need new line: text={repr(word_group.text)}")
+                self.place_current_line()
                 self.create_new_line()
                 self.place_word_group_in_current_line(word_group)
+
+        self.place_current_line()
+        self.place_current_paragraph()
 
     def place_document(self, document_model_node: model.DocumentModelNode):
         assert isinstance(document_model_node, model.DocumentModelNode)
