@@ -35,7 +35,7 @@ class Spacing:
     @property
     def x(self):
         return self.left + self.right
-    
+
     @property
     def y(self):
         return self.top + self.bottom
@@ -111,7 +111,7 @@ class LayoutNode:
         # Constant.
         self.__background_color = background_color
         self.__border_color = border_color
-        
+
         # Spacing of this node.
         # Constant.
         self.__border_spacing = border_spacing
@@ -126,7 +126,7 @@ class LayoutNode:
 
         for child in self.get_children():
             result += child.to_string(indent=indent+1)
-        
+
         return result
 
     # It is possible to assign a new parent node.
@@ -490,7 +490,7 @@ class InlineTextChunkLayoutNode(InlineLayoutNode):
         )
 
         self._text = text
-    
+
     def get_text(self):
         return self._text
 

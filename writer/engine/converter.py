@@ -1,8 +1,10 @@
 import string
-import typing
 from . import model, layout
 
 import dataclasses
+
+# We can't use PyQt from the PyTest environment.
+b_simplify_font_metrics = False
 
 # Represents an excerpt from a text chunk in the model.
 # Text chunks can belong to multiple word groups.
@@ -18,17 +20,34 @@ class WordGroup:
         if excerpts is None:
             excerpts = []
 
-        self.excerpts = excerpts
+        self._excerpts = excerpts
 
-        # FIXME: Add width and height here.
+        self.width = 0.0
+        self.height = 0.0
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, WordGroup):
             return False
-        return self.excerpts == other.excerpts
+
+        # We don't compare the width and height here, because it's difficult to test for.
+        return self._excerpts == other._excerpts
+
+    def add_excerpt(self, excerpt: TextExcerpt):
+        if b_simplify_font_metrics:
+            self.width += len(excerpt.text + " ")
+            self.height = 1
+        else:
+            # We reserve space for an additional space character such that the placement algorithm has enough space for that.
+            # In block mode, we won't actually draw that space but we still need to reserve space for it.
+            size = layout.normal_font_metrics.size(0, excerpt.text + " ")
+
+            self.width += size.width()
+            self.height = max(self.height, size.height())
+
+        self._excerpts.append(excerpt)
 
     def is_empty(self) -> bool:
-        return len(self.excerpts) == 0
+        return len(self._excerpts) == 0
 
 # Replace all whitespace with spaces.
 # Removes adjacent whitespace.
@@ -79,7 +98,7 @@ def compute_word_groups_in_paragraph(paragraph_model_node: model.ParagraphModelN
                 continue
 
             # Add this text to the current word group.
-            current_word_group.excerpts.append(TextExcerpt(
+            current_word_group.add_excerpt(TextExcerpt(
                 text_chunk_model_node=text_chunk_model_node,
                 text=text,
             ))

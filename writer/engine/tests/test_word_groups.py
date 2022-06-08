@@ -3,6 +3,11 @@ import pytest
 import writer.engine.model
 import writer.engine.converter
 
+@pytest.fixture(autouse=True)
+def enable_test_mode():
+    # Using the actual font metrics class from PyQt doesn't work from a test environment.
+    writer.engine.converter.b_simplify_font_metrics = True
+
 @pytest.fixture
 def paragraph_1_input():
     paragraph_node = writer.engine.model.ParagraphModelNode()
