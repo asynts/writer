@@ -24,6 +24,24 @@ def create_model_tree():
     paragraph_3.add_child(model.TextChunkModelNode(text="hasis. "))
     paragraph_3.add_child(model.TextChunkModelNode(text="On top of that there are multiple sentences in here, causing overflow."))
 
+    paragraph_4 = model_tree.add_child(model.ParagraphModelNode())
+    paragraph_4.add_child(model.TextChunkModelNode(text="Now the stress test, we have this really long paragraph which will overflow the page."))
+    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
+    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
+    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
+    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
+    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
+    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
+    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
+    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
+    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
+    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
+    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
+    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
+    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
+    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
+    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
+
     return model_tree
 
 def create_layout_tree(model_tree: model.DocumentModelNode):
