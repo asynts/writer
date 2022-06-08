@@ -13,27 +13,29 @@ class ModelStyle:
         is_italic: bool = None,
         font_size: float = None
     ):
-        self.__parent_model_style = parent_model_style
-        self.__is_bold = is_bold
-        self.__is_italic = is_italic
-        self.__font_size = font_size
+        self._parent_model_style = parent_model_style
+        self._is_bold = is_bold
+        self._is_italic = is_italic
+        self._font_size = font_size
 
     def _get_property(self, name: str):
         if getattr(self, name) is None:
-            assert self.__parent_model_style is not None
-            return self.__parent_model_style._get_property(name)
+            assert self._parent_model_style is not None
+            return self._parent_model_style._get_property(name)
+        else:
+            return getattr(self, name)
 
     @property
     def is_bold(self) -> bool:
-        return self._get_property("__is_bold")
+        return self._get_property("_is_bold")
 
     @property
     def is_italic(self) -> bool:
-        return self._get_property("__is_italic")
+        return self._get_property("_is_italic")
 
     @property
-    def is_font_size(self) -> bool:
-        return self._get_property("__is_font_size")
+    def font_size(self) -> bool:
+        return self._get_property("_font_size")
 
 class ModelNode:
     def __init__(self, *, name: str, style: ModelStyle):
@@ -45,7 +47,7 @@ class ModelNode:
         self.__children.append(child_node)
         return child_node
 
-    def get_style(self):
+    def get_style(self) -> ModelStyle:
         return self.__style
 
     def get_children(self):

@@ -1,4 +1,5 @@
 import enum
+import typing
 
 from PyQt6 import QtGui, QtCore
 from PyQt6.QtGui import QColor
@@ -441,8 +442,10 @@ class PageLayoutNode(VerticalLayoutNode):
         return self.__footer_node
 
 class TextChunkLayoutNode(LayoutNode):
-    def __init__(self, *, text: str, parent_node: LayoutNode):
-        rendered_size = normal_font_metrics.size(0, text)
+    def __init__(self, *, text: str, parent_node: LayoutNode, font_size: float, is_bold: bool, is_italic: bool):
+        font, font_metrics = self._compute_font(font_size=font_size, is_bold=is_bold, is_italic=is_italic)
+
+        rendered_size = font_metrics.size(0, text)
 
         super().__init__(
             name="InlineTextChunkLayoutNode",
@@ -460,6 +463,30 @@ class TextChunkLayoutNode(LayoutNode):
         )
 
         self._text = text
+        self._font = font
+        self._font_metrics = font_metrics
+
+    def _compute_font(self, *, font_size: float, is_bold: bool, is_italic: bool) -> typing.Tuple[QtGui.QFont, QtGui.QFontMetricsF]:
+        weight = QtGui.QFont.Weight.Normal
+        if is_bold:
+            weight = QtGui.QFont.Weight.Bold
+
+        font = QtGui.QFont(
+            "monospace",
+            int(font_size),
+            weight,
+            is_italic,
+        )
+
+        font_metrics = QtGui.QFontMetricsF(font)
+
+        return font, font_metrics
+
+    def get_font(self):
+        return self._font
+
+    def get_font_metrics(self):
+        return self._font_metrics
 
     def get_text(self):
         return self._text
@@ -468,5 +495,5 @@ class TextChunkLayoutNode(LayoutNode):
     def paint_decoration(self, *, painter: QtGui.QPainter):
         super().paint_decoration(painter=painter)
 
-        painter.setFont(normal_font)
+        painter.setFont(self._font)
         painter.drawText(self.get_inner_qrect(), self.get_text())

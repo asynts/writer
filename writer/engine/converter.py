@@ -220,16 +220,28 @@ class Placer:
     def place_word_group_in_current_line(self, word_group: WordGroup):
         assert self._current_line.get_max_remaining_width() >= word_group.width
 
+        model_style = None
         for excerpt in word_group.excerpts:
+            model_style = excerpt.text_chunk_model_node.get_style()
+
             self._current_line.place_child_node(layout.TextChunkLayoutNode(
                 text=excerpt.text,
                 parent_node=self._current_line,
+                font_size=model_style.font_size,
+                is_bold=model_style.is_bold,
+                is_italic=model_style.is_italic,
             ))
+
+        # This is a bit naughty, we simply take the style from the last excerpt.
+        assert model_style is not None
 
         # FIXME: Do the spacing separately.
         self._current_line.place_child_node(layout.TextChunkLayoutNode(
             text=" ",
-            parent_node=self._current_line
+            parent_node=self._current_line,
+            font_size=model_style.font_size,
+            is_bold=model_style.is_bold,
+            is_italic=model_style.is_italic,
         ))
 
     def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode):
