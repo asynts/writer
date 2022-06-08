@@ -185,9 +185,18 @@ class Placer:
             pass
         else:
             # We need to create a new paragraph on the next page.
+
+            # The paragraph logic assumes that no line is pending.
+            current_line = self._current_line
+            self._current_line = None
+
             self.place_current_paragraph()
             self.create_new_page()
             self.create_new_paragraph()
+
+            # We need to reparent the current line to the current paragraph.
+            self._current_line = current_line
+            self._current_line.set_parent(self._current_paragraph)
 
             # Now, it must work.
             assert self.try_place_current_line()

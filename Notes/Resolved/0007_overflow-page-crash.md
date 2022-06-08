@@ -32,3 +32,11 @@ When we overflow the page, this causes another crash.
         assert self._current_line is None
     AssertionError
     ```
+
+### Actions
+
+-   The problem was, that the logic responsible for placing the current line could place the current paragraph.
+    But the logic responsible for placing the paragraph asserted that no current line was pending.
+    On top of that, the current line had to be reparented.
+
+    Two bugs fixed by simply moving it into a temporary, that's good.
