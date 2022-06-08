@@ -1,5 +1,5 @@
 import string
-from . import model, layout
+from . import model, layout, style
 
 import dataclasses
 
@@ -120,7 +120,11 @@ def compute_word_groups_in_paragraph(paragraph_model_node: model.ParagraphModelN
 
 class Placer:
     def __init__(self):
-        self._layout_tree = layout.VerticalLayoutNode(parent_node=None)
+        self._layout_tree = layout.VerticalLayoutNode(
+            parent_node=None,
+            style=style.Style(),
+        )
+
         self._current_page: layout.PageLayoutNode = None
         self._current_paragraph: layout.VerticalLayoutNode = None
         self._current_line: layout.HorizontalLayoutNode = None
@@ -158,7 +162,7 @@ class Placer:
 
         content_node = self._current_page.get_content_node()
 
-        assert content_node.get_max_remaining_height() >= self._current_paragraph.get_min_height() + self._current_paragraph.get_outer_spacing().y
+        assert content_node.get_max_remaining_height() >= self._current_paragraph.get_min_height() + self._current_paragraph.get_style().outer_spacing.y
         content_node.place_child_node(self._current_paragraph)
 
         self._current_paragraph = None
@@ -167,10 +171,15 @@ class Placer:
         assert self._current_paragraph is None
 
         content_node = self._current_page.get_content_node()
-        self._current_paragraph = layout.VerticalLayoutNode(parent_node=content_node)
+        self._current_paragraph = layout.VerticalLayoutNode(
+            parent_node=content_node,
+            style=style.Style(
+                margin_spacing=style.Spacing(bottom=10.0)
+            ),
+        )
 
     def try_place_current_line(self):
-        if self._current_paragraph.get_max_remaining_height() >= self._current_line.get_min_height() + self._current_line.get_outer_spacing().y:
+        if self._current_paragraph.get_max_remaining_height() >= self._current_line.get_min_height() + self._current_line.get_style().outer_spacing.y:
             # There is enough space to place this line in the current paragraph.
             self._current_paragraph.place_child_node(self._current_line)
             self._current_line = None
@@ -203,19 +212,22 @@ class Placer:
 
     def create_new_line(self):
         assert self._current_line is None
-        self._current_line = layout.HorizontalLayoutNode(parent_node=self._current_paragraph)
+        self._current_line = layout.HorizontalLayoutNode(
+            parent_node=self._current_paragraph,
+            style=style.Style(),
+        )
 
     def place_word_group_in_current_line(self, word_group: WordGroup):
         assert self._current_line.get_max_remaining_width() >= word_group.width
 
         for excerpt in word_group.excerpts:
-            self._current_line.place_child_node(layout.InlineTextChunkLayoutNode(
+            self._current_line.place_child_node(layout.TextChunkLayoutNode(
                 text=excerpt.text,
                 parent_node=self._current_line,
             ))
 
         # FIXME: Do the spacing separately.
-        self._current_line.place_child_node(layout.InlineTextChunkLayoutNode(
+        self._current_line.place_child_node(layout.TextChunkLayoutNode(
             text=" ",
             parent_node=self._current_line
         ))
