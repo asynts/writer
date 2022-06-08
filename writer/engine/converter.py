@@ -112,3 +112,56 @@ def compute_word_groups_in_paragraph(paragraph_model_node: model.ParagraphModelN
     finish_word_group()
 
     return word_groups
+
+class Placer:
+    def __init__(self):
+        self._layout_tree = layout.BlockLayoutNode()
+        self._current_page = None
+
+    @property
+    def layout_tree(self) -> layout.BlockLayoutNode:
+        assert self._layout_tree is not None
+        return self._layout_tree
+
+    def finalize(self):
+        layout_tree = self.layout_tree
+
+        self.place_current_page()
+
+        layout_tree.on_placed_in_node(relative_x=0, relative_y=0)
+
+        self._layout_tree = None
+        return layout_tree
+
+    def place_current_page(self):
+        self.layout_tree.place_block_node(self._current_page)
+        self._current_page = None
+
+    def create_new_page(self):
+        if self._current_page is not None:
+            self.place_current_page()
+
+        self._current_page = layout.PageLayoutNode(parent_node=self.layout_tree)
+
+    def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode):
+        assert isinstance(paragraph_model_node, model.ParagraphModelNode)
+
+        word_groups = compute_word_groups_in_paragraph(paragraph_model_node)
+
+        # FIXME
+
+    def place_document(self, document_model_node: model.DocumentModelNode):
+        assert isinstance(document_model_node, model.DocumentModelNode)
+
+        self.create_new_page()
+
+        for paragraph_model_node in document_model_node.get_children():
+            assert isinstance(paragraph_model_node, model.ParagraphModelNode)
+            self.place_paragraph(paragraph_model_node)
+
+def generate_layout_for_model(document_model_node: model.DocumentModelNode) -> layout.BlockLayoutNode:
+    placer = Placer()
+
+    placer.place_document(document_model_node)
+
+    return placer.finalize()
