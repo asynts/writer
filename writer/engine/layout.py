@@ -345,6 +345,17 @@ class BlockLayoutNode(LayoutNode):
         else:
             return self.get_fixed_height() - self.get_min_inner_height() - self.get_inner_spacing().y
 
+    def get_max_remaining_width(self) -> float:
+        assert self.get_phase() == Phase.PHASE_1_CREATED
+
+        if self.get_fixed_width() is None:
+            if isinstance(self.get_parent_node(), BlockLayoutNode):
+                return self.get_parent_node().get_max_remaining_width() - self.get_min_inner_width() - self.get_all_spacing().x
+            else:
+                return None
+        else:
+            return self.get_fixed_width() - self.get_min_inner_width() - self.get_inner_spacing().x
+
     def get_max_width(self):
         if self.get_fixed_width() is None:
             if isinstance(self.get_parent_node(), BlockLayoutNode):

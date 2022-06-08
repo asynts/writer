@@ -15,10 +15,16 @@ def create_model_tree():
     paragraph_1.add_child(model.TextChunkModelNode(text="world"))
     paragraph_1.add_child(model.TextChunkModelNode(text="!"))
 
+    # FIXME: The following doesn't work for some reason.
+    # paragraph_2 = model_tree.add_child(model.ParagraphModelNode())
+    # paragraph_2.add_child(model.TextChunkModelNode(text="Hello, "))
+    # paragraph_2.add_child(model.TextChunkModelNode(text="world"))
+    # paragraph_2.add_child(model.TextChunkModelNode(text="!"))
+
     return model_tree
 
 def create_layout_tree(model_tree: model.DocumentModelNode):
-    return writer.engine.converter.generate_layout_tree(model_tree)
+    return writer.engine.converter.generate_layout_for_model(model_tree)
 
 class WriterWidget(QtWidgets.QWidget):
     def __init__(self):
@@ -61,12 +67,12 @@ class Window(QtWidgets.QMainWindow):
 
         self.setWindowTitle("Writer")
         self.show()
- 
+
 def main():
     app = QtWidgets.QApplication(sys.argv)
     window = Window()
 
     app.exec()
-    
+
 if __name__ == "__main__":
     main()
