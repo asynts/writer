@@ -221,3 +221,17 @@ def paragraph_3_output(paragraph_3_input):
 def test_paragraph_3(paragraph_3_input, paragraph_3_output):
     word_groups = writer.engine.converter.compute_word_groups_in_paragraph(paragraph_3_input)
     assert word_groups == paragraph_3_output
+
+@pytest.fixture
+def paragraph_4_input():
+    paragraph_node = writer.engine.model.ParagraphModelNode()
+
+    return paragraph_node
+
+@pytest.fixture
+def paragraph_4_output(paragraph_3_input):
+    return []
+
+def test_paragraph_4(paragraph_4_input, paragraph_4_output):
+    word_groups = writer.engine.converter.compute_word_groups_in_paragraph(paragraph_4_input)
+    assert word_groups == paragraph_4_output
