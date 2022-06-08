@@ -15,9 +15,14 @@ def create_model_tree():
     paragraph_1.add_child(model.TextChunkModelNode(text="world"))
     paragraph_1.add_child(model.TextChunkModelNode(text="!"))
 
-    # FIXME: The following doesn't work for some reason.
     paragraph_2 = model_tree.add_child(model.ParagraphModelNode())
     paragraph_2.add_child(model.TextChunkModelNode(text="foo"))
+
+    paragraph_3 = model_tree.add_child(model.ParagraphModelNode())
+    paragraph_3.add_child(model.TextChunkModelNode(text="This is a much longer paragraph, which contains "))
+    paragraph_3.add_child(model.TextChunkModelNode(text="emp"))
+    paragraph_3.add_child(model.TextChunkModelNode(text="hasis. "))
+    paragraph_3.add_child(model.TextChunkModelNode(text="On top of that there are multiple sentences in here, causing overflow."))
 
     return model_tree
 

@@ -120,10 +120,10 @@ def compute_word_groups_in_paragraph(paragraph_model_node: model.ParagraphModelN
 
 class Placer:
     def __init__(self):
-        self._layout_tree = layout.BlockLayoutNode(parent_node=None)
+        self._layout_tree = layout.VerticalLayoutNode(parent_node=None)
         self._current_page: layout.PageLayoutNode = None
-        self._current_paragraph: layout.BlockLayoutNode = None
-        self._current_line: layout.BlockLayoutNode = None
+        self._current_paragraph: layout.VerticalLayoutNode = None
+        self._current_line: layout.HorizontalLayoutNode = None
 
     @property
     def layout_tree(self) -> layout.BlockLayoutNode:
@@ -143,7 +143,7 @@ class Placer:
     def place_current_page(self):
         assert self._current_paragraph is None
 
-        self.layout_tree.place_block_node(self._current_page)
+        self.layout_tree.place_child_node(self._current_page)
 
         self._current_page = None
 
@@ -159,7 +159,7 @@ class Placer:
         content_node = self._current_page.get_content_node()
 
         assert content_node.get_max_remaining_height() >= self._current_paragraph.get_min_height() + self._current_paragraph.get_outer_spacing().y
-        content_node.place_block_node(self._current_paragraph)
+        content_node.place_child_node(self._current_paragraph)
 
         self._current_paragraph = None
 
@@ -167,12 +167,12 @@ class Placer:
         assert self._current_paragraph is None
 
         content_node = self._current_page.get_content_node()
-        self._current_paragraph = layout.BlockLayoutNode(parent_node=content_node)
+        self._current_paragraph = layout.VerticalLayoutNode(parent_node=content_node)
 
     def try_place_current_line(self):
         if self._current_paragraph.get_max_remaining_height() >= self._current_line.get_min_height() + self._current_line.get_outer_spacing().y:
             # There is enough space to place this line in the current paragraph.
-            self._current_paragraph.place_block_node(self._current_line)
+            self._current_paragraph.place_child_node(self._current_line)
             self._current_line = None
 
             return True
@@ -194,29 +194,25 @@ class Placer:
 
     def create_new_line(self):
         assert self._current_line is None
-        self._current_line = layout.BlockLayoutNode(parent_node=self._current_paragraph)
+        self._current_line = layout.HorizontalLayoutNode(parent_node=self._current_paragraph)
 
     def place_word_group_in_current_line(self, word_group: WordGroup):
-        print(f"{self._current_line.get_max_remaining_width()=} {word_group.width=}")
-
         assert self._current_line.get_max_remaining_width() >= word_group.width
 
         for excerpt in word_group.excerpts:
-            self._current_line.place_inline_node(layout.InlineTextChunkLayoutNode(
+            self._current_line.place_child_node(layout.InlineTextChunkLayoutNode(
                 text=excerpt.text,
                 parent_node=self._current_line,
             ))
 
         # FIXME: Do the spacing separately.
-        self._current_line.place_inline_node(layout.InlineTextChunkLayoutNode(
+        self._current_line.place_child_node(layout.InlineTextChunkLayoutNode(
             text=" ",
             parent_node=self._current_line
         ))
 
     def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode):
         assert isinstance(paragraph_model_node, model.ParagraphModelNode)
-
-        print(f"place_paragraph: {self._current_page=} {self._current_paragraph=} {self._current_line=}")
 
         self.create_new_paragraph()
         self.create_new_line()
@@ -226,11 +222,9 @@ class Placer:
         for word_group in word_groups:
             if self._current_line.get_max_remaining_width() >= word_group.width:
                 # There is enough space to place this word group in the current line.
-                print("case 1: enough space")
                 self.place_word_group_in_current_line(word_group)
             else:
                 # There is not enough space in the current line to fit this word group, create a new line.
-                print(f"case 2: not enough space, need new line: text={repr(word_group.text)}")
                 self.place_current_line()
                 self.create_new_line()
                 self.place_word_group_in_current_line(word_group)

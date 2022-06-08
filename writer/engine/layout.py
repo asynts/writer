@@ -314,6 +314,10 @@ class BlockLayoutNode(LayoutNode):
 
         self._children: list[LayoutNode] = []
 
+    # Override.
+    def get_children(self):
+        return self._children
+
     def get_max_inner_width(self) -> float:
         if self.get_fixed_width() is None:
             if isinstance(self.get_parent_node(), BlockLayoutNode):
@@ -324,8 +328,6 @@ class BlockLayoutNode(LayoutNode):
             return self.get_fixed_width() - self.get_inner_spacing().x
 
     def get_max_inner_height(self) -> float:
-        assert self.get_phase() == Phase.PHASE_1_CREATED
-
         if self.get_fixed_height() is None:
             if isinstance(self.get_parent_node(), BlockLayoutNode):
                 return self.get_parent_node().get_max_inner_height() - self.get_all_spacing().y
@@ -334,31 +336,10 @@ class BlockLayoutNode(LayoutNode):
         else:
             return self.get_fixed_height() - self.get_inner_spacing().y
 
-    def get_max_remaining_height(self) -> float:
-        assert self.get_phase() == Phase.PHASE_1_CREATED
-
-        if self.get_fixed_height() is None:
-            if isinstance(self.get_parent_node(), BlockLayoutNode):
-                return self.get_parent_node().get_max_remaining_height() - self.get_min_inner_height() - self.get_all_spacing().y
-            else:
-                return None
-        else:
-            return self.get_fixed_height() - self.get_min_inner_height() - self.get_inner_spacing().y
-
-    def get_max_remaining_width(self) -> float:
-        assert self.get_phase() == Phase.PHASE_1_CREATED
-
-        if self.get_fixed_width() is None:
-            if isinstance(self.get_parent_node(), BlockLayoutNode):
-                return self.get_parent_node().get_max_remaining_width() - self.get_min_inner_width() - self.get_all_spacing().x
-            else:
-                return None
-        else:
-            return self.get_fixed_width() - self.get_min_inner_width() - self.get_inner_spacing().x
-
     def get_max_width(self):
         if self.get_fixed_width() is None:
             if isinstance(self.get_parent_node(), BlockLayoutNode):
+                # FIXME: Margin?
                 return self.get_parent_node().get_max_inner_width()
             else:
                 return None
@@ -366,46 +347,38 @@ class BlockLayoutNode(LayoutNode):
             return self.get_fixed_width()
 
     def get_max_height(self):
-        assert self.get_phase() == Phase.PHASE_1_CREATED
-
         if self.get_fixed_height() is None:
             if isinstance(self.get_parent_node(), BlockLayoutNode):
+                # FIXME: Margin?
                 return self.get_parent_node().get_max_inner_height()
             else:
                 return None
         else:
             return self.get_fixed_height()
 
-    # Override.
-    def get_width(self) -> float:
-        assert self.get_phase() == Phase.PHASE_2_PLACED
+    def place_child_node(self, child_node: LayoutNode):
+        raise AssertionError
 
-        if self.get_fixed_width():
-            return self.get_fixed_width()
-        elif self.get_max_width() is not None:
-            return self.get_max_width()
-        else:
-            return self.get_min_width()
+class HorizontalLayoutNode(BlockLayoutNode):
+    def __init__(self, *, name="HorizontalLayoutNode", **kwargs):
+        super().__init__(name=name, **kwargs)
 
-    # Virtual.
-    def place_block_node(self, child_node: "BlockLayoutNode"):
+    def get_max_remaining_width(self) -> float:
         assert self.get_phase() == Phase.PHASE_1_CREATED
 
-        child_node.on_placed_in_node(
-            relative_x=self.get_inner_spacing().left + child_node.get_outer_spacing().left,
-            relative_y=self.get_inner_spacing().top + child_node.get_outer_spacing().top + self._height_of_children,
-        )
-        self._height_of_children += child_node.get_height() + child_node.get_outer_spacing().y
+        if self.get_fixed_width() is None:
+            if isinstance(self.get_parent_node(), HorizontalLayoutNode):
+                return self.get_parent_node().get_max_remaining_width() - self.get_min_inner_width() - self.get_all_spacing().x
+            elif isinstance(self.get_parent_node(), VerticalLayoutNode):
+                return self.get_parent_node().get_max_inner_width() - self.get_min_inner_width() - self.get_all_spacing().x
+            else:
+                return None
+        else:
+            return self.get_fixed_width() - self.get_min_inner_width() - self.get_inner_spacing().x
 
-        self._width_of_children = max(
-            self._width_of_children,
-            child_node.get_width() + child_node.get_outer_spacing().x,
-        )
+    # FIXME: Do we need to override 'get_height' here?
 
-        self._children.append(child_node)
-
-    # FIXME: Maybe this shouldn't belong to a 'BlockLayoutNode' but instead to something else?
-    def place_inline_node(self, child_node: "InlineLayoutNode"):
+    def place_child_node(self, child_node: LayoutNode):
         assert self.get_phase() == Phase.PHASE_1_CREATED
 
         child_node.on_placed_in_node(
@@ -421,11 +394,51 @@ class BlockLayoutNode(LayoutNode):
 
         self._children.append(child_node)
 
-    # Override.
-    def get_children(self):
-        return self._children
+class VerticalLayoutNode(BlockLayoutNode):
+    def __init__(self, *, name="VerticalLayoutNode", **kwargs):
+        super().__init__(name=name, **kwargs)
 
-class PageLayoutNode(BlockLayoutNode):
+    def get_max_remaining_height(self) -> float:
+        assert self.get_phase() == Phase.PHASE_1_CREATED
+
+        if self.get_fixed_height() is None:
+            if isinstance(self.get_parent_node(), VerticalLayoutNode):
+                return self.get_parent_node().get_max_remaining_height() - self.get_min_inner_height() - self.get_all_spacing().y
+            if isinstance(self.get_parent_node(), HorizontalLayoutNode):
+                return self.get_parent_node().get_max_inner_height() - self.get_min_inner_height() - self.get_all_spacing().y
+            else:
+                return None
+        else:
+            return self.get_fixed_height() - self.get_min_inner_height() - self.get_inner_spacing().y
+
+    # Override.
+    def get_width(self) -> float:
+        assert self.get_phase() == Phase.PHASE_2_PLACED
+
+        if self.get_fixed_width():
+            return self.get_fixed_width()
+        elif self.get_max_width() is not None:
+            return self.get_max_width()
+        else:
+            return self.get_min_width()
+
+    def place_child_node(self, child_node: LayoutNode):
+        assert self.get_phase() == Phase.PHASE_1_CREATED
+
+        child_node.on_placed_in_node(
+            relative_x=self.get_inner_spacing().left + child_node.get_outer_spacing().left,
+            relative_y=self.get_inner_spacing().top + child_node.get_outer_spacing().top + self._height_of_children,
+        )
+        self._height_of_children += child_node.get_height() + child_node.get_outer_spacing().y
+
+        self._width_of_children = max(
+            self._width_of_children,
+            child_node.get_width() + child_node.get_outer_spacing().x,
+        )
+
+        self._children.append(child_node)
+
+class PageLayoutNode(VerticalLayoutNode):
     def __init__(self, parent_node: "LayoutNode"):
         super().__init__(
             name="PageLayoutNode",
@@ -444,19 +457,19 @@ class PageLayoutNode(BlockLayoutNode):
         footer_height = cm_to_pixel(3.67)
         content_height = total_height - header_height - footer_height
 
-        self.__header_node = BlockLayoutNode(
+        self.__header_node = VerticalLayoutNode(
             parent_node=self,
             fixed_height=header_height,
             background_color=COLOR_GREEN,
         )
 
-        self.__content_node = BlockLayoutNode(
+        self.__content_node = VerticalLayoutNode(
             parent_node=self,
             fixed_height=content_height,
             background_color=COLOR_BLUE,
         )
 
-        self.__footer_node = BlockLayoutNode(
+        self.__footer_node = VerticalLayoutNode(
             parent_node=self,
             fixed_height=footer_height,
             background_color=COLOR_RED,
@@ -466,9 +479,9 @@ class PageLayoutNode(BlockLayoutNode):
     def on_placed_in_node(self, *, relative_x: int, relative_y: int):
         # We are not allowed to make modifications after placing nodes.
         # But we want to be able to add nodes to the areas, therefore, we defer the placement.
-        self.place_block_node(self.__header_node)
-        self.place_block_node(self.__content_node)
-        self.place_block_node(self.__footer_node)
+        self.place_child_node(self.__header_node)
+        self.place_child_node(self.__content_node)
+        self.place_child_node(self.__footer_node)
 
         super().on_placed_in_node(relative_x=relative_x, relative_y=relative_y)
 
