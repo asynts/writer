@@ -3,7 +3,7 @@ import enum
 from PyQt6 import QtGui, QtCore
 from PyQt6.QtGui import QColor
 
-from .style import Spacing, Style
+from .style import Spacing, LayoutStyle
 
 normal_font = QtGui.QFont("monospace", 12)
 normal_font_metrics = QtGui.QFontMetricsF(normal_font)
@@ -33,7 +33,7 @@ class LayoutNode:
         *,
         name: str,
         parent_node: "LayoutNode",
-        style: Style):
+        style: LayoutStyle):
 
         # The phase in which the layout node is in.
         # Some operations can only be performed in some phases.
@@ -376,7 +376,7 @@ class PageLayoutNode(VerticalLayoutNode):
             name="PageLayoutNode",
             parent_node=parent_node,
 
-            style=Style(
+            style=LayoutStyle(
                 fixed_width=cm_to_pixel(21.0),
                 fixed_height=cm_to_pixel(29.7),
 
@@ -396,7 +396,7 @@ class PageLayoutNode(VerticalLayoutNode):
         self.__header_node = VerticalLayoutNode(
             parent_node=self,
 
-            style=Style(
+            style=LayoutStyle(
                 fixed_height=header_height,
 
                 background_color=COLOR_GREEN,
@@ -406,7 +406,7 @@ class PageLayoutNode(VerticalLayoutNode):
         self.__content_node = VerticalLayoutNode(
             parent_node=self,
 
-            style=Style(
+            style=LayoutStyle(
                 fixed_height=content_height,
                 background_color=COLOR_BLUE,
             ),
@@ -415,7 +415,7 @@ class PageLayoutNode(VerticalLayoutNode):
         self.__footer_node = VerticalLayoutNode(
             parent_node=self,
 
-            style=Style(
+            style=LayoutStyle(
                 fixed_height=footer_height,
                 background_color=COLOR_RED,
             ),
@@ -448,7 +448,7 @@ class TextChunkLayoutNode(LayoutNode):
             name="InlineTextChunkLayoutNode",
             parent_node=parent_node,
 
-            style=Style(
+            style=LayoutStyle(
                 # The fixed size includes the border, therefore, the odd calculation.
                 fixed_width=rendered_size.width() + 2,
                 fixed_height=rendered_size.height() + 2,

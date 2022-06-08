@@ -10,37 +10,35 @@ import writer.engine.converter
 def create_model_tree():
     model_tree = model.DocumentModelNode()
 
-    paragraph_1 = model_tree.add_child(model.ParagraphModelNode())
-    paragraph_1.add_child(model.TextChunkModelNode(text="Hello, "))
-    paragraph_1.add_child(model.TextChunkModelNode(text="world"))
-    paragraph_1.add_child(model.TextChunkModelNode(text="!"))
+    heading_paragraph_style = model.ModelStyle(
+        parent_model_style=model_tree.get_style(),
+        is_bold=True,
+        font_size=20.0,
+    )
+    normal_paragraph_style = model.ModelStyle(
+        parent_model_style=model_tree.get_style(),
+        font_size=12.0,
+    )
 
-    paragraph_2 = model_tree.add_child(model.ParagraphModelNode())
-    paragraph_2.add_child(model.TextChunkModelNode(text="foo"))
+    normal_heading_text_chunk_style = model.ModelStyle(
+        parent_model_style=heading_paragraph_style,
+    )
+    normal_normal_text_chunk_style = model.ModelStyle(
+        parent_model_style=normal_paragraph_style,
+    )
+    bold_normal_text_chunk_style = model.ModelStyle(
+        parent_model_style=normal_paragraph_style,
+        is_bold=True,
+    )
 
-    paragraph_3 = model_tree.add_child(model.ParagraphModelNode())
-    paragraph_3.add_child(model.TextChunkModelNode(text="This is a much longer paragraph, which contains "))
-    paragraph_3.add_child(model.TextChunkModelNode(text="emp"))
-    paragraph_3.add_child(model.TextChunkModelNode(text="hasis. "))
-    paragraph_3.add_child(model.TextChunkModelNode(text="On top of that there are multiple sentences in here, causing overflow."))
+    paragraph_1 = model_tree.add_child(model.ParagraphModelNode(style=heading_paragraph_style))
+    paragraph_1.add_child(model.TextChunkModelNode(text="This is a", style=normal_heading_text_chunk_style))
+    paragraph_1.add_child(model.TextChunkModelNode(text=" heading.", style=normal_heading_text_chunk_style))
 
-    paragraph_4 = model_tree.add_child(model.ParagraphModelNode())
-    paragraph_4.add_child(model.TextChunkModelNode(text="Now the stress test, we have this really long paragraph which will overflow the page."))
-    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
-    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
-    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
-    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
-    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
-    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
-    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
-    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
-    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
-    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
-    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
-    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
-    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
-    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
-    paragraph_4.add_child(model.TextChunkModelNode(text=" This is just some text to overflow the page."))
+    paragraph_2 = model_tree.add_child(model.ParagraphModelNode(style=normal_paragraph_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text="This is a normal paragraph, but ", style=normal_normal_text_chunk_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text="this", style=bold_normal_text_chunk_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text=" has some highlight applied to it.", style=normal_normal_text_chunk_style))
 
     return model_tree
 

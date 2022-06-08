@@ -2,31 +2,28 @@
 
 I didn't know where else to put it after removing it from the code.
 
--   We don't use `append_child` in many cases, because we need to track the nodes in some special way.
-    This is really a workaround and we should be able to iterate on all the children without this workaround.
-
--   When we are deciding where the next node should go, we always have a 'layout_region_node' that will keep track of the node we are currently filling.
-    If that node overflows, we can ask the current page for a new layout region.
-    By doing this, we can easily create new pages or even work with multi-column layouts.
-
 -   When porting this to C++, the following roadmap could be used:
 
-    -   Create trivial block layout node.
+    -   Setup the layout tree.
 
     -   Render trivial block layout node.
 
-    -   Get block layout nodes working mostly.
-
     -   Prioritize getting background color working.
+
+    -   Setup the model tree.
+
+    -   Prepare everything for paging.
+
+    -   Start rendering some text.
 
 -   The idea is that, if we want to change the model, we delete all the layout nodes that correspond to that model node and all the following layout nodes.
     Then, we can just recompute these.
     Even simpler would be, if we just discard the whole layout tree.
 
--   I think that there should be some `on_layout` method that does all the calculations that need to be done again and again.
+-   There is another aspect that I didn't really think about.
+    When we are cascading the style, this will differ between the model and layout nodes.
+    The model nodes have essentially a linked list of styles that are applied to each node.
+    On the other hand, the layout nodes have all the precomputed styles for each node.
 
-    Currently, this is a bit too unstructured for my taste.
-
--   I think the methods should be divided into multiple phases.
-
-    Something like `get_max_inner_height` only really makes sense before placement and `get_height` only makes sense after all the children are filled.
+    There is really no way around that because we need to translate the style from the model to the layout tree since something like splitting paragraphs
+    means that the individual layout nodes have different style (only the last one has a margin bottom for example).

@@ -25,7 +25,7 @@ class Spacing:
     def y(self):
         return self.top + self.bottom
 
-class Style:
+class LayoutStyle:
     def __init__(
         self,
         *,

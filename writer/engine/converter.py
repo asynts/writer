@@ -122,7 +122,7 @@ class Placer:
     def __init__(self):
         self._layout_tree = layout.VerticalLayoutNode(
             parent_node=None,
-            style=style.Style(),
+            style=style.LayoutStyle(),
         )
 
         self._current_page: layout.PageLayoutNode = None
@@ -173,7 +173,7 @@ class Placer:
         content_node = self._current_page.get_content_node()
         self._current_paragraph = layout.VerticalLayoutNode(
             parent_node=content_node,
-            style=style.Style(
+            style=style.LayoutStyle(
                 margin_spacing=style.Spacing(bottom=10.0)
             ),
         )
@@ -214,7 +214,7 @@ class Placer:
         assert self._current_line is None
         self._current_line = layout.HorizontalLayoutNode(
             parent_node=self._current_paragraph,
-            style=style.Style(),
+            style=style.LayoutStyle(),
         )
 
     def place_word_group_in_current_line(self, word_group: WordGroup):
