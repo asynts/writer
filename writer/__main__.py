@@ -30,15 +30,32 @@ def create_model_tree():
         parent_model_style=normal_paragraph_style,
         is_bold=True,
     )
+    italic_normal_text_chunk_style = model.ModelStyle(
+        parent_model_style=normal_paragraph_style,
+        is_italic=True,
+    )
 
     paragraph_1 = model_tree.add_child(model.ParagraphModelNode(style=heading_paragraph_style))
-    paragraph_1.add_child(model.TextChunkModelNode(text="This  is a", style=normal_heading_text_chunk_style))
-    paragraph_1.add_child(model.TextChunkModelNode(text=" heading.", style=normal_heading_text_chunk_style))
+    paragraph_1.add_child(model.TextChunkModelNode(text="About", style=normal_heading_text_chunk_style))
 
     paragraph_2 = model_tree.add_child(model.ParagraphModelNode(style=normal_paragraph_style))
-    paragraph_2.add_child(model.TextChunkModelNode(text="This is a normal paragraph, but ", style=normal_normal_text_chunk_style))
-    paragraph_2.add_child(model.TextChunkModelNode(text="this", style=bold_normal_text_chunk_style))
-    paragraph_2.add_child(model.TextChunkModelNode(text=" has some highlight applied to it.", style=normal_normal_text_chunk_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text="I am creating a word processor in Python. ", style=normal_normal_text_chunk_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text="You are likely already familiar with other word processors such as ", style=normal_normal_text_chunk_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text="Microsoft Word ", style=bold_normal_text_chunk_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text="or ", style=normal_normal_text_chunk_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text="Libre Office Writer", style=bold_normal_text_chunk_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text=".", style=normal_normal_text_chunk_style))
+
+    paragraph_2 = model_tree.add_child(model.ParagraphModelNode(style=normal_paragraph_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text="Originally, I started programming this in ", style=normal_normal_text_chunk_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text="C++ ", style=bold_normal_text_chunk_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text="and was planning to add it to the ", style=normal_normal_text_chunk_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text="SerenityOS ", style=bold_normal_text_chunk_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text="project. ", style=normal_normal_text_chunk_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text="This is still the plan, however, creating a writer application is much harder than I originally anticipated. ", style=normal_normal_text_chunk_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text="Now, I am creating this prototype before porting it to ", style=normal_normal_text_chunk_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text="C++", style=bold_normal_text_chunk_style))
+    paragraph_2.add_child(model.TextChunkModelNode(text=".", style=normal_normal_text_chunk_style))
 
     return model_tree
 
@@ -104,7 +121,9 @@ class Window(QtWidgets.QMainWindow):
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
+
     window = Window()
+    window.setFixedWidth(598)
 
     app.exec()
 

@@ -20,7 +20,7 @@ COLOR_BLUE = QColor(0, 0, 255)
 
 def cm_to_pixel(value: float):
     # This is a bit arbitrary, since this depends on the display resolution.
-    return 37.795275591 * value / 2
+    return 37.795275591 * value
 
 # There are several phases a layout node can be in.
 @functools.total_ordering
@@ -454,8 +454,8 @@ class PageLayoutNode(VerticalLayoutNode):
             parent_node=parent_node,
 
             style=LayoutStyle(
-                fixed_width=cm_to_pixel(21.0),
-                fixed_height=cm_to_pixel(29.7),
+                fixed_width=500,
+                fixed_height=710,
 
                 background_color=COLOR_WHITE,
                 border_color=COLOR_BLACK,
@@ -466,8 +466,8 @@ class PageLayoutNode(VerticalLayoutNode):
         )
 
         total_height = self.get_max_inner_height()
-        header_height = cm_to_pixel(1.9)
-        footer_height = cm_to_pixel(3.67)
+        header_height = 40
+        footer_height = 40
         content_height = total_height - header_height - footer_height
 
         self.__header_node = VerticalLayoutNode(
@@ -475,8 +475,6 @@ class PageLayoutNode(VerticalLayoutNode):
 
             style=LayoutStyle(
                 fixed_height=header_height,
-
-                background_color=COLOR_GREEN,
             ),
         )
 
@@ -485,7 +483,6 @@ class PageLayoutNode(VerticalLayoutNode):
 
             style=LayoutStyle(
                 fixed_height=content_height,
-                background_color=COLOR_BLUE,
                 padding_spacing=Spacing(left=20, right=20, top=20, bottom=20),
             ),
         )
@@ -495,7 +492,6 @@ class PageLayoutNode(VerticalLayoutNode):
 
             style=LayoutStyle(
                 fixed_height=footer_height,
-                background_color=COLOR_RED,
             ),
         )
 
@@ -608,6 +604,3 @@ class TextChunkLayoutNode(LayoutNode):
         painter.setPen(self._font_color)
         painter.setFont(self._font)
         painter.drawText(self.get_inner_qrect(), self.get_text())
-
-        painter.setPen(COLOR_RED)
-        painter.drawRect(self.get_inner_qrect())
