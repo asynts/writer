@@ -2,6 +2,7 @@ import pytest
 
 import writer.engine.model
 import writer.engine.converter
+import writer.engine.style
 
 @pytest.fixture(autouse=True)
 def enable_test_mode():
@@ -10,11 +11,11 @@ def enable_test_mode():
 
 @pytest.fixture
 def paragraph_1_input():
-    paragraph_node = writer.engine.model.ParagraphModelNode()
+    paragraph_node = writer.engine.model.ParagraphModelNode(style=writer.engine.style.LayoutStyle())
 
-    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text="Hello, "))
-    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text="world"))
-    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text="!"))
+    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text="Hello, ", style=writer.engine.style.LayoutStyle()))
+    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text="world", style=writer.engine.style.LayoutStyle()))
+    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text="!", style=writer.engine.style.LayoutStyle()))
 
     return paragraph_node
 
@@ -27,6 +28,7 @@ def paragraph_1_output(paragraph_1_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[0],
+                    offset_into_model_node=0,
                     text="Hello,"
                 ),
             ],
@@ -35,10 +37,12 @@ def paragraph_1_output(paragraph_1_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[1],
+                    offset_into_model_node=0,
                     text="world",
                 ),
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[2],
+                    offset_into_model_node=0,
                     text="!",
                 ),
             ],
@@ -51,11 +55,11 @@ def test_paragraph_1(paragraph_1_input, paragraph_1_output):
 
 @pytest.fixture
 def paragraph_2_input():
-    paragraph_node = writer.engine.model.ParagraphModelNode()
+    paragraph_node = writer.engine.model.ParagraphModelNode(style=writer.engine.style.LayoutStyle())
 
-    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text="foo"))
-    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text="bar"))
-    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text="baz"))
+    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text="foo", style=writer.engine.style.LayoutStyle()))
+    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text="bar", style=writer.engine.style.LayoutStyle()))
+    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text="baz", style=writer.engine.style.LayoutStyle()))
 
     return paragraph_node
 
@@ -68,14 +72,17 @@ def paragraph_2_output(paragraph_2_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[0],
+                    offset_into_model_node=0,
                     text="foo"
                 ),
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[1],
+                    offset_into_model_node=0,
                     text="bar"
                 ),
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[2],
+                    offset_into_model_node=0,
                     text="baz"
                 ),
             ],
@@ -88,11 +95,11 @@ def test_paragraph_2(paragraph_2_input, paragraph_2_output):
 
 @pytest.fixture
 def paragraph_3_input():
-    paragraph_node = writer.engine.model.ParagraphModelNode()
+    paragraph_node = writer.engine.model.ParagraphModelNode(style=writer.engine.style.LayoutStyle())
 
-    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text="This is a much longer paragraph with"))
-    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text=" emphasis "))
-    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text="applied to some of the text chunks. "))
+    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text="This is a much longer paragraph with", style=writer.engine.style.LayoutStyle()))
+    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text=" emphasis ", style=writer.engine.style.LayoutStyle()))
+    paragraph_node.add_child(writer.engine.model.TextChunkModelNode(text="applied to some of the text chunks. ", style=writer.engine.style.LayoutStyle()))
 
     return paragraph_node
 
@@ -105,6 +112,7 @@ def paragraph_3_output(paragraph_3_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[0],
+                    offset_into_model_node=0,
                     text="This"
                 ),
             ],
@@ -113,6 +121,7 @@ def paragraph_3_output(paragraph_3_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[0],
+                    offset_into_model_node=5,
                     text="is"
                 ),
             ],
@@ -121,6 +130,7 @@ def paragraph_3_output(paragraph_3_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[0],
+                    offset_into_model_node=8,
                     text="a"
                 ),
             ],
@@ -129,6 +139,7 @@ def paragraph_3_output(paragraph_3_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[0],
+                    offset_into_model_node=10,
                     text="much"
                 ),
             ],
@@ -137,6 +148,7 @@ def paragraph_3_output(paragraph_3_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[0],
+                    offset_into_model_node=15,
                     text="longer"
                 ),
             ],
@@ -145,6 +157,7 @@ def paragraph_3_output(paragraph_3_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[0],
+                    offset_into_model_node=22,
                     text="paragraph"
                 ),
             ],
@@ -153,6 +166,7 @@ def paragraph_3_output(paragraph_3_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[0],
+                    offset_into_model_node=32,
                     text="with"
                 ),
             ],
@@ -161,6 +175,7 @@ def paragraph_3_output(paragraph_3_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[1],
+                    offset_into_model_node=1,
                     text="emphasis"
                 ),
             ],
@@ -169,6 +184,7 @@ def paragraph_3_output(paragraph_3_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[2],
+                    offset_into_model_node=0,
                     text="applied"
                 ),
             ],
@@ -177,6 +193,7 @@ def paragraph_3_output(paragraph_3_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[2],
+                    offset_into_model_node=8,
                     text="to"
                 ),
             ],
@@ -185,6 +202,7 @@ def paragraph_3_output(paragraph_3_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[2],
+                    offset_into_model_node=11,
                     text="some"
                 ),
             ],
@@ -193,6 +211,7 @@ def paragraph_3_output(paragraph_3_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[2],
+                    offset_into_model_node=16,
                     text="of"
                 ),
             ],
@@ -201,6 +220,7 @@ def paragraph_3_output(paragraph_3_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[2],
+                    offset_into_model_node=19,
                     text="the"
                 ),
             ],
@@ -209,6 +229,7 @@ def paragraph_3_output(paragraph_3_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[2],
+                    offset_into_model_node=23,
                     text="text"
                 ),
             ],
@@ -217,6 +238,7 @@ def paragraph_3_output(paragraph_3_input):
             excerpts=[
                 writer.engine.converter.TextExcerpt(
                     text_chunk_model_node=text_chunks[2],
+                    offset_into_model_node=28,
                     text="chunks."
                 ),
             ],
@@ -229,7 +251,7 @@ def test_paragraph_3(paragraph_3_input, paragraph_3_output):
 
 @pytest.fixture
 def paragraph_4_input():
-    paragraph_node = writer.engine.model.ParagraphModelNode()
+    paragraph_node = writer.engine.model.ParagraphModelNode(style=writer.engine.style.LayoutStyle())
 
     return paragraph_node
 

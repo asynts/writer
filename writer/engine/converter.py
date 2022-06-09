@@ -37,6 +37,13 @@ class WordGroup:
         # We don't compare the width and height here, because it's difficult to test for.
         return self.excerpts == other.excerpts
 
+    def __repr__(self):
+        result = "WordGroup("
+        for excerpt in self.excerpts:
+            result += f" {excerpt}"
+        result += " )"
+        return result
+
     def add_excerpt(self, excerpt: TextExcerpt):
         if b_simplify_font_metrics:
             self.width += len(excerpt.text + " ")
@@ -70,6 +77,12 @@ def normalize_whitespace(string_: str):
             b_previous_character_was_whitespace = False
 
     return "".join(result)
+
+# This works similar to 'str.partition'.
+# The string is split into three parts, the text before the separator, the separator and the text after.
+# Instead of using a simple separator, we are using arbitrary whitespace.
+def partition_remaining_text(remaining_text: str):
+    pass
 
 # Wrapping text is more complicated than one might think at first.
 # The formatting can change in the middle of a word and one chunk of text can contain multiple words.
