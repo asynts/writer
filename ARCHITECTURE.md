@@ -16,7 +16,7 @@ It has the following structure:
 
         -   *ChunkNode*
 
-            Adjacent chunks with the same style must be merged.            
+            Adjacent chunks with the same style must be merged.
 
         -   *FieldNode*
 
@@ -65,5 +65,4 @@ Therefore, there are two phases:
     The parent now knows about this child.
     Space is reserved and a position relative to the parent is assigned.
 
--   We might have to add another phase here later.
-    At some point we need to cache the absolute position which should happen after all nodes completed the second phase.
+-   When all nodes have been placed, we compute all of the absolute positions and sizes and cache them in the nodes.

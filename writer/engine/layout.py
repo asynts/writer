@@ -1,5 +1,6 @@
 import enum
 import typing
+import functools
 
 from PyQt6 import QtGui, QtCore
 from PyQt6.QtGui import QColor
@@ -22,12 +23,26 @@ def cm_to_pixel(value: float):
     return 37.795275591 * value / 2
 
 # There are several phases a layout node can be in.
+@functools.total_ordering
 class Phase(enum.Enum):
     # The node has been created and a temporary parent has been assigned.
     PHASE_1_CREATED = 1
 
     # The node has been permanently placed in a parent node and may not be moved.
-    PHASE_2_PLACED = 3
+    PHASE_2_PLACED = 2
+
+    # When all nodes have been placed, we do the final layout calculation where we determine the absolute positions and sizes.
+    PHASE_3_FINAL = 3
+
+    def __eq__(self, __o: object) -> bool:
+        if not isinstance(__o, Phase):
+            return False
+        return self.value.__eq__(__o.value)
+
+    def __ge__(self, __o: object) -> bool:
+        if not isinstance(__o, Phase):
+            return False
+        return self.value.__ge__(__o.value)
 
 # Properties must not be changed, unless this is explicitly allowed.
 class LayoutNode:
@@ -74,6 +89,16 @@ class LayoutNode:
         # Constant.
         self.__style = style
 
+        # The absolute position and size of the node.
+        # Constant (PHASE_1_CREATED).
+        # Variable (PHASE_2_PLACED).
+        # Constant (PHASE_3_FINAL).
+        # Assigned during final layout calculation.
+        self.__absolute_x = None
+        self.__absolute_y = None
+        self.__absolute_width = None
+        self.__absolute_height = None
+
     def get_phase(self):
         return self.__phase
 
@@ -98,10 +123,36 @@ class LayoutNode:
     # Virtual.
     def on_placed_in_node(self, *, relative_x: int, relative_y: int):
         assert self.__phase == Phase.PHASE_1_CREATED
-        self.__phase = Phase.PHASE_2_PLACED
 
         self._relative_x = relative_x
         self._relative_y = relative_y
+
+        self.__phase = Phase.PHASE_2_PLACED
+
+    # Absolutely nothing can change after the final layout calculation has been performed.
+    def on_final_layout_calculation(self):
+        assert self.__phase == Phase.PHASE_2_PLACED
+
+        if self.__parent_node is None:
+            assert self.__style.outer_spacing.top == 0.0
+
+            self.__absolute_x = 0.0
+            self.__absolute_y = 0.0
+        else:
+            assert self.__parent_node.__absolute_x is not None
+            assert self.__parent_node.__absolute_y is not None
+
+            self.__absolute_x = self.__parent_node.__absolute_x + self._relative_x
+            self.__absolute_y = self.__parent_node.__absolute_y + self._relative_y
+
+        self.__absolute_width = self.get_width()
+        self.__absolute_height = self.get_height()
+
+        self.__phase = Phase.PHASE_3_FINAL
+
+        # Recursively do the final layout calculation on child nodes.
+        for child in self.get_children():
+            child.on_final_layout_calculation()
 
     def get_parent_node(self) -> "LayoutNode":
         return self.__parent_node
@@ -115,22 +166,20 @@ class LayoutNode:
         return self._relative_y
 
     def get_absolute_x(self) -> float:
-        assert self.get_phase() == Phase.PHASE_2_PLACED
-
-        if self.__parent_node is None:
-            assert self.get_style().outer_spacing.left == 0
-            return 0
-        else:
-            return self.__parent_node.get_absolute_x() + self._relative_x
+        assert self.get_phase() == Phase.PHASE_3_FINAL
+        return self.__absolute_x
 
     def get_absolute_y(self) -> float:
-        assert self.get_phase() == Phase.PHASE_2_PLACED
+        assert self.get_phase() == Phase.PHASE_3_FINAL
+        return self.__absolute_y
 
-        if self.__parent_node is None:
-            assert self.get_style().outer_spacing.top == 0
-            return 0
-        else:
-            return self.__parent_node.get_absolute_y() + self._relative_y
+    def get_absolute_width(self) -> float:
+        assert self.get_phase() == Phase.PHASE_3_FINAL
+        return self.__absolute_width
+
+    def get_absolute_height(self) -> float:
+        assert self.get_phase() == Phase.PHASE_3_FINAL
+        return self.__absolute_height
 
     def get_fixed_width(self) -> float:
         return self.__style.fixed_width
@@ -139,6 +188,8 @@ class LayoutNode:
         return self.__style.fixed_height
 
     def get_min_width(self) -> float:
+        assert self.get_phase() <= Phase.PHASE_2_PLACED
+
         if self.get_fixed_width() is not None:
             return self.get_fixed_width()
         else:
@@ -150,6 +201,8 @@ class LayoutNode:
         return self.get_min_width()
 
     def get_min_height(self) -> float:
+        assert self.get_phase() <= Phase.PHASE_2_PLACED
+
         if self.get_fixed_height() is not None:
             return self.get_fixed_height()
         else:
@@ -160,9 +213,11 @@ class LayoutNode:
         return self.get_min_height()
 
     def get_min_inner_height(self):
+        assert self.get_phase() <= Phase.PHASE_2_PLACED
         return self._height_of_children
 
     def get_min_inner_width(self):
+        assert self.get_phase() <= Phase.PHASE_2_PLACED
         return self._width_of_children
 
     # Virtual.
@@ -170,17 +225,17 @@ class LayoutNode:
         return []
 
     def get_qrect(self):
-        assert self.get_phase() == Phase.PHASE_2_PLACED
+        assert self.get_phase() == Phase.PHASE_3_FINAL
 
         return QtCore.QRectF(
-            self.get_absolute_x(),
-            self.get_absolute_y(),
-            self.get_width(),
-            self.get_height(),
+            self.__absolute_x,
+            self.__absolute_y,
+            self.__absolute_width,
+            self.__absolute_height,
         )
 
     def get_inner_qrect(self):
-        assert self.get_phase() == Phase.PHASE_2_PLACED
+        assert self.get_phase() == Phase.PHASE_3_FINAL
 
         return self.get_qrect().adjusted(
             self.get_style().inner_spacing.left,
@@ -190,12 +245,14 @@ class LayoutNode:
         )
 
     def paint_background(self, *, painter: QtGui.QPainter):
-        assert self.get_phase() == Phase.PHASE_2_PLACED
+        assert self.get_phase() == Phase.PHASE_3_FINAL
 
         if self.get_style().background_color is not None:
             painter.fillRect(self.get_qrect(), self.get_style().background_color)
 
     def paint_border(self, *, painter: QtGui.QPainter):
+        assert self.get_phase() == Phase.PHASE_3_FINAL
+
         rect = self.get_qrect()
 
         if self.get_style().border_color is not None:
@@ -231,10 +288,10 @@ class LayoutNode:
 
     # Virtual.
     def paint_decoration(self, *, painter: QtGui.QPainter):
-        pass
+        assert self.get_phase() == Phase.PHASE_3_FINAL
 
     def paint(self, *, painter: QtGui.QPainter):
-        assert self.get_phase() == Phase.PHASE_2_PLACED
+        assert self.get_phase() == Phase.PHASE_3_FINAL
 
         self.paint_background(painter=painter)
         self.paint_border(painter=painter)
@@ -412,6 +469,7 @@ class PageLayoutNode(VerticalLayoutNode):
             style=LayoutStyle(
                 fixed_height=content_height,
                 background_color=COLOR_BLUE,
+                padding_spacing=Spacing(left=20, right=20, top=20, bottom=20),
             ),
         )
 

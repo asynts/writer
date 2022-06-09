@@ -61,7 +61,7 @@ class WriterWidget(QtWidgets.QWidget):
         self._layout_tree.paint(painter=painter)
 
     def sizeHint(self):
-        return QtCore.QSize(math.ceil(self._layout_tree.get_width()), math.ceil(self._layout_tree.get_height()))
+        return QtCore.QSize(math.ceil(self._layout_tree.get_absolute_width()), math.ceil(self._layout_tree.get_absolute_height()))
 
 class Window(QtWidgets.QMainWindow):
     def __init__(self):
