@@ -76,6 +76,9 @@ class TextChunkModelNode(ModelNode):
     def get_text(self):
         return self.__text
 
+    def set_text(self, text: str):
+        self.__text = text
+
 class ParagraphModelNode(ModelNode):
     def __init__(self, *, style: ModelStyle):
         super().__init__(name="ParagraphModelNode", style=style)

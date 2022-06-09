@@ -547,7 +547,8 @@ class TextChunkLayoutNode(LayoutNode):
             ),
         )
 
-        self._model_node = model_node
+        assert isinstance(model_node, model.TextChunkModelNode)
+        self._model_node: model.TextChunkModelNode = model_node
         self._model_node_offset = model_node_offset
 
         self._text = text
@@ -565,6 +566,10 @@ class TextChunkLayoutNode(LayoutNode):
 
         if relative_x > self.get_absolute_width() or relative_y > self.get_absolute_height():
             return False
+
+        text = self._model_node.get_text()
+        text = text[:self._model_node_offset] + text[self._model_node_offset + len(self._text):]
+        self._model_node.set_text(text)
 
         # Do something to visually indicate which node was clicked on.
         self._font_color = COLOR_GREEN

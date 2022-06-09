@@ -75,6 +75,7 @@ class WriterWidget(QtWidgets.QWidget):
         )
 
         # Redraw the widget.
+        self._layout_tree = create_layout_tree(self._model_tree)
         self.update()
 
 class Window(QtWidgets.QMainWindow):
