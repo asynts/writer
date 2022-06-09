@@ -172,6 +172,13 @@ class Placer:
     def place_current_paragraph(self):
         assert self._current_line is None
 
+        # This is not an optimization.
+        # An empty paragraph can have spacing which already exceeds the remaining size.
+        # That would result in a crash.
+        if len(self._current_paragraph.get_children()) == 0:
+            self._current_paragraph = None
+            return
+
         content_node = self._current_page.get_content_node()
 
         # assert content_node.get_max_remaining_height() >= self._current_paragraph.get_min_height() + self._current_paragraph.get_style().outer_spacing.y

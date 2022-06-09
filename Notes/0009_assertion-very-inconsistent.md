@@ -49,3 +49,9 @@ I made one small modification to the model tree and started hitting an assertion
     This seems to be it.
 
 -   I suspect, that I do not properly consider the spacing when trying to place a paragraph.
+
+### Actions
+
+-   The problem was that empty paragraphs can have spacing and thus take up space.
+    Placing an empty paragraph can therefore overflow the page which my code did not account for.
+    It seems that adding the space caused this to happen.
