@@ -20,7 +20,7 @@ COLOR_BLUE = QColor(0, 0, 255)
 
 def cm_to_pixel(value: float):
     # This is a bit arbitrary, since this depends on the display resolution.
-    return 37.795275591 * value / 2
+    return 37.795275591 * value
 
 # There are several phases a layout node can be in.
 @functools.total_ordering

@@ -1,5 +1,6 @@
 import sys
 import math
+import time
 
 from PyQt6 import QtWidgets, QtGui, QtCore
 
@@ -40,6 +41,30 @@ def create_model_tree():
     paragraph_2.add_child(model.TextChunkModelNode(text="this", style=bold_normal_text_chunk_style))
     paragraph_2.add_child(model.TextChunkModelNode(text=" has some highlight applied to it.", style=normal_normal_text_chunk_style))
 
+    for i in range(100):
+        paragraph = model_tree.add_child(model.ParagraphModelNode(style=normal_paragraph_style))
+        for j in range(100):
+            paragraph.add_child(model.TextChunkModelNode(
+                text=f"This is paragraph ",
+                style=normal_normal_text_chunk_style,
+            ))
+            paragraph.add_child(model.TextChunkModelNode(
+                text=f"{i}",
+                style=bold_normal_text_chunk_style,
+            ))
+            paragraph.add_child(model.TextChunkModelNode(
+                text=f" and text chunk",
+                style=normal_normal_text_chunk_style,
+            ))
+            paragraph.add_child(model.TextChunkModelNode(
+                text=f" {j}",
+                style=bold_normal_text_chunk_style,
+            ))
+            paragraph.add_child(model.TextChunkModelNode(
+                text=f".",
+                style=normal_normal_text_chunk_style,
+            ))
+
     return model_tree
 
 def create_layout_tree(model_tree: model.DocumentModelNode):
@@ -52,14 +77,24 @@ class WriterWidget(QtWidgets.QWidget):
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.MinimumExpanding)
 
         self._model_tree = create_model_tree()
-        self._layout_tree = create_layout_tree(self._model_tree)
+        self.build_layout_tree()
 
-        print(self._layout_tree.to_string(), end="")
+    def build_layout_tree(self):
+        before_ns = time.perf_counter_ns()
+        self._layout_tree = create_layout_tree(self._model_tree)
+        after_ns = time.perf_counter_ns()
+
+        print(f"Rebuild  {after_ns - before_ns:>14}ns ({(after_ns - before_ns) / (1000 * 1000 * 1000):>10.4}s)")
 
     # Override.
     def paintEvent(self, event: QtGui.QPaintEvent):
         painter = QtGui.QPainter(self)
+
+        before_ns = time.perf_counter_ns()
         self._layout_tree.paint(painter=painter)
+        after_ns = time.perf_counter_ns()
+
+        print(f"Painting {after_ns - before_ns:>14}ns ({(after_ns - before_ns) / (1000 * 1000 * 1000):>10.4}s)")
 
     # Override.
     def sizeHint(self):
@@ -75,7 +110,7 @@ class WriterWidget(QtWidgets.QWidget):
         )
 
         # Redraw the widget.
-        self._layout_tree = create_layout_tree(self._model_tree)
+        self.build_layout_tree()
         self.update()
 
 class Window(QtWidgets.QMainWindow):
