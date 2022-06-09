@@ -61,28 +61,24 @@ class WordGroup:
     def is_empty(self) -> bool:
         return len(self.excerpts) == 0
 
-# Replace all whitespace with spaces.
-# Removes adjacent whitespace.
-# Keeps leading and trailing whitespace.
-def normalize_whitespace(string_: str):
-    result = []
-    b_previous_character_was_whitespace = False
-    for ch in string_:
-        if ch in string.whitespace:
-            if not b_previous_character_was_whitespace:
-                result.append(" ")
-                b_previous_character_was_whitespace = True
-        else:
-            result.append(ch)
-            b_previous_character_was_whitespace = False
-
-    return "".join(result)
-
 # This works similar to 'str.partition'.
 # The string is split into three parts, the text before the separator, the separator and the text after.
 # Instead of using a simple separator, we are using arbitrary whitespace.
-def partition_remaining_text(remaining_text: str):
-    pass
+def partition_at_whitespace(string_: str):
+    for index in range(len(string_)):
+        if string_[index] in string.whitespace:
+            start_index = index
+            end_index = index + 1
+
+            while end_index < len(string_):
+                if string_[end_index] in string.whitespace:
+                    end_index += 1
+                else:
+                    break
+
+            return string_[:start_index], string_[start_index:end_index], string_[end_index:]
+
+    return string_, "", ""
 
 # Wrapping text is more complicated than one might think at first.
 # The formatting can change in the middle of a word and one chunk of text can contain multiple words.
@@ -104,22 +100,16 @@ def compute_word_groups_in_paragraph(paragraph_model_node: model.ParagraphModelN
         assert isinstance(text_chunk_model_node, model.TextChunkModelNode)
 
         offset_into_model_node = 0
-
-        # FIXME: The 'offset_into_model_node' needs to be updated, so this code needs to be refactored.
         remaining_text = text_chunk_model_node.get_text()
-        len_before_normalization = len(remaining_text)
-        remaining_text = normalize_whitespace(remaining_text)
-        assert len_before_normalization == len(remaining_text)
 
         while len(remaining_text) >= 1:
             # We split of the first word and update our offset calculation.
             offset_into_model_node_before = offset_into_model_node
-            text, separator, remaining_text = remaining_text.partition(" ")
+            text, separator, remaining_text = partition_at_whitespace(remaining_text)
             offset_into_model_node += len(text) + len(separator)
 
             # If we encounter a separator without anything any text before it, open a new word group.
             if len(text) == 0:
-                assert separator == " "
                 finish_word_group()
                 continue
 
@@ -133,7 +123,6 @@ def compute_word_groups_in_paragraph(paragraph_model_node: model.ParagraphModelN
             # If a separator was encountered, open a new word group.
             # Notice that this is different from the other edge case, because the code runs after the text was added.
             if len(separator) >= 1:
-                assert separator == " "
                 finish_word_group()
 
     finish_word_group()

@@ -32,7 +32,7 @@ cases = [
     ),
     Case(
         input_=" \nhello\t world",
-        expected=("", " \n", "hello world")
+        expected=("", " \n", "hello\t world")
     ),
 ]
 
@@ -41,4 +41,4 @@ def case(request):
     return request.param
 
 def test_partition_remaining_text(case):
-    assert writer.engine.converter.partition_remaining_text(case.input_) == case.expected
+    assert writer.engine.converter.partition_at_whitespace(case.input_) == case.expected

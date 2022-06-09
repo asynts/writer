@@ -32,7 +32,7 @@ def create_model_tree():
     )
 
     paragraph_1 = model_tree.add_child(model.ParagraphModelNode(style=heading_paragraph_style))
-    paragraph_1.add_child(model.TextChunkModelNode(text="This is a", style=normal_heading_text_chunk_style))
+    paragraph_1.add_child(model.TextChunkModelNode(text="This  is a", style=normal_heading_text_chunk_style))
     paragraph_1.add_child(model.TextChunkModelNode(text=" heading.", style=normal_heading_text_chunk_style))
 
     paragraph_2 = model_tree.add_child(model.ParagraphModelNode(style=normal_paragraph_style))
