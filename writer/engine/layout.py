@@ -154,15 +154,32 @@ class LayoutNode:
         for child in self.get_children():
             child.on_final_layout_calculation()
 
+    # Virtual.
+    def on_mouse_click(self, *, relative_x: float, relative_y: float):
+        assert self.get_phase() == Phase.PHASE_3_FINAL
+
+        if relative_x < 0.0 or relative_y < 0.0:
+            return False
+
+        if relative_x > self.__absolute_width or relative_y > self.__absolute_height:
+            return False
+
+        for child in self.get_children():
+            if child.on_mouse_click(
+                relative_x=relative_x - child.get_relative_x(),
+                relative_y=relative_y - child.get_relative_y(),
+            ):
+                break
+
+        return True
+
     def get_parent_node(self) -> "LayoutNode":
         return self.__parent_node
 
     def get_relative_x(self) -> float:
-        assert self.get_phase() == Phase.PHASE_2_PLACED
         return self._relative_x
 
     def get_relative_y(self) -> float:
-        assert self.get_phase() == Phase.PHASE_2_PLACED
         return self._relative_y
 
     def get_absolute_x(self) -> float:
@@ -537,6 +554,23 @@ class TextChunkLayoutNode(LayoutNode):
         self._font = font
         self._font_metrics = font_metrics
 
+        self._font_color = COLOR_BLACK
+
+    # Override.
+    def on_mouse_click(self, *, relative_x: float, relative_y: float):
+        assert self.get_phase() == Phase.PHASE_3_FINAL
+
+        if relative_x < 0.0 or relative_y < 0.0:
+            return False
+
+        if relative_x > self.get_absolute_width() or relative_y > self.get_absolute_height():
+            return False
+
+        # Do something to visually indicate which node was clicked on.
+        self._font_color = COLOR_GREEN
+
+        return True
+
     def _compute_font(self, *, font_size: float, is_bold: bool, is_italic: bool) -> typing.Tuple[QtGui.QFont, QtGui.QFontMetricsF]:
         weight = QtGui.QFont.Weight.Normal
         if is_bold:
@@ -566,7 +600,7 @@ class TextChunkLayoutNode(LayoutNode):
     def paint_decoration(self, *, painter: QtGui.QPainter):
         super().paint_decoration(painter=painter)
 
-        painter.setPen(COLOR_BLACK)
+        painter.setPen(self._font_color)
         painter.setFont(self._font)
         painter.drawText(self.get_inner_qrect(), self.get_text())
 

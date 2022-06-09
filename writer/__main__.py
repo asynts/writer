@@ -56,12 +56,26 @@ class WriterWidget(QtWidgets.QWidget):
 
         print(self._layout_tree.to_string(), end="")
 
-    def paintEvent(self, event):
+    # Override.
+    def paintEvent(self, event: QtGui.QPaintEvent):
         painter = QtGui.QPainter(self)
         self._layout_tree.paint(painter=painter)
 
+    # Override.
     def sizeHint(self):
         return QtCore.QSize(math.ceil(self._layout_tree.get_absolute_width()), math.ceil(self._layout_tree.get_absolute_height()))
+
+    # Override.
+    def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
+        super().mousePressEvent(event)
+
+        self._layout_tree.on_mouse_click(
+            relative_x=event.position().x(),
+            relative_y=event.position().y()
+        )
+
+        # Redraw the widget.
+        self.update()
 
 class Window(QtWidgets.QMainWindow):
     def __init__(self):
