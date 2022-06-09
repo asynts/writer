@@ -4,6 +4,8 @@ import typing
 from PyQt6 import QtGui, QtCore
 from PyQt6.QtGui import QColor
 
+from writer.engine import model
+
 from .style import Spacing, LayoutStyle
 
 normal_font = QtGui.QFont("monospace", 12)
@@ -442,7 +444,20 @@ class PageLayoutNode(VerticalLayoutNode):
         return self.__footer_node
 
 class TextChunkLayoutNode(LayoutNode):
-    def __init__(self, *, text: str, parent_node: LayoutNode, font_size: float, is_bold: bool, is_italic: bool):
+    def __init__(
+        self,
+        *,
+        text: str,
+        parent_node: LayoutNode,
+
+        # FIXME: Find some way to move this into 'LayoutStyle'.
+        font_size: float,
+        is_bold: bool,
+        is_italic: bool,
+
+        model_node: model.ModelNode,
+        model_node_offset: int,
+    ):
         font, font_metrics = self._compute_font(font_size=font_size, is_bold=is_bold, is_italic=is_italic)
 
         rendered_size = font_metrics.size(0, text)
@@ -456,6 +471,9 @@ class TextChunkLayoutNode(LayoutNode):
                 fixed_height=rendered_size.height(),
             ),
         )
+
+        self._model_node = model_node
+        self._model_node_offset = model_node_offset
 
         self._text = text
         self._font = font

@@ -12,6 +12,7 @@ b_simplify_font_metrics = False
 class TextExcerpt:
     text_chunk_model_node: model.TextChunkModelNode
     text: str
+    offset_into_model_node: int
 
 # Represents one word that should be wrapped as one.
 # Words can span over multiple text chunks in the model.
@@ -89,11 +90,19 @@ def compute_word_groups_in_paragraph(paragraph_model_node: model.ParagraphModelN
     for text_chunk_model_node in paragraph_model_node.get_children():
         assert isinstance(text_chunk_model_node, model.TextChunkModelNode)
 
+        offset_into_model_node = 0
+
+        # FIXME: The 'offset_into_model_node' needs to be updated, so this code needs to be refactored.
         remaining_text = text_chunk_model_node.get_text()
+        len_before_normalization = len(remaining_text)
         remaining_text = normalize_whitespace(remaining_text)
+        assert len_before_normalization == len(remaining_text)
 
         while len(remaining_text) >= 1:
+            # We split of the first word and update our offset calculation.
+            offset_into_model_node_before = offset_into_model_node
             text, separator, remaining_text = remaining_text.partition(" ")
+            offset_into_model_node += len(text) + len(separator)
 
             # If we encounter a separator without anything any text before it, open a new word group.
             if len(text) == 0:
@@ -104,6 +113,7 @@ def compute_word_groups_in_paragraph(paragraph_model_node: model.ParagraphModelN
             # Add this text to the current word group.
             current_word_group.add_excerpt(TextExcerpt(
                 text_chunk_model_node=text_chunk_model_node,
+                offset_into_model_node=offset_into_model_node_before,
                 text=text,
             ))
 
@@ -219,6 +229,7 @@ class Placer:
     def place_word_group_in_current_line(self, word_group: WordGroup):
         assert self._current_line.get_max_remaining_width() >= word_group.width
 
+        excerpt = None
         model_style = None
         for excerpt in word_group.excerpts:
             model_style = excerpt.text_chunk_model_node.get_style()
@@ -226,21 +237,30 @@ class Placer:
             self._current_line.place_child_node(layout.TextChunkLayoutNode(
                 text=excerpt.text,
                 parent_node=self._current_line,
+
                 font_size=model_style.font_size,
                 is_bold=model_style.is_bold,
                 is_italic=model_style.is_italic,
+
+                model_node=excerpt.text_chunk_model_node,
+                model_node_offset=excerpt.offset_into_model_node,
             ))
 
-        # This is a bit naughty, we simply take the style from the last excerpt.
+        # We are taking the formatting from the last excerpt from the loop.
+        assert excerpt is not None
         assert model_style is not None
 
         # FIXME: Do the spacing separately.
         self._current_line.place_child_node(layout.TextChunkLayoutNode(
             text=" ",
             parent_node=self._current_line,
+
             font_size=model_style.font_size,
             is_bold=model_style.is_bold,
             is_italic=model_style.is_italic,
+
+            model_node=excerpt.text_chunk_model_node,
+            model_node_offset=excerpt.offset_into_model_node + len(excerpt.text),
         ))
 
     def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode):
