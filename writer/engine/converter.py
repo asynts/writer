@@ -45,9 +45,8 @@ class WordGroup:
             # In block mode, we won't actually draw that space but we still need to reserve space for it.
             size = layout.normal_font_metrics.size(0, excerpt.text + " ")
 
-            # FIXME: This offset is required because of the border which takes up one pixel on each side.
-            self.width += size.width() + 2
-            self.height = max(self.height, size.height() + 2)
+            self.width += size.width()
+            self.height = max(self.height, size.height())
 
         self.excerpts.append(excerpt)
 

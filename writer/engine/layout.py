@@ -452,13 +452,8 @@ class TextChunkLayoutNode(LayoutNode):
             parent_node=parent_node,
 
             style=LayoutStyle(
-                # The fixed size includes the border, therefore, the odd calculation.
-                fixed_width=rendered_size.width() + 2,
-                fixed_height=rendered_size.height() + 2,
-
-                border_spacing=Spacing(left=1, right=1, top=1, bottom=1),
-
-                border_color=COLOR_RED,
+                fixed_width=rendered_size.width(),
+                fixed_height=rendered_size.height(),
             ),
         )
 
@@ -495,5 +490,9 @@ class TextChunkLayoutNode(LayoutNode):
     def paint_decoration(self, *, painter: QtGui.QPainter):
         super().paint_decoration(painter=painter)
 
+        painter.setPen(COLOR_BLACK)
         painter.setFont(self._font)
         painter.drawText(self.get_inner_qrect(), self.get_text())
+
+        painter.setPen(COLOR_RED)
+        painter.drawRect(self.get_inner_qrect())
