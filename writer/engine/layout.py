@@ -9,9 +9,6 @@ from writer.engine import model
 
 from .style import Spacing, LayoutStyle
 
-normal_font = QtGui.QFont("monospace", 12)
-normal_font_metrics = QtGui.QFontMetricsF(normal_font)
-
 COLOR_WHITE = QColor(255, 255, 255)
 COLOR_BLACK = QColor(0, 0, 0)
 COLOR_RED = QColor(255, 0, 0)
@@ -525,17 +522,12 @@ class TextChunkLayoutNode(LayoutNode):
         text: str,
         parent_node: LayoutNode,
 
-        # FIXME: Find some way to move this into 'LayoutStyle'.
-        font_size: float,
-        is_bold: bool,
-        is_italic: bool,
-
-        model_node: model.ModelNode,
+        model_node: model.TextChunkModelNode,
         model_node_offset: int,
     ):
-        font, font_metrics = self._compute_font(font_size=font_size, is_bold=is_bold, is_italic=is_italic)
+        assert isinstance(model_node, model.TextChunkModelNode)
 
-        rendered_size = font_metrics.size(0, text)
+        rendered_size = model_node.get_font_metrics().size(0, text)
 
         super().__init__(
             name="InlineTextChunkLayoutNode",
@@ -547,15 +539,9 @@ class TextChunkLayoutNode(LayoutNode):
             ),
         )
 
-        assert isinstance(model_node, model.TextChunkModelNode)
-        self._model_node: model.TextChunkModelNode = model_node
+        self._model_node = model_node
         self._model_node_offset = model_node_offset
-
         self._text = text
-        self._font = font
-        self._font_metrics = font_metrics
-
-        self._font_color = COLOR_BLACK
 
     # Override.
     def on_mouse_click(self, *, relative_x: float, relative_y: float):
@@ -576,28 +562,6 @@ class TextChunkLayoutNode(LayoutNode):
 
         return True
 
-    def _compute_font(self, *, font_size: float, is_bold: bool, is_italic: bool) -> typing.Tuple[QtGui.QFont, QtGui.QFontMetricsF]:
-        weight = QtGui.QFont.Weight.Normal
-        if is_bold:
-            weight = QtGui.QFont.Weight.Bold
-
-        font = QtGui.QFont(
-            "monospace",
-            int(font_size),
-            weight,
-            is_italic,
-        )
-
-        font_metrics = QtGui.QFontMetricsF(font)
-
-        return font, font_metrics
-
-    def get_font(self):
-        return self._font
-
-    def get_font_metrics(self):
-        return self._font_metrics
-
     def get_text(self):
         return self._text
 
@@ -605,8 +569,8 @@ class TextChunkLayoutNode(LayoutNode):
     def paint_decoration(self, *, painter: QtGui.QPainter):
         super().paint_decoration(painter=painter)
 
-        painter.setPen(self._font_color)
-        painter.setFont(self._font)
+        painter.setPen(COLOR_BLACK)
+        painter.setFont(self._model_node.get_font())
         painter.drawText(self.get_inner_qrect(), self.get_text())
 
         painter.setPen(COLOR_RED)

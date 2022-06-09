@@ -60,6 +60,7 @@ def create_model_tree():
                 text=f" {j}",
                 style=bold_normal_text_chunk_style,
             ))
+            # FIXME: If I add another space here, we hit an assertion.
             paragraph.add_child(model.TextChunkModelNode(
                 text=f".",
                 style=normal_normal_text_chunk_style,

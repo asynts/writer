@@ -51,7 +51,7 @@ class WordGroup:
         else:
             # We reserve space for an additional space character such that the placement algorithm has enough space for that.
             # In block mode, we won't actually draw that space but we still need to reserve space for it.
-            size = layout.normal_font_metrics.size(0, excerpt.text + " ")
+            size = excerpt.text_chunk_model_node.get_font_metrics().size(0, excerpt.text + " ")
 
             self.width += size.width()
             self.height = max(self.height, size.height())
@@ -233,17 +233,10 @@ class Placer:
         assert self._current_line.get_max_remaining_width() >= word_group.width
 
         excerpt = None
-        model_style = None
         for excerpt in word_group.excerpts:
-            model_style = excerpt.text_chunk_model_node.get_style()
-
             self._current_line.place_child_node(layout.TextChunkLayoutNode(
                 text=excerpt.text,
                 parent_node=self._current_line,
-
-                font_size=model_style.font_size,
-                is_bold=model_style.is_bold,
-                is_italic=model_style.is_italic,
 
                 model_node=excerpt.text_chunk_model_node,
                 model_node_offset=excerpt.offset_into_model_node,
@@ -251,16 +244,11 @@ class Placer:
 
         # We are taking the formatting from the last excerpt from the loop.
         assert excerpt is not None
-        assert model_style is not None
 
         # FIXME: Do the spacing separately.
         self._current_line.place_child_node(layout.TextChunkLayoutNode(
             text=" ",
             parent_node=self._current_line,
-
-            font_size=model_style.font_size,
-            is_bold=model_style.is_bold,
-            is_italic=model_style.is_italic,
 
             model_node=excerpt.text_chunk_model_node,
             model_node_offset=excerpt.offset_into_model_node + len(excerpt.text),

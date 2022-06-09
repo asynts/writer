@@ -1,3 +1,5 @@
+from PyQt6 import QtGui
+
 # This is where the "cascade" happens.
 # We take the style from the parent and then override some of the values.
 # This happens recursively.
@@ -78,6 +80,22 @@ class TextChunkModelNode(ModelNode):
 
     def set_text(self, text: str):
         self.__text = text
+
+    def get_font(self):
+        weight = QtGui.QFont.Weight.Normal
+        if self.get_style().is_bold:
+            weight = QtGui.QFont.Weight.Bold
+
+        # FIXME: The font size needs to be an integer here!
+        return QtGui.QFont(
+            "monospace",
+            int(self.get_style().font_size),
+            weight,
+            self.get_style().is_italic,
+        )
+
+    def get_font_metrics(self):
+        return QtGui.QFontMetricsF(self.get_font())
 
 class ParagraphModelNode(ModelNode):
     def __init__(self, *, style: ModelStyle):
