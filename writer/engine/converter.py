@@ -174,7 +174,20 @@ class Placer:
 
         content_node = self._current_page.get_content_node()
 
-        assert content_node.get_max_remaining_height() >= self._current_paragraph.get_min_height() + self._current_paragraph.get_style().outer_spacing.y
+        # assert content_node.get_max_remaining_height() >= self._current_paragraph.get_min_height() + self._current_paragraph.get_style().outer_spacing.y
+        if content_node.get_max_remaining_height() < self._current_paragraph.get_min_height() + self._current_paragraph.get_style().outer_spacing.y:
+            previous_sibling = content_node.get_children()[-1]
+
+            print(f"previous_sibling=(relative_x={previous_sibling.get_relative_x()}, relative_y={previous_sibling.get_relative_y()}, height={previous_sibling.get_height()})")
+            print(f"fixed_height={content_node.get_fixed_height()}")
+            print("lhs={} rhs={} ({} + {})".format(
+                content_node.get_max_remaining_height(),
+                self._current_paragraph.get_min_height() + self._current_paragraph.get_style().outer_spacing.y,
+                self._current_paragraph.get_min_height(),
+                self._current_paragraph.get_style().outer_spacing.y,
+            ))
+            raise AssertionError
+
         content_node.place_child_node(self._current_paragraph)
 
         self._current_paragraph = None
