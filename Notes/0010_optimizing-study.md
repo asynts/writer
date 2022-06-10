@@ -7,13 +7,30 @@ My goal is to continue the optimization efforts, but in a more structured way, f
 -   I created a proper benchmark to have more reproduciable results, here is the initial result:
 
     ```none
-    initial_layout                    0.4103s    410282404ns
-    layout_unchanged_1                0.3925s    392546171ns
-    layout_change_start               0.4008s    400800516ns
-    layout_unchanged_2                0.3968s    396805364ns
-    layout_change_end                 0.4003s    400318044ns
-    layout_unchanged_3                0.3912s    391235661ns
+    initial_layout                    0.3905s    390533375ns
+    layout_unchanged_1                0.3735s    373455650ns
+    layout_change_start               0.3868s    386801800ns
+    layout_unchanged_2                0.3845s    384506701ns
+    layout_change_end                 0.3789s    378916188ns
+    layout_unchanged_3                0.3773s    377349250ns
     ```
+
+-   After caching the font in the model nodes, this is the current result:
+
+    ```none
+    initial_layout                    0.3295s    329464474ns
+    layout_unchanged_1                0.3119s    311860668ns
+    layout_change_start               0.3216s    321573964ns
+    layout_unchanged_2                0.3153s    315336605ns
+    layout_change_end                 0.3186s    318620339ns
+    layout_unchanged_3                0.3096s    309575365ns
+    ```
+
+-   The following inefficencies have been resolved:
+
+    -   `WordGroup.add_excerpt` takes up a significant amount of the execution time.
+
+        It should be possible to cache the font in the model nodes.
 
 -   I am aware of the following inefficencies:
 
@@ -21,17 +38,7 @@ My goal is to continue the optimization efforts, but in a more structured way, f
 
         -   This could be cached in the layout node.
 
-    -   `WordGroup.add_excerpt` takes up a significant amount of the execution time.
-
-        It should be possible to cache the font in the model nodes.
-
     -   `LayoutStyle.__init__` is extremely slow, not sure what causes this.
-
-    -   It seems that `QFont` does a bunch of weird things, maybe I should add that cache back in.
-        If no `QApplication` is defined, it will crash.
-
-        To me, this clearly suggests that it's doing something complex.
-        I still don't know if that has a significant performance impact though.
 
     -   It should be possible to store the layout nodes that are generated for paragraphs with the model nodes.
         Most paragraphs will not change, but are only placed in a different position.
@@ -40,3 +47,8 @@ My goal is to continue the optimization efforts, but in a more structured way, f
         That will not decrease the initial loading time, however, it will drastically reduce the time it takes to do incremental layout changes.
 
         To implement this, I should replicate the placement code and figure out how to merge both implementations later on.
+
+### Actions
+
+-   I started caching the font in the `TextChunkModelNode`.
+    This was another noticable improvement, now, we only need to do the style cascade once for each model node.

@@ -1,0 +1,7 @@
+#!/bin/bash
+set -e
+
+py-spy record \
+    --rate 1000 \
+    --output flamegraph.svg \
+    -- python3 benchmark.py --human

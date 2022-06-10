@@ -1,4 +1,4 @@
 /venv
-/python3-*.svg
+/flamegraph.svg
 
 __pycache__

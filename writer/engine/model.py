@@ -89,12 +89,16 @@ class DocumentModelNode(ModelNode):
 class TextChunkModelNode(ModelNode):
     __slots__ = (
         "__text",
+        "__font",
+        "__font_metrics",
     )
 
     def __init__(self, *, text: str, style: ModelStyle):
         super().__init__(name="TextChunkModelNode", style=style)
 
         self.__text = text
+        self.__font = None
+        self.__font_metrics = None
 
     def get_text(self):
         return self.__text
@@ -103,16 +107,24 @@ class TextChunkModelNode(ModelNode):
         self.__text = text
 
     def get_font(self):
+        if self.__font is not None:
+            return self.__font
+
         style = self.get_style()
 
         weight = QtGui.QFont.Weight.Normal
         if style.is_bold:
             weight = QtGui.QFont.Weight.Bold
 
-        return QtGui.QFont("monospace", int(style.font_size), weight, style.is_italic)
+        self.__font = QtGui.QFont("monospace", int(style.font_size), weight, style.is_italic)
+        return self.__font
 
     def get_font_metrics(self):
-        return QtGui.QFontMetricsF(self.get_font())
+        if self.__font_metrics is not None:
+            return self.__font_metrics
+
+        self.__font_metrics = QtGui.QFontMetricsF(self.get_font())
+        return self.__font_metrics
 
 class ParagraphModelNode(ModelNode):
     __slots__ = tuple()
