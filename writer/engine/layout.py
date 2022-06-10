@@ -304,15 +304,19 @@ class LayoutNode:
     def paint_decoration(self, *, painter: QtGui.QPainter):
         assert self.get_phase() == Phase.PHASE_3_FINAL
 
-    def paint(self, *, painter: QtGui.QPainter):
+    def paint(self, *, painter: QtGui.QPainter, visible_rect: QtCore.QRectF):
         assert self.get_phase() == Phase.PHASE_3_FINAL
+
+        # If this element is not visible, we do not draw it.
+        if not self.get_qrect().intersects(visible_rect):
+            return
 
         self.paint_background(painter=painter)
         self.paint_border(painter=painter)
         self.paint_decoration(painter=painter)
 
         for child in self.get_children():
-            child.paint(painter=painter)
+            child.paint(painter=painter, visible_rect=visible_rect)
 
 class BlockLayoutNode(LayoutNode):
     def __init__(self, *, name="BlockLayoutNode", **kwargs):

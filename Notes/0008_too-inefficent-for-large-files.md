@@ -24,7 +24,20 @@ As I suspected, my current implementation is too inefficent to be used in any re
 
     Seems that there is no noticible difference.
 
+-   After adding some basic culling, the rendering itself is fast enough to navigate the page without any noticable lag:
+
+    ```none
+    Rebuild      7371958048ns (     7.372s)
+    Painting       11476634ns (   0.01148s)
+    ```
+
+    However, the time required to rebuild the layout tree is still a big problem.
+
 ### Ideas
 
--   It should be possible to drastically improve the rendering time with some basic culling.
-    That should be fairly easy to implement too.
+### Actions
+
+-   I added culling during the painting phase.
+    We only draw the things that are actually visible on the screen.
+
+    That was extremely easy to implement and drastically improved the performance.

@@ -90,9 +90,10 @@ class WriterWidget(QtWidgets.QWidget):
     # Override.
     def paintEvent(self, event: QtGui.QPaintEvent):
         painter = QtGui.QPainter(self)
+        painter.setClipRect(event.rect())
 
         before_ns = time.perf_counter_ns()
-        self._layout_tree.paint(painter=painter)
+        self._layout_tree.paint(painter=painter, visible_rect=QtCore.QRectF(event.rect()))
         after_ns = time.perf_counter_ns()
 
         print(f"Painting {after_ns - before_ns:>14}ns ({(after_ns - before_ns) / (1000 * 1000 * 1000):>10.4}s)")
