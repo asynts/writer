@@ -1,10 +1,11 @@
 from writer.engine import model
 
-def create_model_tree():
+def create_model_tree(b_print_document_name: bool = True):
     # This is from "A STUDY IN SCARLET." by "A. Conan Doyle".
     # It is in public domain and can therefore easily be used for this purpose.
 
-    print("Document: 'A Study in Scarlet'")
+    if b_print_document_name:
+        print("Document: 'A Study in Scarlet'")
 
     model_tree = model.DocumentModelNode()
 

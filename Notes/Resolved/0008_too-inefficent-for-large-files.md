@@ -80,20 +80,6 @@ As I suspected, my current implementation is too inefficent to be used in any re
 
     -   Generally, the contructors of many classes show up in the profile, slots could really help here.
 
--   I used `py-spy` to create a flame graph of the application.
-
-    The following functions had some noticable inpact on performance, where I did not expect that:
-
-    -   `get_max_remaining_width` when trying to place words in the current line.
-
-        -   This could be cached in the layout node.
-
-    -   `WordGroup.add_excerpt` takes up a significant amount of the execution time.
-
-        It should be possible to cache the font in the model nodes.
-
-    -   `LayoutStyle.__init__` is extremely slow, not sure what causes this.
-
 ### Ideas
 
 ### Actions
