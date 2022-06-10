@@ -26,3 +26,17 @@ My goal is to continue the optimization efforts, but in a more structured way, f
         It should be possible to cache the font in the model nodes.
 
     -   `LayoutStyle.__init__` is extremely slow, not sure what causes this.
+
+    -   It seems that `QFont` does a bunch of weird things, maybe I should add that cache back in.
+        If no `QApplication` is defined, it will crash.
+
+        To me, this clearly suggests that it's doing something complex.
+        I still don't know if that has a significant performance impact though.
+
+    -   It should be possible to store the layout nodes that are generated for paragraphs with the model nodes.
+        Most paragraphs will not change, but are only placed in a different position.
+
+        Therefore, if only one layout node is used for that paragraph, we try to use it again and recompute the result otherwise.
+        That will not decrease the initial loading time, however, it will drastically reduce the time it takes to do incremental layout changes.
+
+        To implement this, I should replicate the placement code and figure out how to merge both implementations later on.

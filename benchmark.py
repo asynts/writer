@@ -10,7 +10,7 @@ import writer.engine.layout
 
 from PyQt6 import QtWidgets
 
-def main(b_human_readable: bool):
+def main(*, b_human_readable: bool):
     measurements = collections.OrderedDict()
 
     application = QtWidgets.QApplication([])
@@ -19,17 +19,17 @@ def main(b_human_readable: bool):
 
     model_tree = writer.example.create_model_tree(b_print_document_name=False)
 
-    regenerate_layout(model_tree=model_tree, measurements=measurements, identifier="initial_layout")
+    measurement_initial(model_tree=model_tree, measurements=measurements) # initial_layout
     regenerate_layout(model_tree=model_tree, measurements=measurements, identifier="layout_unchanged_1")
 
     modify_first_paragraph(model_tree=model_tree)
 
-    regenerate_layout(model_tree=model_tree, measurements=measurements, identifier="layout_change_start")
+    measurement_regenerate_worst(model_tree=model_tree, measurements=measurements) # layout_change_start
     regenerate_layout(model_tree=model_tree, measurements=measurements, identifier="layout_unchanged_2")
 
     modify_last_paragraph(model_tree=model_tree)
 
-    regenerate_layout(model_tree=model_tree, measurements=measurements, identifier="layout_change_end")
+    measurement_regenerate_best(model_tree=model_tree, measurements=measurements) # layout_change_end
     regenerate_layout(model_tree=model_tree, measurements=measurements, identifier="layout_unchanged_3")
 
     if b_human_readable:
@@ -49,6 +49,18 @@ def print_measurements_human_readable(measurements: collections.OrderedDict, /):
         seconds = f"{nanoseconds / (1000 * 1000 * 1000):10.4f}"
 
         print(f"{prefix:<30}{seconds:>10}s {nanoseconds:12}ns")
+
+# This is a separate function to make the flame graph easier to navigate.
+def measurement_initial(*, model_tree, measurements):
+    regenerate_layout(model_tree=model_tree, measurements=measurements, identifier="initial_layout")
+
+# This is a separate function to make the flame graph easier to navigate.
+def measurement_regenerate_worst(*, model_tree, measurements):
+    regenerate_layout(model_tree=model_tree, measurements=measurements, identifier="layout_change_start")
+
+# This is a separate function to make the flame graph easier to navigate.
+def measurement_regenerate_best(*, model_tree, measurements):
+    regenerate_layout(model_tree=model_tree, measurements=measurements, identifier="layout_change_end")
 
 def regenerate_layout(*, model_tree: writer.engine.model.DocumentModelNode, measurements: collections.OrderedDict, identifier: str):
     before_ns = time.perf_counter_ns()
@@ -73,8 +85,8 @@ def modify_last_paragraph(*, model_tree: writer.engine.model.DocumentModelNode):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("benchmark")
 
-    parser.add_argument("--human", action="store_true")
+    parser.add_argument("--human-readable", action="store_true")
 
     namespace = parser.parse_args()
 
-    main(b_human_readable=namespace.human)
+    main(b_human_readable=namespace.human_readable)
