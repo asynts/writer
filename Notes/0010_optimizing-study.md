@@ -26,17 +26,28 @@ My goal is to continue the optimization efforts, but in a more structured way, f
     layout_unchanged_3                0.3096s    309575365ns
     ```
 
+-   After caching the remaining width in the `HorizontalLayoutNode`, this is the current result:
+
+    ```none
+    initial_layout                    0.2521s    252105829ns
+    layout_unchanged_1                0.2360s    235982229ns
+    layout_change_start               0.2515s    251532266ns
+    layout_unchanged_2                0.2497s    249661256ns
+    layout_change_end                 0.2427s    242692955ns
+    layout_unchanged_3                0.2289s    228929265ns
+    ```
+
 -   The following inefficencies have been resolved:
 
     -   `WordGroup.add_excerpt` takes up a significant amount of the execution time.
 
         It should be possible to cache the font in the model nodes.
 
--   I am aware of the following inefficencies:
-
     -   `get_max_remaining_width` when trying to place words in the current line.
 
         -   This could be cached in the layout node.
+
+-   I am aware of the following inefficencies:
 
     -   `LayoutStyle.__init__` is extremely slow, not sure what causes this.
 
@@ -52,3 +63,5 @@ My goal is to continue the optimization efforts, but in a more structured way, f
 
 -   I started caching the font in the `TextChunkModelNode`.
     This was another noticable improvement, now, we only need to do the style cascade once for each model node.
+
+-   I started caching the remaining width in `HorizontalLayoutNode`, this was another drastic improvement.

@@ -16,10 +16,6 @@ I didn't know where else to put it after removing it from the code.
 
     -   Start rendering some text.
 
--   The idea is that, if we want to change the model, we delete all the layout nodes that correspond to that model node and all the following layout nodes.
-    Then, we can just recompute these.
-    Even simpler would be, if we just discard the whole layout tree.
-
 -   There is another aspect that I didn't really think about.
     When we are cascading the style, this will differ between the model and layout nodes.
     The model nodes have essentially a linked list of styles that are applied to each node.
@@ -44,3 +40,8 @@ I didn't know where else to put it after removing it from the code.
     If we edit at the beginning of the file, we do not save any of the work, but all of the extra calculations will make this even slower.
 
 -   I should move the codebase to at least some amount of dependency injection in the engine to be able to add unit tests to some aspects.
+
+-   I should disconnect layout nodes from their parents in some organized way.
+    This is important to assert in the parent that no other pending children exist.
+
+    In other words, parent layout nodes should track pending children to verify that at most one is pending.

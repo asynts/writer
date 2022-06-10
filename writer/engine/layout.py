@@ -27,6 +27,10 @@ def cm_to_pixel(value: float):
 @functools.total_ordering
 class Phase(enum.Enum):
     # The node has been created and a temporary parent has been assigned.
+    # Parent nodes are not allowed to be changed while such a node exists.
+    #
+    # Only exception is, if the node is discarded without ever being added to the parent.
+    # This is very important because we are caching the parent node's remaining space and using it without checking for changes.
     PHASE_1_CREATED = 1
 
     # The node has been permanently placed in a parent node and may not be moved.
@@ -406,12 +410,16 @@ class BlockLayoutNode(LayoutNode):
         raise AssertionError
 
 class HorizontalLayoutNode(BlockLayoutNode):
-    __slots__ = tuple()
+    __slots__ = (
+        "__max_remaining_width",
+    )
 
     def __init__(self, *, name="HorizontalLayoutNode", **kwargs):
         super().__init__(name=name, **kwargs)
 
-    def get_max_remaining_width(self) -> float:
+        self.__max_remaining_width = None
+
+    def _get_max_remaining_width(self) -> float:
         assert self.get_phase() == Phase.PHASE_1_CREATED
 
         if self.get_fixed_width() is None:
@@ -424,7 +432,15 @@ class HorizontalLayoutNode(BlockLayoutNode):
         else:
             return self.get_fixed_width() - self.get_min_inner_width() - self.get_style().inner_spacing.x
 
-    # FIXME: Do we need to override 'get_height' here?
+    # This function assumes that the space avaliable in the parent node doesn't change while this node is in the 'PHASE_1_CREATED' phase.
+    def get_max_remaining_width(self) -> float:
+        assert self.get_phase() == Phase.PHASE_1_CREATED
+
+        if self.__max_remaining_width is not None:
+            return self.__max_remaining_width
+
+        self.__max_remaining_width = self._get_max_remaining_width()
+        return self.__max_remaining_width
 
     def place_child_node(self, child_node: LayoutNode):
         assert self.get_phase() == Phase.PHASE_1_CREATED
@@ -433,7 +449,11 @@ class HorizontalLayoutNode(BlockLayoutNode):
             relative_x=self.get_style().inner_spacing.left + child_node.get_style().outer_spacing.left + self._width_of_children,
             relative_y=self.get_style().inner_spacing.top + child_node.get_style().outer_spacing.top,
         )
-        self._width_of_children += child_node.get_width() + child_node.get_style().outer_spacing.x
+        occupied_by_child = child_node.get_width() + child_node.get_style().outer_spacing.x
+
+        self._width_of_children += occupied_by_child
+        self.__max_remaining_width -= occupied_by_child
+        assert self.__max_remaining_width >= 0.0
 
         self._height_of_children = max(
             self._height_of_children,

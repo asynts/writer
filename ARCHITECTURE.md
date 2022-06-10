@@ -57,6 +57,11 @@ Therefore, there are two phases:
     The parent doesn't know about this at this point.
     No space is reserved and no position is assigned.
 
+    Note, that nothing else can be placed in a parent if it is referenced by a child node.
+    This is, because the child node will cache the remaining width of the parent and it assumes that all of it can be used.
+
+    If a node will never be added to the parent, the parent can freely be changed.
+
 -   We might have to add another phase here.
     Instead of placing children directly, we could reserve space and figure out the placement later.
     That is needed for flexible containers where children can influence each other.
