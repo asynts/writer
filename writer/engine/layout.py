@@ -54,6 +54,7 @@ class LayoutNode:
     __slots__ = (
         "__phase",
         "__parent_node",
+        "__associated_child_node",
         "__name",
         "_relative_x",
         "_relative_y",
@@ -73,6 +74,11 @@ class LayoutNode:
         parent_node: "LayoutNode",
         style: LayoutStyle):
 
+        # The parent node needs to be extremely careful now.
+        # We assume that the avaliable space does not change while we are associated.
+        if parent_node is not None:
+            parent_node.on_child_associated(self)
+
         # The phase in which the layout node is in.
         # Some operations can only be performed in some phases.
         # Variable (PHASE_1_CREATED).
@@ -85,6 +91,12 @@ class LayoutNode:
         # Variable (PHASE_1_CREATED).
         # Constant (PHASE_2_PLACED).
         self.__parent_node = parent_node
+
+        # There can only be one child associated with this node.
+        # To enforce this, we keep track of the associated child.
+        # Variable (PHASE_1_CREATED).
+        # Constant (PHASE_2_PLACED).
+        self.__associated_child_node = None
 
         # Name of the node for debugging.
         # Constant.
@@ -139,15 +151,34 @@ class LayoutNode:
         assert self.get_phase() == Phase.PHASE_1_CREATED
         self.__parent_node = parent_node
 
+        # The parent node needs to be extremely careful now.
+        self.__parent_node.on_child_associated(self)
+
+    # Virtual.
+    def on_child_associated(self, child_node: "LayoutNode"):
+        assert self.__associated_child_node is None
+        self.__associated_child_node = child_node
+
+    # Virtual.
+    def on_child_dissociated(self, child_node: "LayoutNode"):
+        assert self.__associated_child_node is not None
+        assert self.__associated_child_node is child_node
+        self.__associated_child_node = None
+
     # Child nodes must not be changed after they are placed in their parent node.
     # Virtual.
     def on_placed_in_node(self, *, relative_x: int, relative_y: int):
         assert self.__phase == Phase.PHASE_1_CREATED
+        assert self.__associated_child_node is None
 
         self._relative_x = relative_x
         self._relative_y = relative_y
 
         self.__phase = Phase.PHASE_2_PLACED
+
+        # The parent no longer needs to worry about us.
+        if self.__parent_node is not None:
+            self.__parent_node.on_child_dissociated(self)
 
     # Absolutely nothing can change after the final layout calculation has been performed.
     # This is done lazily.
@@ -565,6 +596,16 @@ class PageLayoutNode(VerticalLayoutNode):
                 background_color=COLOR_RED,
             ),
         )
+
+    # Override.
+    def on_child_associated(self, child_node: "LayoutNode"):
+        # We don't track associated children in the page node, because there can be multiple pending and this is fine.
+        pass
+
+    # Override.
+    def on_child_dissociated(self, child_node: "LayoutNode"):
+        # We don't track associated children in the page node, because there can be multiple pending and this is fine.
+        pass
 
     # Override.
     def on_placed_in_node(self, *, relative_x: int, relative_y: int):

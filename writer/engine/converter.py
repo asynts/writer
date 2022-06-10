@@ -183,6 +183,7 @@ class Placer:
         # An empty paragraph can have spacing which already exceeds the remaining size.
         # That would result in a crash.
         if len(self._current_paragraph.get_children()) == 0:
+            self._current_paragraph.get_parent_node().on_child_dissociated(self._current_paragraph)
             self._current_paragraph = None
             return
 
@@ -236,6 +237,7 @@ class Placer:
 
             # The paragraph logic assumes that no line is pending.
             current_line = self._current_line
+            current_line.get_parent_node().on_child_dissociated(current_line)
             self._current_line = None
 
             self.place_current_paragraph()

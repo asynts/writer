@@ -37,6 +37,20 @@ My goal is to continue the optimization efforts, but in a more structured way, f
     layout_unchanged_3                0.2289s    228929265ns
     ```
 
+-   I made another rather unrelated change where I added some assertions to verify that only one child node is pending.
+    There were actually multiple locations were this was not the case.
+    I did this to further ensure that the caching of the parents width is without consequences.
+    This did not have a significant performance impact:
+
+    ```none
+    initial_layout                    0.2603s    260306618ns
+    layout_unchanged_1                0.2434s    243395355ns
+    layout_change_start               0.2525s    252480508ns
+    layout_unchanged_2                0.2471s    247085962ns
+    layout_change_end                 0.2491s    249101330ns
+    layout_unchanged_3                0.2413s    241266159ns
+    ```
+
 -   The following inefficencies have been resolved:
 
     -   `WordGroup.add_excerpt` takes up a significant amount of the execution time.
@@ -65,3 +79,6 @@ My goal is to continue the optimization efforts, but in a more structured way, f
     This was another noticable improvement, now, we only need to do the style cascade once for each model node.
 
 -   I started caching the remaining width in `HorizontalLayoutNode`, this was another drastic improvement.
+
+-   I started tracking pending child nodes in the parent layout nodes.
+    This is purely for debugging purposes.
