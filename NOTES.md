@@ -27,3 +27,20 @@ I didn't know where else to put it after removing it from the code.
 
     There is really no way around that because we need to translate the style from the model to the layout tree since something like splitting paragraphs
     means that the individual layout nodes have different style (only the last one has a margin bottom for example).
+
+-   At some point I will have to figure out how to implement the undo/redo functionality.
+    This means that it's not possible to just cut of the layout tree, instead we probably need to modify the model tree and then make all the model nodes
+    immutable, then, we should be able to store the old model nodes and revert somehow.
+
+    That will be fun to implement, especially, because we might run into memory issues here.
+
+-   We always need to compute the entire layout, because of the scroll bars.
+    Or at the very least we need to know the exact height of the result, but this is essentially the same thing like computing the entire layout since
+    we do need the whole word group thing.
+
+-   The whole idea with cutting of the end of the layout tree doesn't work.
+    This might improve performance in some areas, but the worst case performance likely becomes worse.
+
+    If we edit at the beginning of the file, we do not save any of the work, but all of the extra calculations will make this even slower.
+
+-   I should move the codebase to at least some amount of dependency injection in the engine to be able to add unit tests to some aspects.

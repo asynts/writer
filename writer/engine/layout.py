@@ -1,11 +1,10 @@
 import enum
-import typing
 import functools
 
 from PyQt6 import QtGui, QtCore
 from PyQt6.QtGui import QColor
 
-from writer.engine import model
+from writer.engine import model, font_cache
 
 from .style import Spacing, LayoutStyle
 
@@ -546,7 +545,7 @@ class TextChunkLayoutNode(LayoutNode):
     ):
         assert isinstance(model_node, model.TextChunkModelNode)
 
-        rendered_size = model_node.get_font_metrics().size(0, text)
+        rendered_size = font_cache.global_font_cache.get_qfont_metrics(model_node.get_font()).size(0, text)
 
         super().__init__(
             name="InlineTextChunkLayoutNode",
@@ -572,12 +571,10 @@ class TextChunkLayoutNode(LayoutNode):
         if relative_x > self.get_absolute_width() or relative_y > self.get_absolute_height():
             return False
 
+        # Currently, we just delete the text that belongs to this layout node from the model.
         text = self._model_node.get_text()
         text = text[:self._model_node_offset] + text[self._model_node_offset + len(self._text):]
         self._model_node.set_text(text)
-
-        # Do something to visually indicate which node was clicked on.
-        self._font_color = COLOR_GREEN
 
         return True
 
@@ -589,7 +586,7 @@ class TextChunkLayoutNode(LayoutNode):
         super().paint_decoration(painter=painter)
 
         painter.setPen(COLOR_BLACK)
-        painter.setFont(self._model_node.get_font())
+        painter.setFont(font_cache.global_font_cache.get_qfont(self._model_node.get_font()))
         painter.drawText(self.get_inner_qrect(), self.get_text())
 
         painter.setPen(COLOR_RED)

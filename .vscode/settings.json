@@ -3,6 +3,7 @@
         "**/.git": true,
         "venv": true,
         "**/__pycache__": true,
+        "Meta/Benchmarks/**": true,
     },
     "files.insertFinalNewline": true,
     "files.trimTrailingWhitespace": true,

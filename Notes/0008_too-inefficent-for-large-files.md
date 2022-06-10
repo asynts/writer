@@ -33,13 +33,23 @@ As I suspected, my current implementation is too inefficent to be used in any re
 
     However, the time required to rebuild the layout tree is still a big problem.
 
--   I used `py-spy` to create a flame graph of the application.
+-   When I used `py-spy` to create a flame graph, the following things were slow, but have already been addressed since then:
 
-    The following functions had some noticable inpact on performance, where I did not expect that:
+    -   Another thing that is generally slow is the absolute layout calculation in the end.
+
+        This could be done lazily with caching to benifit from the culling as well.
 
     -   `TextChunkModelNode.get_font_metrics` when building the word groups.
 
         -   This could be cached in some font helper class.
+
+        -   On top of that, we should store the reference in the `TextChunkLayoutNode` to avoid the lookup in the cache.
+
+            This would not affect the initial layout time.
+
+-   I used `py-spy` to create a flame graph of the application.
+
+    The following functions had some noticable inpact on performance, where I did not expect that:
 
     -   `get_max_remaining_width` when trying to place words in the current line.
 
@@ -51,9 +61,12 @@ As I suspected, my current implementation is too inefficent to be used in any re
 
         -   I could make use of slots here.
 
-    -   Another thing that is generally slow is the absolute layout calculation in the end.
+    -   Generally, the contructors of many classes show up in the profile, slots could really help here.
 
-        This could be done lazily with caching to benifit from the culling as well.
+    -   I suspect that my font cache is actually slower than before.
+        This is because of the required lookup, which could be avoided otherwise.
+
+        However, with slots it could still be an improvement so I am keeping it for now.
 
 -   After doing the transition to `PHASE_3_FINAL` lazily, I was able to drastically improve performance again:
 
@@ -75,3 +88,6 @@ As I suspected, my current implementation is too inefficent to be used in any re
 
     That was extremely easy to implement and drastically improved the performance again.
     This is likely the last simple optimization that is possible.
+
+-   I added a font cache to avoid creating `QFont` and `QFontMetricsF` objects all the time, but this didn't do much.
+    It was still an improvement so I am keeping it, but this was underwhelming.

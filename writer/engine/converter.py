@@ -1,5 +1,5 @@
 import string
-from . import model, layout, style
+from . import model, layout, style, font_cache
 
 import dataclasses
 
@@ -51,7 +51,10 @@ class WordGroup:
         else:
             # We reserve space for an additional space character such that the placement algorithm has enough space for that.
             # In block mode, we won't actually draw that space but we still need to reserve space for it.
-            size = excerpt.text_chunk_model_node.get_font_metrics().size(0, excerpt.text + " ")
+            text = excerpt.text + " "
+
+            qfont = font_cache.global_font_cache.get_qfont_metrics(excerpt.text_chunk_model_node.get_font())
+            size = qfont.size(0, text)
 
             self.width += size.width()
             self.height = max(self.height, size.height())
