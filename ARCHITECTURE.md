@@ -66,3 +66,6 @@ Therefore, there are two phases:
     Space is reserved and a position relative to the parent is assigned.
 
 -   When all nodes have been placed, we compute all of the absolute positions and sizes and cache them in the nodes.
+
+    Previously, this was done in one big step, however, this can be optimized to take advantage of culling.
+    We lazily switch to this phase when they become visible on the screen.

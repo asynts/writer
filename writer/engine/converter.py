@@ -151,7 +151,6 @@ class Placer:
         self.place_current_page()
 
         layout_tree.on_placed_in_node(relative_x=0, relative_y=0)
-        layout_tree.on_final_layout_calculation()
 
         self._layout_tree = None
         return layout_tree

@@ -51,6 +51,17 @@ As I suspected, my current implementation is too inefficent to be used in any re
 
         -   I could make use of slots here.
 
+    -   Another thing that is generally slow is the absolute layout calculation in the end.
+
+        This could be done lazily with caching to benifit from the culling as well.
+
+-   After doing the transition to `PHASE_3_FINAL` lazily, I was able to drastically improve performance again:
+
+    ```none
+    Rebuild      6178246457ns (     6.178s)
+    Painting       15264888ns (   0.01526s)
+    ```
+
 ### Ideas
 
 ### Actions
@@ -59,3 +70,8 @@ As I suspected, my current implementation is too inefficent to be used in any re
     We only draw the things that are actually visible on the screen.
 
     That was extremely easy to implement and drastically improved the performance.
+
+-   I improved on the culling by computing the absolute positions of nodes lazily.
+
+    That was extremely easy to implement and drastically improved the performance again.
+    This is likely the last simple optimization that is possible.

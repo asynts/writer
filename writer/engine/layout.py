@@ -127,6 +127,7 @@ class LayoutNode:
         self.__phase = Phase.PHASE_2_PLACED
 
     # Absolutely nothing can change after the final layout calculation has been performed.
+    # This is done lazily.
     def on_final_layout_calculation(self):
         assert self.__phase == Phase.PHASE_2_PLACED
 
@@ -146,10 +147,6 @@ class LayoutNode:
         self.__absolute_height = self.get_height()
 
         self.__phase = Phase.PHASE_3_FINAL
-
-        # Recursively do the final layout calculation on child nodes.
-        for child in self.get_children():
-            child.on_final_layout_calculation()
 
     # Virtual.
     def on_mouse_click(self, *, relative_x: float, relative_y: float):
@@ -180,19 +177,31 @@ class LayoutNode:
         return self._relative_y
 
     def get_absolute_x(self) -> float:
+        if self.get_phase() == Phase.PHASE_2_PLACED:
+            self.on_final_layout_calculation()
         assert self.get_phase() == Phase.PHASE_3_FINAL
+
         return self.__absolute_x
 
     def get_absolute_y(self) -> float:
+        if self.get_phase() == Phase.PHASE_2_PLACED:
+            self.on_final_layout_calculation()
         assert self.get_phase() == Phase.PHASE_3_FINAL
+
         return self.__absolute_y
 
     def get_absolute_width(self) -> float:
+        if self.get_phase() == Phase.PHASE_2_PLACED:
+            self.on_final_layout_calculation()
         assert self.get_phase() == Phase.PHASE_3_FINAL
+
         return self.__absolute_width
 
     def get_absolute_height(self) -> float:
+        if self.get_phase() == Phase.PHASE_2_PLACED:
+            self.on_final_layout_calculation()
         assert self.get_phase() == Phase.PHASE_3_FINAL
+
         return self.__absolute_height
 
     def get_fixed_width(self) -> float:
@@ -239,6 +248,8 @@ class LayoutNode:
         return []
 
     def get_qrect(self):
+        if self.get_phase() == Phase.PHASE_2_PLACED:
+            self.on_final_layout_calculation()
         assert self.get_phase() == Phase.PHASE_3_FINAL
 
         return QtCore.QRectF(
@@ -249,6 +260,8 @@ class LayoutNode:
         )
 
     def get_inner_qrect(self):
+        if self.get_phase() == Phase.PHASE_2_PLACED:
+            self.on_final_layout_calculation()
         assert self.get_phase() == Phase.PHASE_3_FINAL
 
         return self.get_qrect().adjusted(
@@ -305,6 +318,8 @@ class LayoutNode:
         assert self.get_phase() == Phase.PHASE_3_FINAL
 
     def paint(self, *, painter: QtGui.QPainter, visible_rect: QtCore.QRectF):
+        if self.get_phase() == Phase.PHASE_2_PLACED:
+            self.on_final_layout_calculation()
         assert self.get_phase() == Phase.PHASE_3_FINAL
 
         # If this element is not visible, we do not draw it.
