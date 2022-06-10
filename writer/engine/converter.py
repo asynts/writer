@@ -8,7 +8,7 @@ b_simplify_font_metrics = False
 
 # Represents an excerpt from a text chunk in the model.
 # Text chunks can belong to multiple word groups.
-@dataclasses.dataclass(frozen=True, kw_only=True)
+@dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class TextExcerpt:
     text_chunk_model_node: model.TextChunkModelNode
     text: str
@@ -17,6 +17,12 @@ class TextExcerpt:
 # Represents one word that should be wrapped as one.
 # Words can span over multiple text chunks in the model.
 class WordGroup:
+    __slots__ = (
+        "excerpts",
+        "width",
+        "height",
+    )
+
     def __init__(self, excerpts: list[TextExcerpt] = None):
         if excerpts is None:
             excerpts = []

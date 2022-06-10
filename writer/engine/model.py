@@ -7,6 +7,13 @@ from PyQt6 import QtGui
 # Note, that this is not the style that will be used for rendering later.
 # The layout style can be derived from this class, however, that process is context dependent.
 class ModelStyle:
+    __slots__ = (
+        "_parent_model_style",
+        "_is_bold",
+        "_is_italic",
+        "_font_size",
+    )
+
     def __init__(
         self,
         *,
@@ -42,6 +49,12 @@ class ModelStyle:
         return self._get_property("_font_size")
 
 class ModelNode:
+    __slots__ = (
+        "__name",
+        "__children",
+        "__style",
+    )
+
     def __init__(self, *, name: str, style: ModelStyle):
         self.__name = name
         self.__children: list[ModelNode] = []
@@ -58,6 +71,8 @@ class ModelNode:
         return self.__children
 
 class DocumentModelNode(ModelNode):
+    __slots__ = tuple()
+
     def __init__(self):
         super().__init__(
             name="DocumentModelNode",
@@ -72,6 +87,10 @@ class DocumentModelNode(ModelNode):
         )
 
 class TextChunkModelNode(ModelNode):
+    __slots__ = (
+        "__text",
+    )
+
     def __init__(self, *, text: str, style: ModelStyle):
         super().__init__(name="TextChunkModelNode", style=style)
 
@@ -96,5 +115,7 @@ class TextChunkModelNode(ModelNode):
         return QtGui.QFontMetricsF(self.get_font())
 
 class ParagraphModelNode(ModelNode):
+    __slots__ = tuple()
+
     def __init__(self, *, style: ModelStyle):
         super().__init__(name="ParagraphModelNode", style=style)

@@ -40,6 +40,13 @@ As I suspected, my current implementation is too inefficent to be used in any re
     Painting       15264888ns (   0.01526s)
     ```
 
+-   After using `__slots__` in all places where this was possible, I was able to drastically improve the performance again:
+
+    ```none
+    Rebuild      4968573793ns (     4.969s)
+    Painting       14246275ns (   0.01425s)
+    ```
+
 -   When I used `py-spy` to create a flame graph, the following things were slow, but have already been addressed since then:
 
     -   Another thing that is generally slow is the absolute layout calculation in the end.
@@ -54,6 +61,8 @@ As I suspected, my current implementation is too inefficent to be used in any re
 
             This would not affect the initial layout time.
 
+    -   Generally, the contructors of many classes show up in the profile, slots could really help here.
+
 -   I used `py-spy` to create a flame graph of the application.
 
     The following functions had some noticable inpact on performance, where I did not expect that:
@@ -62,18 +71,11 @@ As I suspected, my current implementation is too inefficent to be used in any re
 
         -   This could be cached in the layout node.
 
-    -   `TextChunkLayoutNode.__init__`
+    -   `WordGroup.add_excerpt` takes up a significant amount of the execution time.
 
-        -   This might be because it uses `TextChunkModelNode.get_font_metrics`.
+        It should be possible to cache the font in the model nodes.
 
-        -   I could make use of slots here.
-
-    -   Generally, the contructors of many classes show up in the profile, slots could really help here.
-
-    -   I suspect that my font cache is actually slower than before.
-        This is because of the required lookup, which could be avoided otherwise.
-
-        However, with slots it could still be an improvement so I am keeping it for now.
+    -   `LayoutStyle.__init__` is extremely slow, not sure what causes this.
 
 ### Ideas
 
@@ -94,3 +96,5 @@ As I suspected, my current implementation is too inefficent to be used in any re
 
     I did revert these changes even though they improved the performance a bit, in my opinion this is a micro-optimization
     which was not justified.
+
+-   I used `__slots__` everywhere to drastically improve performance.

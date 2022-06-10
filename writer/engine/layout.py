@@ -42,6 +42,21 @@ class Phase(enum.Enum):
 
 # Properties must not be changed, unless this is explicitly allowed.
 class LayoutNode:
+    __slots__ = (
+        "__phase",
+        "__parent_node",
+        "__name",
+        "_relative_x",
+        "_relative_y",
+        "_width_of_children",
+        "_height_of_children",
+        "__style",
+        "__absolute_x",
+        "__absolute_y",
+        "__absolute_width",
+        "__absolute_height",
+    )
+
     def __init__(
         self,
         *,
@@ -333,6 +348,8 @@ class LayoutNode:
             child.paint(painter=painter, visible_rect=visible_rect)
 
 class BlockLayoutNode(LayoutNode):
+    __slots__ = "_children"
+
     def __init__(self, *, name="BlockLayoutNode", **kwargs):
         super().__init__(name=name, **kwargs)
 
@@ -384,6 +401,8 @@ class BlockLayoutNode(LayoutNode):
         raise AssertionError
 
 class HorizontalLayoutNode(BlockLayoutNode):
+    __slots__ = tuple()
+
     def __init__(self, *, name="HorizontalLayoutNode", **kwargs):
         super().__init__(name=name, **kwargs)
 
@@ -419,6 +438,8 @@ class HorizontalLayoutNode(BlockLayoutNode):
         self._children.append(child_node)
 
 class VerticalLayoutNode(BlockLayoutNode):
+    __slots__ = tuple()
+
     def __init__(self, *, name="VerticalLayoutNode", **kwargs):
         super().__init__(name=name, **kwargs)
 
@@ -463,6 +484,12 @@ class VerticalLayoutNode(BlockLayoutNode):
         self._children.append(child_node)
 
 class PageLayoutNode(VerticalLayoutNode):
+    __slots__ = (
+        "__header_node",
+        "__content_node",
+        "__footer_node",
+    )
+
     def __init__(self, parent_node: "LayoutNode"):
         super().__init__(
             name="PageLayoutNode",
@@ -534,6 +561,12 @@ class PageLayoutNode(VerticalLayoutNode):
         return self.__footer_node
 
 class TextChunkLayoutNode(LayoutNode):
+    __slots__ = (
+        "_model_node",
+        "_model_node_offset",
+        "_text"
+    )
+
     def __init__(
         self,
         *,

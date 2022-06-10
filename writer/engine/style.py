@@ -2,7 +2,7 @@ import dataclasses
 
 from PyQt6.QtGui import QColor as Color
 
-@dataclasses.dataclass(kw_only=True, frozen=True)
+@dataclasses.dataclass(kw_only=True, frozen=True, slots=True)
 class Spacing:
     left: int = 0
     right: int = 0
@@ -26,6 +26,16 @@ class Spacing:
         return self.top + self.bottom
 
 class LayoutStyle:
+    __slots__ = (
+        "__fixed_width",
+        "__fixed_height",
+        "__margin_spacing",
+        "__border_spacing",
+        "__padding_spacing",
+        "__background_color",
+        "__border_color",
+    )
+
     def __init__(
         self,
         *,
