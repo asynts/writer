@@ -7,6 +7,7 @@ As I suspected, my current implementation is too inefficent to be used in any re
 -   I ran a benchmark and the result isn't good:
 
     ```none
+    Document: 'Extremely Long'
     Rebuild      6667293512ns (     6.667s)
     Painting     3805168215ns (     3.805s)
     ```
@@ -16,6 +17,7 @@ As I suspected, my current implementation is too inefficent to be used in any re
 -   In a slightly different benchmark, I clicked on a word to trigger a redraw:
 
     ```none
+    Document: 'Extremely Long'
     Rebuild      6680747048ns (     6.681s)
     Painting     3740714299ns (     3.741s)
     Rebuild      6665600045ns (     6.666s)
@@ -27,6 +29,7 @@ As I suspected, my current implementation is too inefficent to be used in any re
 -   After adding some basic culling, the rendering itself is fast enough to navigate the page without any noticable lag:
 
     ```none
+    Document: 'Extremely Long'
     Rebuild      7371958048ns (     7.372s)
     Painting       11476634ns (   0.01148s)
     ```
@@ -36,6 +39,7 @@ As I suspected, my current implementation is too inefficent to be used in any re
 -   After doing the transition to `PHASE_3_FINAL` lazily, I was able to drastically improve performance again:
 
     ```none
+    Document: 'Extremely Long'
     Rebuild      6178246457ns (     6.178s)
     Painting       15264888ns (   0.01526s)
     ```
@@ -43,8 +47,21 @@ As I suspected, my current implementation is too inefficent to be used in any re
 -   After using `__slots__` in all places where this was possible, I was able to drastically improve the performance again:
 
     ```none
+    Document: 'Extremely Long'
     Rebuild      4968573793ns (     4.969s)
     Painting       14246275ns (   0.01425s)
+    ```
+
+-   I created a more suitable test case.
+    This is an excerpt from "A Study in Scarlet" by "A. Conan Doyle".
+
+    It is much shorter but long enough to provide a realistic maximum case to optimize for.
+    Here are the results:
+
+    ```none
+    Document: 'A Study in Scarlet'
+    Rebuild       391047729ns (     0.391s)
+    Painting       12300102ns (    0.0123s)
     ```
 
 -   When I used `py-spy` to create a flame graph, the following things were slow, but have already been addressed since then:

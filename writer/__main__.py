@@ -8,65 +8,8 @@ import writer.engine.layout as layout
 import writer.engine.model as model
 import writer.engine.converter
 
-def create_model_tree():
-    model_tree = model.DocumentModelNode()
+from . import example
 
-    heading_paragraph_style = model.ModelStyle(
-        parent_model_style=model_tree.get_style(),
-        is_bold=True,
-        font_size=20.0,
-    )
-    normal_paragraph_style = model.ModelStyle(
-        parent_model_style=model_tree.get_style(),
-        font_size=12.0,
-    )
-
-    normal_heading_text_chunk_style = model.ModelStyle(
-        parent_model_style=heading_paragraph_style,
-    )
-    normal_normal_text_chunk_style = model.ModelStyle(
-        parent_model_style=normal_paragraph_style,
-    )
-    bold_normal_text_chunk_style = model.ModelStyle(
-        parent_model_style=normal_paragraph_style,
-        is_bold=True,
-    )
-
-    paragraph_1 = model_tree.add_child(model.ParagraphModelNode(style=heading_paragraph_style))
-    paragraph_1.add_child(model.TextChunkModelNode(text="This  is a", style=normal_heading_text_chunk_style))
-    paragraph_1.add_child(model.TextChunkModelNode(text=" heading.", style=normal_heading_text_chunk_style))
-
-    paragraph_2 = model_tree.add_child(model.ParagraphModelNode(style=normal_paragraph_style))
-    paragraph_2.add_child(model.TextChunkModelNode(text="This is a normal paragraph, but ", style=normal_normal_text_chunk_style))
-    paragraph_2.add_child(model.TextChunkModelNode(text="this", style=bold_normal_text_chunk_style))
-    paragraph_2.add_child(model.TextChunkModelNode(text=" has some highlight applied to it.", style=normal_normal_text_chunk_style))
-
-    for i in range(100):
-        paragraph = model_tree.add_child(model.ParagraphModelNode(style=normal_paragraph_style))
-        for j in range(100):
-            paragraph.add_child(model.TextChunkModelNode(
-                text=f"This is paragraph ",
-                style=normal_normal_text_chunk_style,
-            ))
-            paragraph.add_child(model.TextChunkModelNode(
-                text=f"{i}",
-                style=bold_normal_text_chunk_style,
-            ))
-            paragraph.add_child(model.TextChunkModelNode(
-                text=f" and text chunk",
-                style=normal_normal_text_chunk_style,
-            ))
-            paragraph.add_child(model.TextChunkModelNode(
-                text=f" {j}",
-                style=bold_normal_text_chunk_style,
-            ))
-            # FIXME: If I add another space here, we hit an assertion.
-            paragraph.add_child(model.TextChunkModelNode(
-                text=f". ",
-                style=normal_normal_text_chunk_style,
-            ))
-
-    return model_tree
 
 def create_layout_tree(model_tree: model.DocumentModelNode):
     return writer.engine.converter.generate_layout_for_model(model_tree)
@@ -77,7 +20,7 @@ class WriterWidget(QtWidgets.QWidget):
 
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.MinimumExpanding)
 
-        self._model_tree = create_model_tree()
+        self._model_tree = example.create_model_tree()
         self.build_layout_tree()
 
     def build_layout_tree(self):
@@ -119,6 +62,8 @@ class Window(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
 
+        layout.dots_per_cm = self.screen().logicalDotsPerInch() / 2.54
+
         self._writerWidget = WriterWidget()
 
         horizontalCenterLayout = QtWidgets.QHBoxLayout()
@@ -141,6 +86,7 @@ class Window(QtWidgets.QMainWindow):
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
+
     window = Window()
 
     app.exec()
