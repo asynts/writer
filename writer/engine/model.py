@@ -1,5 +1,3 @@
-from . import font_cache
-
 from PyQt6 import QtGui
 
 # This is where the "cascade" happens.
@@ -15,6 +13,8 @@ class ModelStyle:
         parent_model_style: "ModelStyle",
         is_bold: bool = None,
         is_italic: bool = None,
+
+        # FIXME: Qt wants this to be an integer, we later have to truncate it.
         font_size: float = None
     ):
         self._parent_model_style = parent_model_style
@@ -86,12 +86,14 @@ class TextChunkModelNode(ModelNode):
     def get_font(self):
         style = self.get_style()
 
-        return font_cache.Font(
-            name="monospace",
-            point_size=int(style.font_size),
-            is_bold=style.is_bold,
-            is_italic=style.is_italic,
-        )
+        weight = QtGui.QFont.Weight.Normal
+        if style.is_bold:
+            weight = QtGui.QFont.Weight.Bold
+
+        return QtGui.QFont("monospace", int(style.font_size), weight, style.is_italic)
+
+    def get_font_metrics(self):
+        return QtGui.QFontMetricsF(self.get_font())
 
 class ParagraphModelNode(ModelNode):
     def __init__(self, *, style: ModelStyle):

@@ -4,7 +4,7 @@ import functools
 from PyQt6 import QtGui, QtCore
 from PyQt6.QtGui import QColor
 
-from writer.engine import model, font_cache
+from writer.engine import model
 
 from .style import Spacing, LayoutStyle
 
@@ -545,7 +545,7 @@ class TextChunkLayoutNode(LayoutNode):
     ):
         assert isinstance(model_node, model.TextChunkModelNode)
 
-        rendered_size = font_cache.global_font_cache.get_qfont_metrics(model_node.get_font()).size(0, text)
+        rendered_size = model_node.get_font_metrics().size(0, text)
 
         super().__init__(
             name="InlineTextChunkLayoutNode",
@@ -586,7 +586,7 @@ class TextChunkLayoutNode(LayoutNode):
         super().paint_decoration(painter=painter)
 
         painter.setPen(COLOR_BLACK)
-        painter.setFont(font_cache.global_font_cache.get_qfont(self._model_node.get_font()))
+        painter.setFont(self._model_node.get_font())
         painter.drawText(self.get_inner_qrect(), self.get_text())
 
         painter.setPen(COLOR_RED)

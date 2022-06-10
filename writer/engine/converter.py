@@ -1,5 +1,5 @@
 import string
-from . import model, layout, style, font_cache
+from . import model, layout, style
 
 import dataclasses
 
@@ -53,8 +53,7 @@ class WordGroup:
             # In block mode, we won't actually draw that space but we still need to reserve space for it.
             text = excerpt.text + " "
 
-            qfont = font_cache.global_font_cache.get_qfont_metrics(excerpt.text_chunk_model_node.get_font())
-            size = qfont.size(0, text)
+            size = excerpt.text_chunk_model_node.get_font_metrics().size(0, text)
 
             self.width += size.width()
             self.height = max(self.height, size.height())

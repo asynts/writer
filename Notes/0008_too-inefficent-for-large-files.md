@@ -33,6 +33,13 @@ As I suspected, my current implementation is too inefficent to be used in any re
 
     However, the time required to rebuild the layout tree is still a big problem.
 
+-   After doing the transition to `PHASE_3_FINAL` lazily, I was able to drastically improve performance again:
+
+    ```none
+    Rebuild      6178246457ns (     6.178s)
+    Painting       15264888ns (   0.01526s)
+    ```
+
 -   When I used `py-spy` to create a flame graph, the following things were slow, but have already been addressed since then:
 
     -   Another thing that is generally slow is the absolute layout calculation in the end.
@@ -68,13 +75,6 @@ As I suspected, my current implementation is too inefficent to be used in any re
 
         However, with slots it could still be an improvement so I am keeping it for now.
 
--   After doing the transition to `PHASE_3_FINAL` lazily, I was able to drastically improve performance again:
-
-    ```none
-    Rebuild      6178246457ns (     6.178s)
-    Painting       15264888ns (   0.01526s)
-    ```
-
 ### Ideas
 
 ### Actions
@@ -91,3 +91,6 @@ As I suspected, my current implementation is too inefficent to be used in any re
 
 -   I added a font cache to avoid creating `QFont` and `QFontMetricsF` objects all the time, but this didn't do much.
     It was still an improvement so I am keeping it, but this was underwhelming.
+
+    I did revert these changes even though they improved the performance a bit, in my opinion this is a micro-optimization
+    which was not justified.
