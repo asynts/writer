@@ -27,10 +27,13 @@ class LayoutNode:
         result = ""
 
         result += " " * indent
-        result += f"{name}("
+        result += f"{name}@{id(self)}("
 
         prefix = ""
         for property_, value in self.properties.items():
+            if property_ == "child_nodes":
+                continue
+
             result += prefix
             prefix = ", "
 
@@ -164,15 +167,6 @@ def iterate_nodes_of_type_in_pre_order(*, root_node: LayoutNode, class_: type):
     parent_nodes = []
     return iterate_nodes_of_type_in_pre_order_helper(current_node=root_node, class_=class_, parent_nodes=parent_nodes)
 
-class Maybe:
-    pass
-
-class Some(Maybe):
-    value: any
-
-class Nothing(Maybe):
-    pass
-
 def partition_with_sentinel(list_: list, sentinel: any):
     for index in range(len(list_)):
         if list_[index] == sentinel:
@@ -187,8 +181,7 @@ def mutate(position: Position, /, **kwargs):
     # Update some of the properties based on keyword arguments.
     for property_, value in { **kwargs }.items():
         assert property_ in properties
-        if isinstance(value, Some):
-            properties[property_] = value
+        properties[property_] = value
 
     # Create the new node.
     new_node = position.node.__class__(**properties)
@@ -199,7 +192,8 @@ def mutate(position: Position, /, **kwargs):
         parent_node = position.parent_nodes[-1]
         assert isinstance(parent_node, ParentLayoutNode)
 
-        siblings_before, _, siblings_after = partition_with_sentinel(parent_node.child_nodes, position.node)
+        siblings_before, sentinel, siblings_after = partition_with_sentinel(parent_node.child_nodes, position.node)
+        print(f"siblings_before={[id(sibling) for sibling in siblings_before]} sentinel={id(sentinel)} siblings_after={[id(sibling) for sibling in siblings_after]} node={id(position.node)}")
 
         new_parent_position = mutate(
             Position(

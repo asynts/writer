@@ -15,6 +15,11 @@ It turns out that it's quite a bit more difficult to reuse layout nodes than I t
     -   When iterating the tree, I need to keep track of the parent nodes because the child nodes are immutable and thus can not
         reference their parent nodes.
 
+    -   When modifying the tree, we need to be able to create a derived version of a node, this is quite involved and I don't know how I could
+        implement this in C++ without tons of boilerplate.
+
+        It's quite likely that some amount of code generation will be mandatory.
+
 -   It may not be the right call to use immutable trees for the layout because this could add a ton of complexity in the converter logic.
     However, it may be more flexible when more features are added to the engine later on.
 
