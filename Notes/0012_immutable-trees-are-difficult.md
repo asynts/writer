@@ -10,6 +10,11 @@ It turns out that it's quite a bit more difficult to reuse layout nodes than I t
 
 -   https://stackoverflow.com/a/2587202/8746648
 
+-   I started working on a prototype for immutable trees (`0001_immutable-tree`):
+
+    -   When iterating the tree, I need to keep track of the parent nodes because the child nodes are immutable and thus can not
+        reference their parent nodes.
+
 ### Ideas
 
 -   I could add an additional phase where the object can be mutated freely.
