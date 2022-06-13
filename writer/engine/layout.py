@@ -4,7 +4,9 @@ import functools
 from PyQt6 import QtGui, QtCore
 from PyQt6.QtGui import QColor
 
-from writer.engine import model
+import writer.engine.model as model
+import writer.engine.tree as tree
+import writer.engine.history as history
 
 from .style import Spacing, LayoutStyle
 
@@ -203,7 +205,7 @@ class LayoutNode:
         self.__phase = Phase.PHASE_3_FINAL
 
     # Virtual.
-    def on_mouse_click(self, *, relative_x: float, relative_y: float):
+    def on_mouse_click(self, *, relative_x: float, relative_y: float, model_position: "tree.Position"):
         assert self.get_phase() == Phase.PHASE_3_FINAL
 
         if relative_x < 0.0 or relative_y < 0.0:
@@ -212,10 +214,18 @@ class LayoutNode:
         if relative_x > self.__absolute_width or relative_y > self.__absolute_height:
             return False
 
-        for child in self.get_children():
-            if child.on_mouse_click(
-                relative_x=relative_x - child.get_relative_x(),
-                relative_y=relative_y - child.get_relative_y(),
+        for child_node in self.get_children():
+            # FIXME: Not every layout node has a model node assigned to it.
+            #        Currently, only the text nodes have layout nodes assigned to them.
+            child_model_position = tree.Position(
+                node=child_node,
+                parent_nodes=model_position.parent_nodes + [ self._model_node ],
+            )
+
+            if child_node.on_mouse_click(
+                relative_x=relative_x - child_node.get_relative_x(),
+                relative_y=relative_y - child_node.get_relative_y(),
+                model_position=child_model_position,
             ):
                 break
 
@@ -661,7 +671,7 @@ class TextChunkLayoutNode(LayoutNode):
         self._text = text
 
     # Override.
-    def on_mouse_click(self, *, relative_x: float, relative_y: float):
+    def on_mouse_click(self, *, relative_x: float, relative_y: float, model_position: "tree.Position"):
         assert self.get_phase() == Phase.PHASE_3_FINAL
 
         if relative_x < 0.0 or relative_y < 0.0:
@@ -670,7 +680,13 @@ class TextChunkLayoutNode(LayoutNode):
         if relative_x > self.get_absolute_width() or relative_y > self.get_absolute_height():
             return False
 
-        # FIXME: Delete the current word here.
+        # Delete the text chunk that the user clicked on.
+        text = self._model_node.text
+        new_text = text[:self._model_node_offset] + text[self._model_node_offset + len(self._text):]
+        history.global_history_manager.modify(
+            model_position,
+            text=new_text,
+        )
 
         return True
 

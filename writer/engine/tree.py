@@ -75,7 +75,8 @@ def partition_with_sentinel(list_: list, *, sentinel: any):
 
     return list_, [], []
 
-def modified_copy(position: Position, /, **kwargs):
+# Returns the root node of a new tree where the modifications were applied to the node.
+def new_tree_with_modified_node(position: Position, /, **kwargs):
     # Create a copy of the original node.
     new_node = copy.copy(position.node)
 
@@ -88,14 +89,14 @@ def modified_copy(position: Position, /, **kwargs):
 
     if len(position.parent_nodes) >= 1:
         # If we have parent nodes, recursively update the child nodes of parents.
-
         parent_node = position.parent_nodes[-1]
+        assert position.node in parent_node
 
         siblings_before, _, siblings_after = partition_with_sentinel(parent_node.children, sentinel=position.node)
 
-        new_parent_position = modified_copy(
+        return new_tree_with_modified_node(
             Position(
-                node=position.parent_nodes[-1],
+                node=parent_node,
                 parent_nodes=position.parent_nodes[:-1]
             ),
             children=[
@@ -104,18 +105,6 @@ def modified_copy(position: Position, /, **kwargs):
                 *siblings_after,
             ],
         )
-
-        return Position(
-            node=new_node,
-            parent_nodes=[
-                *new_parent_position.parent_nodes,
-                new_parent_position.node,
-            ],
-        )
     else:
         # We are the root node.
-
-        return Position(
-            node=new_node,
-            parent_nodes=[],
-        )
+        return new_node

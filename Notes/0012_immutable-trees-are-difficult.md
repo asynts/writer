@@ -29,6 +29,14 @@ It turns out that it's quite a bit more difficult to reuse layout nodes than I t
     -   I tried adding an additional phase where the object can be mutated and this is probably the way to go.
         At this point, I should try to implement this in the actual writer application.
 
+-   I started implementing everything in the actual writer application.
+
+    -   There is another problem that I did not think of.
+
+        I need to construct the parent hierachy because the nodes can not reference their parents.
+        The problem is, that I am not actually iterating through the model tree but through the layout tree.
+        In other words, I am only able to indirectly build this parent hierachy.
+
 ### Ideas
 
 -   I could add another object which can be modified freely but when it's assigned to a layout node,

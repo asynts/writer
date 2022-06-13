@@ -6,7 +6,9 @@ from PyQt6 import QtWidgets, QtGui, QtCore
 
 import writer.engine.layout as layout
 import writer.engine.model as model
+import writer.engine.tree as tree
 import writer.engine.converter
+import writer.engine.history
 
 from . import example
 
@@ -22,7 +24,7 @@ class WriterWidget(QtWidgets.QWidget):
 
         self._model_tree = example.create_model_tree()
 
-        print(self._model_tree.dump())
+        writer.engine.history.global_history_manager = writer.engine.history.HistoryManager(self._model_tree)
 
         self.build_layout_tree()
 
@@ -54,7 +56,11 @@ class WriterWidget(QtWidgets.QWidget):
 
         self._layout_tree.on_mouse_click(
             relative_x=event.position().x(),
-            relative_y=event.position().y()
+            relative_y=event.position().y(),
+            model_position=tree.Position(
+                node=self._model_tree,
+                parent_nodes=[],
+            )
         )
 
         # Redraw the widget.
