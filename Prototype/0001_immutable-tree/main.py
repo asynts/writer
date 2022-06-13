@@ -16,6 +16,34 @@ class LayoutNode:
     def background_color(self):
         return self._background_color
 
+    # Virtual.
+    @property
+    def properties(self):
+        return {
+            "background_color": self._background_color,
+        }
+
+    def dump_header(self, *, name: str, indent: int):
+        result = ""
+
+        result += " " * indent
+        result += f"{name}("
+
+        prefix = ""
+        for property_, value in self.properties.items():
+            result += prefix
+            prefix = ", "
+
+            result += f"{property_}={repr(value)}"
+
+        result += ")\n"
+
+        return result
+
+    # Virtual.
+    def dump(self, indent: int = 0, name: str = "LayoutNode"):
+        return self.dump_header(name=name, indent=indent)
+
 class ParentLayoutNode(LayoutNode):
     __slots__ = (
         "_child_nodes",
@@ -29,11 +57,33 @@ class ParentLayoutNode(LayoutNode):
     def child_nodes(self):
         return self._child_nodes
 
+    # Override.
+    @property
+    def properties(self):
+        properties = super().properties
+        properties.update({
+            "child_nodes": self._child_nodes,
+        })
+        return properties
+
+    # Override.
+    def dump(self, indent: int = 0, name: str = "ParentLayoutNode"):
+        result = super().dump(indent=indent, name=name)
+
+        for child_node in self.child_nodes:
+            result += child_node.dump(indent=indent+1)
+
+        return result
+
 class VerticalLayoutNode(ParentLayoutNode):
-    pass
+    # Virtual.
+    def dump(self, indent: int = 0, name: str = "VerticalLayoutNode"):
+        return super().dump(name=name, indent=indent)
 
 class HorizontalLayoutNode(ParentLayoutNode):
-    pass
+    # Virtual.
+    def dump(self, indent: int = 0, name: str = "HorizontalLayoutNode"):
+        return super().dump(name=name, indent=indent)
 
 class TextLayoutNode(LayoutNode):
     __slots__ = (
@@ -47,6 +97,18 @@ class TextLayoutNode(LayoutNode):
     @property
     def text(self):
         return self._text
+
+    @property
+    def properties(self):
+        properties = super().properties
+        properties.update({
+            "text": self._text,
+        })
+        return properties
+
+    # Virtual.
+    def dump(self, indent: int = 0, name: str = "TextLayoutNode"):
+        return super().dump(name=name, indent=indent)
 
 root_layout_node = VerticalLayoutNode(
     background_color=(200, 200, 200),
@@ -102,5 +164,80 @@ def iterate_nodes_of_type_in_pre_order(*, root_node: LayoutNode, class_: type):
     parent_nodes = []
     return iterate_nodes_of_type_in_pre_order_helper(current_node=root_node, class_=class_, parent_nodes=parent_nodes)
 
-for position in iterate_nodes_of_type_in_pre_order(root_node=root_layout_node, class_=TextLayoutNode):
-    print(f"node: {position.node.text=} {len(position.parent_nodes)=}")
+class Maybe:
+    pass
+
+class Some(Maybe):
+    value: any
+
+class Nothing(Maybe):
+    pass
+
+def partition_with_sentinel(list_: list, sentinel: any):
+    for index in range(len(list_)):
+        if list_[index] == sentinel:
+            return list_[:index], list_[index], list_[index+1:]
+
+    return list_, [], []
+
+def mutate(position: Position, /, **kwargs):
+    # Collect all the old properties in a dictionary.
+    properties = position.node.properties
+
+    # Update some of the properties based on keyword arguments.
+    for property_, value in { **kwargs }.items():
+        assert property_ in properties
+        if isinstance(value, Some):
+            properties[property_] = value
+
+    # Create the new node.
+    new_node = position.node.__class__(**properties)
+
+    if len(position.parent_nodes) >= 1:
+        # If we have parent nodes, recursively update the child nodes of parents.
+
+        parent_node = position.parent_nodes[-1]
+        assert isinstance(parent_node, ParentLayoutNode)
+
+        siblings_before, _, siblings_after = partition_with_sentinel(parent_node.child_nodes, position.node)
+
+        new_parent_position = mutate(
+            Position(
+                node=position.parent_nodes[-1],
+                parent_nodes=position.parent_nodes[:-1]
+            ),
+            child_nodes=[
+                *siblings_before,
+                new_node,
+                *siblings_after,
+            ],
+        )
+
+        return Position(
+            node=new_node,
+            parent_nodes=[
+                *new_parent_position.parent_nodes,
+                new_parent_position.node,
+            ],
+        )
+    else:
+        # We are the root node.
+
+        return Position(
+            node=new_node,
+            parent_nodes=[],
+        )
+
+text_node_iterator = iterate_nodes_of_type_in_pre_order(root_node=root_layout_node, class_=TextLayoutNode)
+next(text_node_iterator)
+old_position = next(text_node_iterator)
+
+print(">>> before")
+print(old_position.parent_nodes[0].dump(), end="")
+print("<<<")
+
+new_position = mutate(old_position, text="Paul")
+
+print(">>> after")
+print(new_position.parent_nodes[0].dump(), end="")
+print("<<<")

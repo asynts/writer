@@ -15,6 +15,9 @@ It turns out that it's quite a bit more difficult to reuse layout nodes than I t
     -   When iterating the tree, I need to keep track of the parent nodes because the child nodes are immutable and thus can not
         reference their parent nodes.
 
+-   It may not be the right call to use immutable trees for the layout because this could add a ton of complexity in the converter logic.
+    However, it may be more flexible when more features are added to the engine later on.
+
 ### Ideas
 
 -   I could add an additional phase where the object can be mutated freely.
