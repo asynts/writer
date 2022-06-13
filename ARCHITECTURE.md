@@ -47,6 +47,21 @@ It has the following structure:
 
     -   *WordChunkNode*
 
+### Immutable Model Tree
+
+-   The model tree needs to be immutable because we want to add undo/redo functionality to the codebase.
+
+    Usually this is done by a fancy "command" pattern where instead of making modifications directly, a new object is created with an `redo()` and
+    `undo()` method.
+    These commands can then be stored in a stack structure.
+
+-   When we change a node further down in the tree, we need to update all the parent nodes with new children.
+    All remaining nodes remain unchanged.
+
+-   Notice, that we automatically discard any caches when we create a copy of a node.
+    This means that if we make modifications all of our cached values are gone before we can make changes.
+    This is another layer of protection.
+
 ### Layout Phases
 
 Not all of the layout operation can be performed in a single step.
