@@ -31,7 +31,12 @@ It turns out that it's quite a bit more difficult to reuse layout nodes than I t
 
 ### Ideas
 
--   I could add an additional phase where the object can be mutated freely.
-
 -   I could add another object which can be modified freely but when it's assigned to a layout node,
     we promise not to change it.
+
+-   I should update the layout and converter code to be able to handle the immutable model tree next.
+
+### Actions
+
+-   I made the model tree immutable.
+    This seemed simpler than messing with the layout tree and I am confident that this will stay, since undo/redo logic mandates it.

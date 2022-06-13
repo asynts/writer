@@ -1,8 +1,7 @@
-import enum
-
 from PyQt6 import QtGui
 
 import writer.engine.layout as layout
+import writer.engine.tree as tree
 
 # This is where the "cascade" happens.
 # We take the style from the parent and then override some of the values.
@@ -52,70 +51,20 @@ class ModelStyle:
     def font_size(self) -> bool:
         return self._get_property("_font_size")
 
-class ModelPhase(enum.Enum):
-    # When a model node is first created, it is mutable.
-    #
-    # Some properties are derived from other properties and are cached inside the object.
-    # They must not be accessed before the object becomes immutable.
-    PHASE_1_MUTABLE = 1
-
-    # One a model node has been fully initialized, it becomes immutable.
-    # Nodes must be in this phase before they can become children of other nodes.
-    #
-    # Note that there are some special properties that can still change in immutable nodes.
-    # However, this is restricted to caching the result of something derived from other immutable properties.
-    PHASE_2_IMMUTABLE = 2
-
-class ModelNode:
+class ModelNode(tree.Node):
     __slots__ = (
         "__style",
-        "__children",
-        "_phase",
     )
 
-    def __init__(self, *, style: ModelStyle, children: list["ModelNode"]):
-        # Property.
-        self.__children = children
+    def __init__(self, *, style: ModelStyle, **kwargs):
+        super().__init__(**kwargs)
 
         # Property.
         self.__style = style
 
-        self._phase = ModelPhase.PHASE_1_MUTABLE
-
-    def finalize(self):
-        assert self._phase == ModelPhase.PHASE_1_MUTABLE
-        self._phase = ModelPhase.PHASE_2_IMMUTABLE
-
-    def append_child(self, child_node: "ModelNode"):
-        assert self._phase == ModelPhase.PHASE_1_MUTABLE
-        self.__children.append(child_node)
-        return child_node
-
-    # Virtual.
-    def dump_properties(self):
-        return ""
-
-    # Virtual.
+    # Override.
     def dump(self, *, name: str = "ModelNode", indent: int = 0):
-        result = ""
-        result += " " * indent
-        result += f"{name}("
-        result += self.dump_properties()
-        result += ")\n"
-
-        for child_node in self.children:
-            result += child_node.dump(indent=indent+1)
-
-        return result
-
-    @property
-    def children(self):
-        return self.__children
-
-    @children.setter
-    def children(self, value: list["ModelNode"]):
-        assert self._phase == ModelPhase.PHASE_1_MUTABLE
-        self.__children = value
+        return super().dump(name=name, indent=indent)
 
     @property
     def style(self):
@@ -123,13 +72,13 @@ class ModelNode:
 
     @style.setter
     def style(self, value: ModelStyle):
-        assert self._phase == ModelPhase.PHASE_1_MUTABLE
+        assert self._is_mutable
         self.__style = value
 
 class DocumentModelNode(ModelNode):
     __slots__ = tuple()
 
-    # Virtual.
+    # Override.
     def dump(self, *, name: str = "DocumentModelNode", indent: int = 0):
         return super().dump(name=name, indent=indent)
 
@@ -152,9 +101,13 @@ class TextChunkModelNode(ModelNode):
         # Cache.
         self.__font_metrics: QtGui.QFontMetricsF = None
 
-    # Virtual.
+    # Override.
     def dump_properties(self):
         return f"text={repr(self.text)}"
+
+    # Override.
+    def dump(self, *, name: str = "TextChunkModelNode", indent: int = 0):
+        return super().dump(name=name, indent=indent)
 
     @property
     def text(self):
@@ -162,12 +115,12 @@ class TextChunkModelNode(ModelNode):
 
     @text.setter
     def text(self, value: str):
-        assert self._phase == ModelPhase.PHASE_1_MUTABLE
+        assert self.is_mutable
         self.__text = value
 
     @property
     def font(self):
-        assert self._phase == ModelPhase.PHASE_2_IMMUTABLE
+        assert not self.is_mutable
 
         if self.__font is not None:
             return self.__font
@@ -181,7 +134,7 @@ class TextChunkModelNode(ModelNode):
 
     @property
     def font_metrics(self):
-        assert self._phase == ModelPhase.PHASE_2_IMMUTABLE
+        assert not self.is_mutable
 
         if self.__font_metrics is not None:
             return self.__font_metrics
@@ -200,17 +153,17 @@ class ParagraphModelNode(ModelNode):
         # Cache.
         self.__layout_nodes: list["layout.VerticalLayoutNode"] = None
 
-    # Virtual.
+    # Override.
     def dump(self, *, name: str = "ParagraphModelNode", indent: int = 0):
         return super().dump(name=name, indent=indent)
 
     def clear_layout_nodes(self):
-        assert self._phase == ModelPhase.PHASE_2_IMMUTABLE
+        assert not self.is_mutable
 
         self.__layout_nodes = None
 
     def assign_layout_nodes(self, layout_nodes: list["layout.VerticalLayoutNode"]):
-        assert self._phase == ModelPhase.PHASE_2_IMMUTABLE
+        assert not self.is_mutable
 
         assert self.__layout_nodes is None
         self.__layout_nodes = layout_nodes

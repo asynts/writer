@@ -1,8 +1,32 @@
 import writer.engine.model as model
+import writer.engine.tree as tree
 
 def create_model_tree(*, b_print_document_name: bool = True):
-    # return create_model_tree_1(b_print_document_name=b_print_document_name)
-    return create_model_tree_2(b_print_document_name=b_print_document_name)
+    model_tree = create_model_tree_2(b_print_document_name=b_print_document_name)
+
+    # FIXME: Create a unit test for this.
+
+    old_position = tree.Position(
+        node=model_tree.children[0].children[0],
+        parent_nodes=[
+            model_tree,
+            model_tree.children[0],
+        ],
+    )
+    assert old_position.node.text == "Title"
+
+    new_position = tree.modified_copy(old_position, text="New Title")
+    new_model_tree = new_position.parent_nodes[0]
+
+    print(">>> old:")
+    print(model_tree.dump(), end="")
+    print("<<<")
+
+    print(">>> new:")
+    print(new_model_tree.dump(), end="")
+    print("<<<")
+
+    return model_tree
 
 def create_model_tree_2(*, b_print_document_name: bool):
     if b_print_document_name:
