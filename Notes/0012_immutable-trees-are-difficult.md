@@ -20,8 +20,14 @@ It turns out that it's quite a bit more difficult to reuse layout nodes than I t
 
         It's quite likely that some amount of code generation will be mandatory.
 
--   It may not be the right call to use immutable trees for the layout because this could add a ton of complexity in the converter logic.
-    However, it may be more flexible when more features are added to the engine later on.
+    -   It may not be the right call to use immutable trees for the layout because this could add a ton of complexity in the converter logic.
+        However, it may be more flexible when more features are added to the engine later on.
+
+        We have to create a ton of intermediate lists, just to be able to iterate the tree.
+        This is likely necessary for the model tree but for the layout tree this is really bad.
+
+    -   I tried adding an additional phase where the object can be mutated and this is probably the way to go.
+        At this point, I should try to implement this in the actual writer application.
 
 ### Ideas
 
@@ -29,8 +35,3 @@ It turns out that it's quite a bit more difficult to reuse layout nodes than I t
 
 -   I could add another object which can be modified freely but when it's assigned to a layout node,
     we promise not to change it.
-
--   I could get rid of back references by memorizing the parent hierachy when iterating the tree.
-    When computing mouse events, I would always keep track of the parent node.
-
--   I should create a small prototype of such a tree modification before implementing this here.

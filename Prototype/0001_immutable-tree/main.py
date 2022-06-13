@@ -1,20 +1,36 @@
+import copy
+import enum
 import typing
 
 Color = typing.Tuple[int, int, int]
 
 # Invariant: All the getters return immutable objects, they must not be modified.
 
+class Phase(enum.Enum):
+    PHASE_1_MUTABLE = 1
+    PHASE_2_IMMUTABLE = 2
+
 class LayoutNode:
     __slots__ = (
+        "_phase",
         "_background_color",
     )
 
     def __init__(self, *, background_color: Color):
         self._background_color = background_color
+        self._phase = Phase.PHASE_1_MUTABLE
+
+    def finalize(self):
+        assert self._phase == Phase.PHASE_1_MUTABLE
+        self._phase = Phase.PHASE_2_IMMUTABLE
 
     @property
     def background_color(self):
         return self._background_color
+    @background_color.setter
+    def background_color(self, value: Color):
+        assert self._phase == Phase.PHASE_1_MUTABLE
+        self._background_color = value
 
     # Virtual.
     @property
@@ -59,6 +75,10 @@ class ParentLayoutNode(LayoutNode):
     @property
     def child_nodes(self):
         return self._child_nodes
+    @child_nodes.setter
+    def child_nodes(self, value: list[LayoutNode]):
+        assert self._phase == Phase.PHASE_1_MUTABLE
+        self._child_nodes = value
 
     # Override.
     @property
@@ -73,17 +93,21 @@ class ParentLayoutNode(LayoutNode):
     def dump(self, indent: int = 0, name: str = "ParentLayoutNode"):
         result = super().dump(indent=indent, name=name)
 
-        for child_node in self.child_nodes:
+        for child_node in self._child_nodes:
             result += child_node.dump(indent=indent+1)
 
         return result
 
 class VerticalLayoutNode(ParentLayoutNode):
+    __slots__ = tuple()
+
     # Virtual.
     def dump(self, indent: int = 0, name: str = "VerticalLayoutNode"):
         return super().dump(name=name, indent=indent)
 
 class HorizontalLayoutNode(ParentLayoutNode):
+    __slots__ = tuple()
+
     # Virtual.
     def dump(self, indent: int = 0, name: str = "HorizontalLayoutNode"):
         return super().dump(name=name, indent=indent)
@@ -100,6 +124,10 @@ class TextLayoutNode(LayoutNode):
     @property
     def text(self):
         return self._text
+    @text.setter
+    def text(self, value: str):
+        assert self._phase == Phase.PHASE_1_MUTABLE
+        self._text = value
 
     @property
     def properties(self):
@@ -157,7 +185,7 @@ def iterate_nodes_of_type_in_pre_order_helper(*, current_node: LayoutNode, class
     if isinstance(current_node, ParentLayoutNode):
         # We may have to optimize it by maintaining a stack, I don't think the optimizer will be able to do that for me.
         new_parent_nodes = parent_nodes + [ current_node ]
-        for child_node in current_node.child_nodes:
+        for child_node in current_node._child_nodes:
             yield from iterate_nodes_of_type_in_pre_order_helper(current_node=child_node, class_=class_, parent_nodes=new_parent_nodes)
 
     if isinstance(current_node, class_):
@@ -175,16 +203,15 @@ def partition_with_sentinel(list_: list, sentinel: any):
     return list_, [], []
 
 def mutate(position: Position, /, **kwargs):
-    # Collect all the old properties in a dictionary.
-    properties = position.node.properties
+    # Create a copy of the original node.
+    new_node = copy.copy(position.node)
 
     # Update some of the properties based on keyword arguments.
+    # In the C++ version we would have to implement this for each class manually.
     for property_, value in { **kwargs }.items():
-        assert property_ in properties
-        properties[property_] = value
+        setattr(new_node, property_, value)
 
-    # Create the new node.
-    new_node = position.node.__class__(**properties)
+    new_node.finalize()
 
     if len(position.parent_nodes) >= 1:
         # If we have parent nodes, recursively update the child nodes of parents.
@@ -192,8 +219,7 @@ def mutate(position: Position, /, **kwargs):
         parent_node = position.parent_nodes[-1]
         assert isinstance(parent_node, ParentLayoutNode)
 
-        siblings_before, sentinel, siblings_after = partition_with_sentinel(parent_node.child_nodes, position.node)
-        print(f"siblings_before={[id(sibling) for sibling in siblings_before]} sentinel={id(sentinel)} siblings_after={[id(sibling) for sibling in siblings_after]} node={id(position.node)}")
+        siblings_before, sentinel, siblings_after = partition_with_sentinel(parent_node._child_nodes, position.node)
 
         new_parent_position = mutate(
             Position(
