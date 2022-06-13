@@ -148,6 +148,11 @@ class Placer:
         self._current_paragraph: layout.VerticalLayoutNode = None
         self._current_line: layout.HorizontalLayoutNode = None
 
+        # The paragraph needs to know which layout nodes are used to represent it.
+        # We keep track of the layout nodes that we already created for the current paragraph, then we
+        # assign it to the model node in the end.
+        self._current_paragraph_layout_nodes: list[layout.VerticalLayoutNode] = None
+
     @property
     def layout_tree(self) -> layout.BlockLayoutNode:
         assert self._layout_tree is not None
@@ -188,21 +193,9 @@ class Placer:
             return
 
         content_node = self._current_page.get_content_node()
+        assert content_node.get_max_remaining_height() >= self._current_paragraph.get_min_height() + self._current_paragraph.get_style().outer_spacing.y
 
-        # assert content_node.get_max_remaining_height() >= self._current_paragraph.get_min_height() + self._current_paragraph.get_style().outer_spacing.y
-        if content_node.get_max_remaining_height() < self._current_paragraph.get_min_height() + self._current_paragraph.get_style().outer_spacing.y:
-            previous_sibling = content_node.get_children()[-1]
-
-            print(f"previous_sibling=(relative_x={previous_sibling.get_relative_x()}, relative_y={previous_sibling.get_relative_y()}, height={previous_sibling.get_height()})")
-            print(f"fixed_height={content_node.get_fixed_height()}")
-            print("lhs={} rhs={} ({} + {})".format(
-                content_node.get_max_remaining_height(),
-                self._current_paragraph.get_min_height() + self._current_paragraph.get_style().outer_spacing.y,
-                self._current_paragraph.get_min_height(),
-                self._current_paragraph.get_style().outer_spacing.y,
-            ))
-            raise AssertionError
-
+        self._current_paragraph_layout_nodes.append(self._current_paragraph)
         content_node.place_child_node(self._current_paragraph)
 
         self._current_paragraph = None
@@ -286,6 +279,13 @@ class Placer:
     def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode):
         assert isinstance(paragraph_model_node, model.ParagraphModelNode)
 
+        # FIXME: At this point, we are mutating a model node, that won't work later on.
+        #        For now, this is fine though.
+        paragraph_model_node.clear_layout_nodes()
+
+        assert self._current_paragraph_layout_nodes is None
+        self._current_paragraph_layout_nodes = []
+
         self.create_new_paragraph()
         self.create_new_line()
 
@@ -304,6 +304,9 @@ class Placer:
         self.place_current_line()
         self.place_current_paragraph()
 
+        paragraph_model_node.assign_layout_nodes(self._current_paragraph_layout_nodes)
+        self._current_paragraph_layout_nodes = None
+
     def place_document(self, document_model_node: model.DocumentModelNode):
         assert isinstance(document_model_node, model.DocumentModelNode)
 
@@ -315,6 +318,8 @@ class Placer:
 
 def generate_layout_for_model(document_model_node: model.DocumentModelNode) -> layout.BlockLayoutNode:
     placer = Placer()
+
+    # FIXME: We should clear the saved layout nodes before we start here, or we should ignore them entirely.
 
     placer.place_document(document_model_node)
 

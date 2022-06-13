@@ -1,5 +1,7 @@
 from PyQt6 import QtGui
 
+import writer.engine.layout as layout
+
 # This is where the "cascade" happens.
 # We take the style from the parent and then override some of the values.
 # This happens recursively.
@@ -53,12 +55,17 @@ class ModelNode:
         "__name",
         "__children",
         "__style",
+        "__parent_node",
     )
 
-    def __init__(self, *, name: str, style: ModelStyle):
+    def __init__(self, *, name: str, style: ModelStyle, parent_node: "ModelNode" = None):
         self.__name = name
         self.__children: list[ModelNode] = []
         self.__style = style
+        self.__parent_node = parent_node
+
+    def get_parent(self):
+        return self.__parent_node
 
     def add_child(self, child_node: "ModelNode"):
         self.__children.append(child_node)
@@ -93,8 +100,8 @@ class TextChunkModelNode(ModelNode):
         "__font_metrics",
     )
 
-    def __init__(self, *, text: str, style: ModelStyle):
-        super().__init__(name="TextChunkModelNode", style=style)
+    def __init__(self, *, text: str, style: ModelStyle, parent_node: ModelNode):
+        super().__init__(name="TextChunkModelNode", style=style, parent_node=parent_node)
 
         self.__text = text
         self.__font = None
@@ -127,7 +134,20 @@ class TextChunkModelNode(ModelNode):
         return self.__font_metrics
 
 class ParagraphModelNode(ModelNode):
-    __slots__ = tuple()
+    __slots__ = (
+        "__layout_nodes",
+    )
 
-    def __init__(self, *, style: ModelStyle):
-        super().__init__(name="ParagraphModelNode", style=style)
+    def __init__(self, *, style: ModelStyle, parent_node: ModelNode):
+        super().__init__(name="ParagraphModelNode", style=style, parent_node=parent_node)
+
+        # The layout nodes that are used to render this paragraph.
+        # If this paragraph overflows a page or multiple pages, there can be multiple layout nodes.
+        self.__layout_nodes: list["layout.VerticalLayoutNode"] = None
+
+    def clear_layout_nodes(self):
+        self.__layout_nodes = None
+
+    def assign_layout_nodes(self, layout_nodes: list["layout.VerticalLayoutNode"]):
+        assert self.__layout_nodes is None
+        self.__layout_nodes = layout_nodes

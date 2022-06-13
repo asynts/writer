@@ -639,7 +639,7 @@ class TextChunkLayoutNode(LayoutNode):
         text: str,
         parent_node: LayoutNode,
 
-        model_node: model.TextChunkModelNode,
+        model_node: "model.TextChunkModelNode",
         model_node_offset: int,
     ):
         assert isinstance(model_node, model.TextChunkModelNode)
@@ -670,10 +670,18 @@ class TextChunkLayoutNode(LayoutNode):
         if relative_x > self.get_absolute_width() or relative_y > self.get_absolute_height():
             return False
 
+        # FIXME: At this point, we are mutating a model node, that won't work later on.
+        #        For now, this is fine though.
+
         # Currently, we just delete the text that belongs to this layout node from the model.
         text = self._model_node.get_text()
         text = text[:self._model_node_offset] + text[self._model_node_offset + len(self._text):]
         self._model_node.set_text(text)
+
+        # We need to invalidate the model, the layout nodes can not be reused.
+        # In the future, we would create a copy of the model node that would not inherit the layout nodes.
+        # That would be a much safer approach.
+        self._model_node.get_parent().clear_layout_nodes()
 
         return True
 
