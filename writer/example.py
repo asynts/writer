@@ -1,6 +1,78 @@
 import writer.engine.model as model
 
-def create_model_tree(b_print_document_name: bool = True):
+def create_model_tree(*, b_print_document_name: bool = True):
+    # return create_model_tree_1(b_print_document_name=b_print_document_name)
+    return create_model_tree_2(b_print_document_name=b_print_document_name)
+
+def create_model_tree_2(*, b_print_document_name: bool):
+    if b_print_document_name:
+        print("Document: 'Immutable Tree Example'")
+
+    default_style = model.ModelStyle(
+        parent_model_style=None,
+        is_bold=False,
+        is_italic=False,
+        font_size=None,
+    )
+
+    normal_paragraph_style = model.ModelStyle(
+        parent_model_style=default_style,
+        font_size=12.0,
+    )
+    normal_normal_text_chunk_style = model.ModelStyle(
+        parent_model_style=normal_paragraph_style,
+    )
+    bold_normal_text_chunk_style = model.ModelStyle(
+        parent_model_style=normal_paragraph_style,
+        is_bold=True,
+    )
+
+    heading_paragraph_style = model.ModelStyle(
+        parent_model_style=default_style,
+        is_bold=True,
+        font_size=18.0,
+    )
+    normal_heading_text_chunk_style = model.ModelStyle(
+        parent_model_style=heading_paragraph_style,
+    )
+
+    return model.DocumentModelNode(
+        style=default_style,
+        children=[
+            model.ParagraphModelNode(
+                style=heading_paragraph_style,
+                children=[
+                    model.TextChunkModelNode(
+                        style=normal_heading_text_chunk_style,
+                        text="Title",
+                        children=[],
+                    ),
+                ],
+            ),
+            model.ParagraphModelNode(
+                style=normal_paragraph_style,
+                children=[
+                    model.TextChunkModelNode(
+                        style=normal_normal_text_chunk_style,
+                        text="This is a test document with ",
+                        children=[],
+                    ),
+                    model.TextChunkModelNode(
+                        style=bold_normal_text_chunk_style,
+                        text="formatting",
+                        children=[],
+                    ),
+                    model.TextChunkModelNode(
+                        style=normal_normal_text_chunk_style,
+                        text=".",
+                        children=[],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+def create_model_tree_1(*, b_print_document_name: bool):
     # This is from "A STUDY IN SCARLET." by "A. Conan Doyle".
     # It is in public domain and can therefore easily be used for this purpose.
 

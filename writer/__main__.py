@@ -21,6 +21,9 @@ class WriterWidget(QtWidgets.QWidget):
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.MinimumExpanding)
 
         self._model_tree = example.create_model_tree()
+
+        print(self._model_tree.dump())
+
         self.build_layout_tree()
 
     def build_layout_tree(self):
