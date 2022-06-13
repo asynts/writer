@@ -139,7 +139,7 @@ class TextChunkModelNode(ModelNode):
         if self.__font_metrics is not None:
             return self.__font_metrics
 
-        self.__font_metrics = QtGui.QFontMetricsF(self.get_font())
+        self.__font_metrics = QtGui.QFontMetricsF(self.font)
         return self.__font_metrics
 
 class ParagraphModelNode(ModelNode):
@@ -157,13 +157,11 @@ class ParagraphModelNode(ModelNode):
     def dump(self, *, name: str = "ParagraphModelNode", indent: int = 0):
         return super().dump(name=name, indent=indent)
 
-    def clear_layout_nodes(self):
+    @property
+    def layout_nodes(self):
+        return self.__layout_nodes
+
+    @layout_nodes.setter
+    def layout_nodes(self, value: list["layout.VerticalLayoutNode"]):
         assert not self.is_mutable
-
-        self.__layout_nodes = None
-
-    def assign_layout_nodes(self, layout_nodes: list["layout.VerticalLayoutNode"]):
-        assert not self.is_mutable
-
-        assert self.__layout_nodes is None
-        self.__layout_nodes = layout_nodes
+        self.__layout_nodes = value

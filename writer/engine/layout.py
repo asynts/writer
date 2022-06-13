@@ -644,7 +644,7 @@ class TextChunkLayoutNode(LayoutNode):
     ):
         assert isinstance(model_node, model.TextChunkModelNode)
 
-        rendered_size = model_node.get_font_metrics().size(0, text)
+        rendered_size = model_node.font_metrics.size(0, text)
 
         super().__init__(
             name="InlineTextChunkLayoutNode",
@@ -670,18 +670,7 @@ class TextChunkLayoutNode(LayoutNode):
         if relative_x > self.get_absolute_width() or relative_y > self.get_absolute_height():
             return False
 
-        # FIXME: At this point, we are mutating a model node, that won't work later on.
-        #        For now, this is fine though.
-
-        # Currently, we just delete the text that belongs to this layout node from the model.
-        text = self._model_node.get_text()
-        text = text[:self._model_node_offset] + text[self._model_node_offset + len(self._text):]
-        self._model_node.set_text(text)
-
-        # We need to invalidate the model, the layout nodes can not be reused.
-        # In the future, we would create a copy of the model node that would not inherit the layout nodes.
-        # That would be a much safer approach.
-        self._model_node.get_parent().clear_layout_nodes()
+        # FIXME: Delete the current word here.
 
         return True
 
@@ -693,7 +682,7 @@ class TextChunkLayoutNode(LayoutNode):
         super().paint_decoration(painter=painter)
 
         painter.setPen(COLOR_BLACK)
-        painter.setFont(self._model_node.get_font())
+        painter.setFont(self._model_node.font)
         painter.drawText(self.get_inner_qrect(), self.get_text())
 
         painter.setPen(COLOR_RED)

@@ -59,7 +59,7 @@ class WordGroup:
             # In block mode, we won't actually draw that space but we still need to reserve space for it.
             text = excerpt.text + " "
 
-            size = excerpt.text_chunk_model_node.get_font_metrics().size(0, text)
+            size = excerpt.text_chunk_model_node.font_metrics.size(0, text)
 
             self.width += size.width()
             self.height = max(self.height, size.height())
@@ -104,11 +104,11 @@ def compute_word_groups_in_paragraph(paragraph_model_node: model.ParagraphModelN
 
         current_word_group = WordGroup()
 
-    for text_chunk_model_node in paragraph_model_node.get_children():
+    for text_chunk_model_node in paragraph_model_node.children:
         assert isinstance(text_chunk_model_node, model.TextChunkModelNode)
 
         offset_into_model_node = 0
-        remaining_text = text_chunk_model_node.get_text()
+        remaining_text = text_chunk_model_node.text
 
         while len(remaining_text) >= 1:
             # We split of the first word and update our offset calculation.
@@ -279,9 +279,7 @@ class Placer:
     def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode):
         assert isinstance(paragraph_model_node, model.ParagraphModelNode)
 
-        # FIXME: At this point, we are mutating a model node, that won't work later on.
-        #        For now, this is fine though.
-        paragraph_model_node.clear_layout_nodes()
+        # FIXME: Try to reuse the existing layout nodes here.
 
         assert self._current_paragraph_layout_nodes is None
         self._current_paragraph_layout_nodes = []
@@ -304,7 +302,7 @@ class Placer:
         self.place_current_line()
         self.place_current_paragraph()
 
-        paragraph_model_node.assign_layout_nodes(self._current_paragraph_layout_nodes)
+        paragraph_model_node.layout_nodes = self._current_paragraph_layout_nodes
         self._current_paragraph_layout_nodes = None
 
     def place_document(self, document_model_node: model.DocumentModelNode):
@@ -312,7 +310,7 @@ class Placer:
 
         self.create_new_page()
 
-        for paragraph_model_node in document_model_node.get_children():
+        for paragraph_model_node in document_model_node.children:
             assert isinstance(paragraph_model_node, model.ParagraphModelNode)
             self.place_paragraph(paragraph_model_node)
 

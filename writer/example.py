@@ -2,31 +2,7 @@ import writer.engine.model as model
 import writer.engine.tree as tree
 
 def create_model_tree(*, b_print_document_name: bool = True):
-    model_tree = create_model_tree_2(b_print_document_name=b_print_document_name)
-
-    # FIXME: Create a unit test for this.
-
-    old_position = tree.Position(
-        node=model_tree.children[0].children[0],
-        parent_nodes=[
-            model_tree,
-            model_tree.children[0],
-        ],
-    )
-    assert old_position.node.text == "Title"
-
-    new_position = tree.modified_copy(old_position, text="New Title")
-    new_model_tree = new_position.parent_nodes[0]
-
-    print(">>> old:")
-    print(model_tree.dump(), end="")
-    print("<<<")
-
-    print(">>> new:")
-    print(new_model_tree.dump(), end="")
-    print("<<<")
-
-    return model_tree
+    return create_model_tree_2(b_print_document_name=b_print_document_name)
 
 def create_model_tree_2(*, b_print_document_name: bool):
     if b_print_document_name:
@@ -60,41 +36,30 @@ def create_model_tree_2(*, b_print_document_name: bool):
         parent_model_style=heading_paragraph_style,
     )
 
-    return model.DocumentModelNode(
+    model_tree = model.DocumentModelNode(
         style=default_style,
-        children=[
-            model.ParagraphModelNode(
-                style=heading_paragraph_style,
-                children=[
-                    model.TextChunkModelNode(
-                        style=normal_heading_text_chunk_style,
-                        text="Title",
-                        children=[],
-                    ),
-                ],
-            ),
-            model.ParagraphModelNode(
-                style=normal_paragraph_style,
-                children=[
-                    model.TextChunkModelNode(
-                        style=normal_normal_text_chunk_style,
-                        text="This is a test document with ",
-                        children=[],
-                    ),
-                    model.TextChunkModelNode(
-                        style=bold_normal_text_chunk_style,
-                        text="formatting",
-                        children=[],
-                    ),
-                    model.TextChunkModelNode(
-                        style=normal_normal_text_chunk_style,
-                        text=".",
-                        children=[],
-                    ),
-                ],
-            ),
-        ],
+        children=[],
     )
+
+    paragraph = model.ParagraphModelNode(
+        style=heading_paragraph_style,
+        children=[],
+    )
+
+    text_chunk = model.TextChunkModelNode(
+        style=normal_heading_text_chunk_style,
+        text="Title",
+        children=[],
+    )
+    text_chunk.make_immutable()
+    paragraph.append_child(text_chunk)
+
+    paragraph.make_immutable()
+    model_tree.append_child(paragraph)
+
+    model_tree.make_immutable()
+
+    return model_tree
 
 def create_model_tree_1(*, b_print_document_name: bool):
     # This is from "A STUDY IN SCARLET." by "A. Conan Doyle".
