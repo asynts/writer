@@ -45,3 +45,19 @@ I didn't know where else to put it after removing it from the code.
     This is important to assert in the parent that no other pending children exist.
 
     In other words, parent layout nodes should track pending children to verify that at most one is pending.
+
+-   I had some thoughts while I was taking a break from the project:
+
+    -   The layout nodes can not be immutable, because they must contain references to the model tree.
+        If they were immutable, they would have to be copied.
+
+    -   We can reuse layout nodes relatively safely, because there is only one layout tree that is being rendered.
+        This is because the code runs synchronously, if we change that it will cause issues.
+
+        Maybe copying the tree is better?
+
+    -   It may be smart to make some parts of the layout nodes immutable though, maybe we don't go back to the first
+        initialization phase but only after that.
+
+    -   I was thinking about caching some more information in the model nodes about the length of words, however, this doesn't work
+        because of word groups.
