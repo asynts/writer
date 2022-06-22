@@ -8,7 +8,8 @@ import writer.engine.layout as layout
 import writer.engine.model as model
 import writer.engine.tree as tree
 import writer.engine.converter
-import writer.engine.history
+import writer.engine.history as history
+import writer.engine.events as events
 
 from . import example
 
@@ -22,15 +23,15 @@ class WriterWidget(QtWidgets.QWidget):
 
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.MinimumExpanding)
 
-        self._model_tree = example.create_model_tree()
-
-        writer.engine.history.global_history_manager = writer.engine.history.HistoryManager(self._model_tree)
+        writer.engine.history.global_history_manager = history.HistoryManager(
+            model_tree=example.create_model_tree(),
+        )
 
         self.build_layout_tree()
 
     def build_layout_tree(self):
         before_ns = time.perf_counter_ns()
-        self._layout_tree = create_layout_tree(self._model_tree)
+        self._layout_tree = create_layout_tree(history.global_history_manager.get_model_tree())
         after_ns = time.perf_counter_ns()
 
         print(f"Rebuild  {after_ns - before_ns:>14}ns ({(after_ns - before_ns) / (1000 * 1000 * 1000):>10.4}s)")
@@ -54,14 +55,26 @@ class WriterWidget(QtWidgets.QWidget):
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
         super().mousePressEvent(event)
 
-        self._layout_tree.on_mouse_click(
-            relative_x=event.position().x(),
-            relative_y=event.position().y(),
-            model_position=tree.Position(
-                node=self._model_tree,
-                parent_nodes=[],
-            )
+        print(">>> mousePressEvent before")
+        print(
+            history.global_history_manager.get_model_tree().dump(),
+            end="",
         )
+        print("<<<")
+
+        events.mouse_click_event(
+            absolute_x=event.position().x(),
+            absolute_y=event.position().y(),
+            model_tree=history.global_history_manager.get_model_tree(),
+            layout_tree=self._layout_tree
+        )
+
+        print(">>> mousePressEvent after")
+        print(
+            history.global_history_manager.get_model_tree().dump(),
+            end="",
+        )
+        print("<<<")
 
         # Redraw the widget.
         self.build_layout_tree()

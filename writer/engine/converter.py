@@ -138,9 +138,10 @@ def compute_word_groups_in_paragraph(paragraph_model_node: model.ParagraphModelN
     return word_groups
 
 class Placer:
-    def __init__(self):
+    def __init__(self, *, document_model_node: "model.DocumentModelNode"):
         self._layout_tree = layout.VerticalLayoutNode(
             parent_node=None,
+            model_node=document_model_node,
             style=style.LayoutStyle(),
         )
 
@@ -152,6 +153,10 @@ class Placer:
         # We keep track of the layout nodes that we already created for the current paragraph, then we
         # assign it to the model node in the end.
         self._current_paragraph_layout_nodes: list[layout.VerticalLayoutNode] = None
+
+        self._current_model_paragraph_node: layout.VerticalLayoutNode = None
+
+        self.place_document(document_model_node)
 
     @property
     def layout_tree(self) -> layout.BlockLayoutNode:
@@ -206,6 +211,8 @@ class Placer:
         content_node = self._current_page.get_content_node()
         self._current_paragraph = layout.VerticalLayoutNode(
             parent_node=content_node,
+            model_node=self._current_model_paragraph_node,
+
             style=style.LayoutStyle(
                 margin_spacing=style.Spacing(bottom=10.0)
             ),
@@ -248,6 +255,8 @@ class Placer:
         assert self._current_line is None
         self._current_line = layout.HorizontalLayoutNode(
             parent_node=self._current_paragraph,
+            model_node=None,
+
             style=style.LayoutStyle(),
         )
 
@@ -279,6 +288,8 @@ class Placer:
     def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode):
         assert isinstance(paragraph_model_node, model.ParagraphModelNode)
 
+        self._current_model_paragraph_node = paragraph_model_node
+
         # FIXME: Try to reuse the existing layout nodes here.
 
         assert self._current_paragraph_layout_nodes is None
@@ -305,6 +316,8 @@ class Placer:
         paragraph_model_node.layout_nodes = self._current_paragraph_layout_nodes
         self._current_paragraph_layout_nodes = None
 
+        self._current_model_paragraph_node = None
+
     def place_document(self, document_model_node: model.DocumentModelNode):
         assert isinstance(document_model_node, model.DocumentModelNode)
 
@@ -315,10 +328,8 @@ class Placer:
             self.place_paragraph(paragraph_model_node)
 
 def generate_layout_for_model(document_model_node: model.DocumentModelNode) -> layout.BlockLayoutNode:
-    placer = Placer()
+    placer = Placer(document_model_node=document_model_node)
 
     # FIXME: We should clear the saved layout nodes before we start here, or we should ignore them entirely.
-
-    placer.place_document(document_model_node)
 
     return placer.finalize()

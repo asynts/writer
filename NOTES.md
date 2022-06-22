@@ -61,3 +61,9 @@ I didn't know where else to put it after removing it from the code.
 
     -   I was thinking about caching some more information in the model nodes about the length of words, however, this doesn't work
         because of word groups.
+
+-   We need to reference model nodes in almost all layout nodes to be able to build the parent hierachy.
+
+    The difficulty here is that we need to ensure that this hierachy is complete.
+
+-   If we modify the model tree from a hook in the layout tree, we must not modify any layout nodes because the calling code might rely on it still.

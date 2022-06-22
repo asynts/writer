@@ -56,6 +56,7 @@ class LayoutNode:
     __slots__ = (
         "__phase",
         "__parent_node",
+        "__model_node",
         "__associated_child_node",
         "__name",
         "_relative_x",
@@ -74,6 +75,7 @@ class LayoutNode:
         *,
         name: str,
         parent_node: "LayoutNode",
+        model_node: "model.ModelNode",
         style: LayoutStyle):
 
         # The parent node needs to be extremely careful now.
@@ -93,6 +95,10 @@ class LayoutNode:
         # Variable (PHASE_1_CREATED).
         # Constant (PHASE_2_PLACED).
         self.__parent_node = parent_node
+
+        # Can reference the corresponding model node, or 'None'.
+        # Variable.
+        self.__model_node = model_node
 
         # There can only be one child associated with this node.
         # To enforce this, we keep track of the associated child.
@@ -138,6 +144,9 @@ class LayoutNode:
 
     def get_style(self):
         return self.__style
+
+    def get_model_node(self):
+        return self.__model_node
 
     def to_string(self, *, indent=0):
         result = f"{indent*' '}{self.__name}(relative_x={self._relative_x}, relative_y={self._relative_y}, id={id(self)} phase={self.__phase})\n"
@@ -206,30 +215,7 @@ class LayoutNode:
 
     # Virtual.
     def on_mouse_click(self, *, relative_x: float, relative_y: float, model_position: "tree.Position"):
-        assert self.get_phase() == Phase.PHASE_3_FINAL
-
-        if relative_x < 0.0 or relative_y < 0.0:
-            return False
-
-        if relative_x > self.__absolute_width or relative_y > self.__absolute_height:
-            return False
-
-        for child_node in self.get_children():
-            # FIXME: Not every layout node has a model node assigned to it.
-            #        Currently, only the text nodes have layout nodes assigned to them.
-            child_model_position = tree.Position(
-                node=child_node,
-                parent_nodes=model_position.parent_nodes + [ self._model_node ],
-            )
-
-            if child_node.on_mouse_click(
-                relative_x=relative_x - child_node.get_relative_x(),
-                relative_y=relative_y - child_node.get_relative_y(),
-                model_position=child_model_position,
-            ):
-                break
-
-        return True
+        return False
 
     def get_parent_node(self) -> "LayoutNode":
         return self.__parent_node
@@ -556,10 +542,11 @@ class PageLayoutNode(VerticalLayoutNode):
         "__footer_node",
     )
 
-    def __init__(self, parent_node: "LayoutNode"):
+    def __init__(self, *, parent_node: "LayoutNode"):
         super().__init__(
             name="PageLayoutNode",
             parent_node=parent_node,
+            model_node=None,
 
             style=LayoutStyle(
                 fixed_width=cm_to_pixel(21.0),
@@ -581,6 +568,9 @@ class PageLayoutNode(VerticalLayoutNode):
         self.__header_node = VerticalLayoutNode(
             parent_node=self,
 
+            # FIXME: Add HeaderModelNode.
+            model_node=None,
+
             style=LayoutStyle(
                 fixed_height=header_height,
 
@@ -590,6 +580,7 @@ class PageLayoutNode(VerticalLayoutNode):
 
         self.__content_node = VerticalLayoutNode(
             parent_node=self,
+            model_node=None,
 
             style=LayoutStyle(
                 fixed_height=content_height,
@@ -600,6 +591,9 @@ class PageLayoutNode(VerticalLayoutNode):
 
         self.__footer_node = VerticalLayoutNode(
             parent_node=self,
+
+            # FIXME: Add HeaderModelNode.
+            model_node=None,
 
             style=LayoutStyle(
                 fixed_height=footer_height,
@@ -659,6 +653,7 @@ class TextChunkLayoutNode(LayoutNode):
         super().__init__(
             name="InlineTextChunkLayoutNode",
             parent_node=parent_node,
+            model_node=model_node,
 
             style=LayoutStyle(
                 fixed_width=rendered_size.width(),
@@ -666,22 +661,13 @@ class TextChunkLayoutNode(LayoutNode):
             ),
         )
 
-        self._model_node = model_node
         self._model_node_offset = model_node_offset
         self._text = text
 
     # Override.
     def on_mouse_click(self, *, relative_x: float, relative_y: float, model_position: "tree.Position"):
-        assert self.get_phase() == Phase.PHASE_3_FINAL
-
-        if relative_x < 0.0 or relative_y < 0.0:
-            return False
-
-        if relative_x > self.get_absolute_width() or relative_y > self.get_absolute_height():
-            return False
-
         # Delete the text chunk that the user clicked on.
-        text = self._model_node.text
+        text = self.get_model_node().text
         new_text = text[:self._model_node_offset] + text[self._model_node_offset + len(self._text):]
         history.global_history_manager.modify(
             model_position,
@@ -698,7 +684,7 @@ class TextChunkLayoutNode(LayoutNode):
         super().paint_decoration(painter=painter)
 
         painter.setPen(COLOR_BLACK)
-        painter.setFont(self._model_node.font)
+        painter.setFont(self.get_model_node().font)
         painter.drawText(self.get_inner_qrect(), self.get_text())
 
         painter.setPen(COLOR_RED)
