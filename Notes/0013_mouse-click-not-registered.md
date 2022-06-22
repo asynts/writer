@@ -108,6 +108,10 @@ When I click, somehow, we don't detect the mouse click correctly.
 
 -   I did draw a rect where I clicked on the screen and it seems to appear in the correct location.
 
+### Ideas
+
+-   Should I handle the event in the leaf first before allowing parent nodes to process the event?
+
 ### Theories
 
 -   The space after doesn't really belong to a model node, therefore, we never go through the logic and can't fail.

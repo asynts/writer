@@ -62,6 +62,15 @@ It has the following structure:
     This means that if we make modifications all of our cached values are gone before we can make changes.
     This is another layer of protection.
 
+### Event Handling
+
+With the complex model and layout structures, we need to be careful what we can modify in event handers.
+Currently, my approach is, that I am allowed to change the model in the event handler (by creating a new root node).
+However, I am not allowed to modify the layout nodes in any way.
+
+In the future, I will have to adjust this because I need some way of invalidating layout nodes that can not be reused.
+Since the model nodes do not reference the layout nodes, this would be difficult otherwise.
+
 ### Layout Phases
 
 Not all of the layout operation can be performed in a single step.
