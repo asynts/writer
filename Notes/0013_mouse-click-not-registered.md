@@ -1,3 +1,5 @@
+commitid b867cdd53c2f2a170a8eb5c6c6e031198d5b1fa6
+
 When I click, somehow, we don't detect the mouse click correctly.
 
 ### Notes
@@ -69,6 +71,47 @@ When I click, somehow, we don't detect the mouse click correctly.
     My understanding is, that the first one happens when I click on the "Title" text and the other happens if I click on
     the space after.
 
+-   I added some debug rects that show which nodes are visited when I click somewhere.
+    The result is really confusing.
+
+    -   First, we encounter the root node, this is correct.
+
+    -   Then we encounter the page node, that is correct too.
+
+    -   Then we encounter the content node, this is correct too.
+
+    -   Then we encounter the footer node which makes no sense.
+
+-   I added a bunch of debug statements into the event handling logic:
+
+    ```none
+    # We visit the root node, the target is contained and we have a model node we can visit.
+    relative_x=71.0 relative_y=120.0 layout_node.get_absolute_width()=793.7007874015748 layout_node.get_absolute_height()=1142.51968503937
+    visited id(layout_node)=139698164796768 (id(layout_node.get_model_node())=139698159972864)
+
+    # We look at the header node.
+    recursive call: relative_x=71.0 layout_node.get_relative_x()=0 relative_y=120.0 layout_node.get_relative_y()=0
+    relative_x=71.0 relative_y=120.0 layout_node.get_absolute_width()=793.7007874015748 layout_node.get_absolute_height()=1122.51968503937
+
+    # This I do not understand.
+    recursive call: relative_x=71.0 layout_node.get_relative_x()=0 relative_y=120.0 layout_node.get_relative_y()=10
+    relative_x=71.0 relative_y=110.0 layout_node.get_absolute_width()=791.7007874015748 layout_node.get_absolute_height()=71.81102362204723
+    node outside (2)
+    recursive call: relative_x=71.0 layout_node.get_relative_x()=0 relative_y=120.0 layout_node.get_relative_y()=10
+    relative_x=71.0 relative_y=110.0 layout_node.get_absolute_width()=791.7007874015748 layout_node.get_absolute_height()=909.9999999999999
+    recursive call: relative_x=71.0 layout_node.get_relative_x()=1 relative_y=110.0 layout_node.get_relative_y()=72.81102362204723
+    relative_x=70.0 relative_y=37.18897637795277 layout_node.get_absolute_width()=751.7007874015748 layout_node.get_absolute_height()=32.6875
+    node outside (2)
+    recursive call: relative_x=71.0 layout_node.get_relative_x()=0 relative_y=120.0 layout_node.get_relative_y()=10
+    relative_x=71.0 relative_y=110.0 layout_node.get_absolute_width()=791.7007874015748 layout_node.get_absolute_height()=138.70866141732282
+    ```
+
+-   I did draw a rect where I clicked on the screen and it seems to appear in the correct location.
+
 ### Theories
 
 -   The space after doesn't really belong to a model node, therefore, we never go through the logic and can't fail.
+
+-   I suspect that we don't consider scrolling.
+
+-   Maybe the position I am getting has a different coordinate system?

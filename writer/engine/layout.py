@@ -15,6 +15,7 @@ COLOR_BLACK = QColor(0, 0, 0)
 COLOR_RED = QColor(255, 0, 0)
 COLOR_GREEN = QColor(0, 255, 0)
 COLOR_BLUE = QColor(0, 0, 255)
+COLOR_PINK = QColor(255, 53, 184)
 
 # This is initialized on startup by Qt.
 dots_per_cm = None

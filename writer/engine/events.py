@@ -16,16 +16,25 @@ import writer.engine.tree as tree
 def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model.DocumentModelNode, layout_tree: layout.LayoutNode):
     model_parent_nodes: list[model.ModelNode] = []
 
+    debug_rects = []
+
     def visit_layout_node(layout_node: layout.LayoutNode, *, relative_x: float, relative_y: float):
         nonlocal model_parent_nodes
+        nonlocal debug_rects
 
         assert layout_node.get_phase() == layout.Phase.PHASE_3_FINAL
 
+        print(f"{relative_x=} {relative_y=} {layout_node.get_absolute_width()=} {layout_node.get_absolute_height()=}")
+
         # For simplicity, this function may be called with positions that do not make any sense.
         if relative_x < 0.0 or relative_y < 0.0:
+            print("node outside (1)")
             return False
         if relative_x > layout_node.get_absolute_width() or relative_y > layout_node.get_absolute_height():
+            print("node outside (2)")
             return False
+
+        debug_rects.append(layout_node.get_qrect())
 
         # Only call the hook for layout nodes that define a model node.
         # Otherwise, we can't really associate this with the model tree.
@@ -54,10 +63,11 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
             else:
                 b_added_parent_node = False
 
+            print(f"recursive call: {relative_x=} {layout_node.get_relative_x()=} {relative_y=} {layout_node.get_relative_y()=}")
             b_event_consumed = visit_layout_node(
                 layout_child_node,
                 relative_x=relative_x - layout_node.get_relative_x(),
-                relative_y=relative_y - layout_node.get_relative_y()
+                relative_y=relative_y - layout_node.get_relative_y(),
             )
 
             if b_added_parent_node:
@@ -69,3 +79,5 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
         return False
 
     visit_layout_node(layout_tree, relative_x=absolute_x, relative_y=absolute_y)
+
+    return debug_rects
