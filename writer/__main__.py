@@ -42,6 +42,11 @@ class WriterWidget(QtWidgets.QWidget):
         self._layout_tree = create_layout_tree(history.global_history_manager.get_model_tree())
         after_ns = time.perf_counter_ns()
 
+        events.validate_parent_hierachy_event(
+            model_tree=history.global_history_manager.get_model_tree(),
+            layout_tree=self._layout_tree,
+        )
+
         print(f"Rebuild  {after_ns - before_ns:>14}ns ({(after_ns - before_ns) / (1000 * 1000 * 1000):>10.4}s)")
 
     def timerTimeout(self):

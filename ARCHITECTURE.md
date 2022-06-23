@@ -37,6 +37,11 @@ The layout tree describes how the model tree is rendered.
 
 -   In some cases, we need to fill in some information like page numbers that are abstracted in the model.
 
+-   The layout nodes can reference model nodes.
+    If so, then the parent of that model node is referenced by a parent of the layout node.
+
+    In other words, the hierarchy is consistent with the model tree.
+
 It has the following structure:
 
 -   *PageNode*

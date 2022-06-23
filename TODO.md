@@ -1,14 +1,8 @@
 ### Current
 
--   I should build some validation logic that verifies that the parent hierachy is correct.
-
-    For each model node, I should collect the correct parent hierachy and then use this to verify the hierachy in the layout tree.
-
-    It would be nice, if I find some way of documenting this in some clear invariant.
+-   Reuse paragraphs during layout.
 
 ### Next Up
-
--   Reuse paragraphs during layout.
 
 ### Backlog
 

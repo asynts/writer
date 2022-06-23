@@ -1,3 +1,4 @@
+import typing
 import writer.engine.model as model
 import writer.engine.layout as layout
 import writer.engine.tree as tree
@@ -92,3 +93,41 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
     visit_layout_node(layout_tree, relative_x=absolute_x, relative_y=absolute_y)
 
     return debug_rects
+
+# Layout nodes can reference model nodes.
+# This "event" verifies that the layout tree is consistent with the model tree.
+# If a model node has a parent, the same parent can be discovered in the layout tree.
+def validate_parent_hierachy_event(*, model_tree: "model.DocumentModelNode", layout_tree: "layout.LayoutNode"):
+    model_node_to_parents: typing.Dict[model.ModelNode, list[model.ModelNode]] = {}
+
+    # First, we find the parents for each model node.
+    current_model_parents = []
+    def visit_model_node(model_node: model.ModelNode):
+        nonlocal current_model_parents
+
+        assert model_node not in model_node_to_parents
+        model_node_to_parents[model_node] = current_model_parents[:]
+
+        current_model_parents.append(model_node)
+        for child_node in model_node.children:
+            visit_model_node(child_node)
+        assert current_model_parents.pop() == model_node
+
+    visit_model_node(model_tree)
+
+    # Then we go through the layout node and verify the parents.
+    current_model_parents = []
+    def visit_layout_node(layout_node: layout.LayoutNode):
+        nonlocal current_model_parents
+
+        if layout_node.get_model_node() is not None:
+            assert model_node_to_parents[layout_node.get_model_node()] == current_model_parents
+
+        if layout_node.get_model_node() is not None:
+            current_model_parents.append(layout_node.get_model_node())
+        for child_node in layout_node.get_children():
+            visit_layout_node(child_node)
+        if layout_node.get_model_node() is not None:
+            assert current_model_parents.pop() == layout_node.get_model_node()
+
+    visit_layout_node(layout_tree)
