@@ -27,14 +27,6 @@ class WriterWidget(QtWidgets.QWidget):
             model_tree=example.create_model_tree(),
         )
 
-        self._debug_rects = []
-        self._debug_rect_offset = 0
-
-        self._timer = QtCore.QTimer(self)
-        self._timer.setInterval(500)
-        self._timer.timeout.connect(self.timerTimeout)
-        self._timer.start()
-
         self.build_layout_tree()
 
     def build_layout_tree(self):
@@ -49,10 +41,6 @@ class WriterWidget(QtWidgets.QWidget):
 
         print(f"Rebuild  {after_ns - before_ns:>14}ns ({(after_ns - before_ns) / (1000 * 1000 * 1000):>10.4}s)")
 
-    def timerTimeout(self):
-        self._debug_rect_offset += 1
-        self.update()
-
     # Override.
     def paintEvent(self, event: QtGui.QPaintEvent):
         painter = QtGui.QPainter(self)
@@ -61,11 +49,6 @@ class WriterWidget(QtWidgets.QWidget):
         before_ns = time.perf_counter_ns()
         self._layout_tree.paint(painter=painter, visible_rect=QtCore.QRectF(event.rect()))
         after_ns = time.perf_counter_ns()
-
-        if len(self._debug_rects) >= 1:
-            debug_rect_index = self._debug_rect_offset % len(self._debug_rects)
-            painter.setPen(QtGui.QPen(layout.COLOR_PINK, 3))
-            painter.drawRect(self._debug_rects[debug_rect_index])
 
         print(f"Painting {after_ns - before_ns:>14}ns ({(after_ns - before_ns) / (1000 * 1000 * 1000):>10.4}s)")
 
@@ -91,16 +74,11 @@ class WriterWidget(QtWidgets.QWidget):
         )
         print("<<<")
 
-        self._debug_rects = events.mouse_click_event(
+        events.mouse_click_event(
             absolute_x=event.position().x(),
             absolute_y=event.position().y(),
             model_tree=history.global_history_manager.get_model_tree(),
             layout_tree=self._layout_tree
-        )
-        self._debug_rect_offset = 0
-
-        self._debug_rects.append(
-            QtCore.QRectF(event.position().x() - 4, event.position().y() - 4, 8, 8)
         )
 
         print(">>> mousePressEvent after")
