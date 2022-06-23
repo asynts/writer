@@ -1,8 +1,8 @@
 ### Current
 
--   Reuse paragraphs during layout.
-
 ### Next Up
+
+-   Remove the logic used to debug the mouse click bug.
 
 ### Backlog
 
