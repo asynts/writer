@@ -174,6 +174,42 @@ When I click, somehow, we don't detect the mouse click correctly.
 
     This all looks correct, just the modification logic is broken.
 
+-   Same thing, but this time, I did trigger the case where the click isn't registered:
+
+    ```none
+    mouse_click_event(absolute_x=60.0, absolute_y=133.0)
+    >>> model_tree
+    DocumentModelNode@139916960347072()
+     ParagraphModelNode@139916960347200()
+      TextChunkModelNode@139916960322304(text='Title')
+    <<<
+    >>> layout_tree
+    VerticalLayoutNode(relative_x=0, relative_y=0, id=139916964875616 phase=Phase.PHASE_3_FINAL)
+     PageLayoutNode(relative_x=0, relative_y=10, id=139916960270992 phase=Phase.PHASE_3_FINAL)
+      VerticalLayoutNode(relative_x=1, relative_y=1, id=139916964875776 phase=Phase.PHASE_3_FINAL)
+      VerticalLayoutNode(relative_x=1, relative_y=72.81102362204723, id=139916964875936 phase=Phase.PHASE_3_FINAL)
+       VerticalLayoutNode(relative_x=20, relative_y=20, id=139916964876256 phase=Phase.PHASE_3_FINAL)
+        HorizontalLayoutNode(relative_x=0, relative_y=0, id=139916964876416 phase=Phase.PHASE_3_FINAL)
+         InlineTextChunkLayoutNode(relative_x=0, relative_y=0, id=139916960271520 phase=Phase.PHASE_3_FINAL)
+         InlineTextChunkLayoutNode(relative_x=71.953125, relative_y=0, id=139916960271696 phase=Phase.PHASE_3_FINAL)
+      VerticalLayoutNode(relative_x=1, relative_y=982.8110236220471, id=139916964876096 phase=Phase.PHASE_3_FINAL)
+    <<<
+    visit_layout_node(relative_x=60.0, relative_y=133.0, id(layout_node)=139916964875616)
+    visit_layout_node: calling hook for id(layout_node)=139916964875616
+    visit_layout_node: recursive call by id(layout_node)=139916964875616
+    visit_layout_node(relative_x=60.0, relative_y=133.0, id(layout_node)=139916960270992)
+    visit_layout_node: recursive call by id(layout_node)=139916960270992
+    visit_layout_node(relative_x=60.0, relative_y=123.0, id(layout_node)=139916964875776)
+    visit_layout_node: out of bounds, returning false
+    visit_layout_node: recursive call by id(layout_node)=139916960270992
+    visit_layout_node(relative_x=60.0, relative_y=123.0, id(layout_node)=139916964875936)
+    visit_layout_node: recursive call by id(layout_node)=139916964875936
+    visit_layout_node(relative_x=59.0, relative_y=50.18897637795277, id(layout_node)=139916964876256)
+    visit_layout_node: out of bounds, returning false
+    visit_layout_node: recursive call by id(layout_node)=139916960270992
+    visit_layout_node(relative_x=60.0, relative_y=123.0, id(layout_node)=139916964876096)
+    ```
+
 ### Ideas
 
 -   Should I handle the event in the leaf first before allowing parent nodes to process the event?
@@ -196,3 +232,7 @@ When I click, somehow, we don't detect the mouse click correctly.
     However, I also copied the hidden `__is_mutable` property which remained false.
 
     I fixed this by adding a `make_mutable_copy` method that creates a copy and then changes this property.
+
+-   The problem was, that I mixed up `layout_node` and `layout_child_node` when computing the position of the child node.
+
+    That resolved the issue.

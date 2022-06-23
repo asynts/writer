@@ -76,8 +76,8 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
             print(f"visit_layout_node: recursive call by {id(layout_node)=}")
             b_event_consumed = visit_layout_node(
                 layout_child_node,
-                relative_x=relative_x - layout_node.get_relative_x(),
-                relative_y=relative_y - layout_node.get_relative_y(),
+                relative_x=relative_x - layout_child_node.get_relative_x(),
+                relative_y=relative_y - layout_child_node.get_relative_y(),
             )
 
             if b_added_parent_node:
