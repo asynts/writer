@@ -288,9 +288,25 @@ class Placer:
     def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode):
         assert isinstance(paragraph_model_node, model.ParagraphModelNode)
 
-        self._current_model_paragraph_node = paragraph_model_node
+        # Check if this node has exactly one cached layout node.
+        # If there are multiple, then we can't easily reuse them.
+        if paragraph_model_node.layout_nodes is not None and len(paragraph_model_node.layout_nodes) == 1:
+            layout_node = paragraph_model_node.layout_nodes[0]
+            content_node = self._current_page.get_content_node()
 
-        # FIXME: Try to reuse the existing layout nodes here.
+            # FIXME: What about floating point inaccuracies?
+
+            # Check if this cached layout node can be reused in this context.
+            b_width_exactly_equal = (layout_node.get_absolute_width() == content_node.get_max_width())
+            b_fits_on_page = (layout_node.get_absolute_height() <= content_node.get_max_remaining_height())
+            if b_width_exactly_equal and b_fits_on_page:
+                # Place the existing layout node in this new environment.
+                layout_node.on_reused_with_new_parent(parent_node=content_node)
+                content_node.place_child_node(layout_node)
+                return
+        paragraph_model_node.layout_nodes = None
+
+        self._current_model_paragraph_node = paragraph_model_node
 
         assert self._current_paragraph_layout_nodes is None
         self._current_paragraph_layout_nodes = []

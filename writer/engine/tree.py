@@ -19,6 +19,7 @@ class Node:
         assert self.is_mutable
         self.__is_mutable = False
 
+    # Virtual.
     def make_mutable_copy(self):
         copy_ = copy.copy(self)
         copy_.__is_mutable = True

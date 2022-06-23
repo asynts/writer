@@ -166,6 +166,12 @@ class LayoutNode:
         # The parent node needs to be extremely careful now.
         self.__parent_node.on_child_associated(self)
 
+    def on_reused_with_new_parent(self, *, parent_node: "LayoutNode"):
+        assert self.get_phase() == Phase.PHASE_3_FINAL
+
+        self.__phase = Phase.PHASE_1_CREATED
+        self.__parent_node = parent_node
+
     # Virtual.
     def on_child_associated(self, child_node: "LayoutNode"):
         assert self.__associated_child_node is None

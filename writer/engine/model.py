@@ -154,6 +154,12 @@ class ParagraphModelNode(ModelNode):
         self.__layout_nodes: list["layout.VerticalLayoutNode"] = None
 
     # Override.
+    def make_mutable_copy(self):
+        copy_ = super().make_mutable_copy()
+        copy_.__layout_nodes = None
+        return copy_
+
+    # Override.
     def dump(self, *, name: str = "ParagraphModelNode", indent: int = 0):
         return super().dump(name=name, indent=indent)
 
