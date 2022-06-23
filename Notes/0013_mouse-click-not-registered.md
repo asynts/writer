@@ -108,9 +108,77 @@ When I click, somehow, we don't detect the mouse click correctly.
 
 -   I did draw a rect where I clicked on the screen and it seems to appear in the correct location.
 
+-   I started more systematically printing out the state of the event logic:
+
+    ```none
+    mouse_click_event(absolute_x=53.0, absolute_y=109.0)
+    >>> model_tree
+    DocumentModelNode@140392506340160()
+     ParagraphModelNode@140392506199040()
+      TextChunkModelNode@140392506315280(text='Title')
+    <<<
+    >>> layout_tree
+    VerticalLayoutNode(relative_x=0, relative_y=0, id=140392511901024 phase=Phase.PHASE_3_FINAL)
+     PageLayoutNode(relative_x=0, relative_y=10, id=140392506264560 phase=Phase.PHASE_3_FINAL)
+      VerticalLayoutNode(relative_x=1, relative_y=1, id=140392511901184 phase=Phase.PHASE_3_FINAL)
+      VerticalLayoutNode(relative_x=1, relative_y=72.81102362204723, id=140392511901344 phase=Phase.PHASE_3_FINAL)
+       VerticalLayoutNode(relative_x=20, relative_y=20, id=140392511901664 phase=Phase.PHASE_3_FINAL)
+        HorizontalLayoutNode(relative_x=0, relative_y=0, id=140392511901824 phase=Phase.PHASE_3_FINAL)
+         InlineTextChunkLayoutNode(relative_x=0, relative_y=0, id=140392506264736 phase=Phase.PHASE_3_FINAL)
+         InlineTextChunkLayoutNode(relative_x=71.953125, relative_y=0, id=140392506264912 phase=Phase.PHASE_3_FINAL)
+      VerticalLayoutNode(relative_x=1, relative_y=982.8110236220471, id=140392511901504 phase=Phase.PHASE_3_FINAL)
+    <<<
+    visit_layout_node(relative_x=53.0, relative_y=109.0, id(layout_node)=140392511901024)
+    visit_layout_node: calling hook for id(layout_node)=140392511901024
+    visit_layout_node: recursive call by id(layout_node)=140392511901024
+    visit_layout_node(relative_x=53.0, relative_y=109.0, id(layout_node)=140392506264560)
+    visit_layout_node: recursive call by id(layout_node)=140392506264560
+    visit_layout_node(relative_x=53.0, relative_y=99.0, id(layout_node)=140392511901184)
+    visit_layout_node: out of bounds, returning false
+    visit_layout_node: recursive call by id(layout_node)=140392506264560
+    visit_layout_node(relative_x=53.0, relative_y=99.0, id(layout_node)=140392511901344)
+    visit_layout_node: recursive call by id(layout_node)=140392511901344
+    visit_layout_node(relative_x=52.0, relative_y=26.18897637795277, id(layout_node)=140392511901664)
+    visit_layout_node: calling hook for id(layout_node)=140392511901664
+    visit_layout_node: recursive call by id(layout_node)=140392511901664
+    visit_layout_node(relative_x=32.0, relative_y=6.18897637795277, id(layout_node)=140392511901824)
+    visit_layout_node: recursive call by id(layout_node)=140392511901824
+    visit_layout_node(relative_x=32.0, relative_y=6.18897637795277, id(layout_node)=140392506264736)
+    visit_layout_node: calling hook for id(layout_node)=140392506264736
+    HistoryManager.modify
+    Traceback (most recent call last):
+      File "/home/me/dev/writer/writer/__main__.py", line 89, in mousePressEvent
+        self._debug_rects = events.mouse_click_event(
+      File "/home/me/dev/writer/writer/engine/events.py", line 92, in mouse_click_event
+        visit_layout_node(layout_tree, relative_x=absolute_x, relative_y=absolute_y)
+      File "/home/me/dev/writer/writer/engine/events.py", line 77, in visit_layout_node
+        b_event_consumed = visit_layout_node(
+      File "/home/me/dev/writer/writer/engine/events.py", line 77, in visit_layout_node
+        b_event_consumed = visit_layout_node(
+      File "/home/me/dev/writer/writer/engine/events.py", line 77, in visit_layout_node
+        b_event_consumed = visit_layout_node(
+      [Previous line repeated 2 more times]
+      File "/home/me/dev/writer/writer/engine/events.py", line 54, in visit_layout_node
+        b_event_consumed = layout_node.on_mouse_click(
+      File "/home/me/dev/writer/writer/engine/layout.py", line 673, in on_mouse_click
+        history.global_history_manager.modify(
+      File "/home/me/dev/writer/writer/engine/history.py", line 17, in modify
+        new_model_tree = tree.new_tree_with_modified_node(position, **kwargs)
+      File "/home/me/dev/writer/writer/engine/tree.py", line 86, in new_tree_with_modified_node
+        setattr(new_node, property_, value)
+      File "/home/me/dev/writer/writer/engine/model.py", line 118, in text
+        assert self.is_mutable
+    AssertionError
+    ./bin/run: line 4:  4008 Aborted                 (core dumped) python3 -m writer
+    ```
+
+    This all looks correct, just the modification logic is broken.
+
 ### Ideas
 
 -   Should I handle the event in the leaf first before allowing parent nodes to process the event?
+
+-   Is the border properly considered when defining the width of the header, content and footer nodes?
 
 ### Theories
 
@@ -119,3 +187,12 @@ When I click, somehow, we don't detect the mouse click correctly.
 -   I suspect that we don't consider scrolling.
 
 -   Maybe the position I am getting has a different coordinate system?
+
+-   Maybe, I have x and y swapped somewhere?
+
+### Conclusions
+
+-   One problem was that I was making a copy and assumed that I could mutate the copy.
+    However, I also copied the hidden `__is_mutable` property which remained false.
+
+    I fixed this by adding a `make_mutable_copy` method that creates a copy and then changes this property.

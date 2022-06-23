@@ -18,20 +18,30 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
 
     debug_rects = []
 
+    print(f"mouse_click_event({absolute_x=}, {absolute_y=})")
+
+    print(">>> model_tree")
+    print(model_tree.dump(), end="")
+    print("<<<")
+
+    print(">>> layout_tree")
+    print(layout_tree.to_string(), end="")
+    print("<<<")
+
     def visit_layout_node(layout_node: layout.LayoutNode, *, relative_x: float, relative_y: float):
         nonlocal model_parent_nodes
         nonlocal debug_rects
 
         assert layout_node.get_phase() == layout.Phase.PHASE_3_FINAL
 
-        print(f"{relative_x=} {relative_y=} {layout_node.get_absolute_width()=} {layout_node.get_absolute_height()=}")
+        print(f"visit_layout_node({relative_x=}, {relative_y=}, {id(layout_node)=})")
 
         # For simplicity, this function may be called with positions that do not make any sense.
         if relative_x < 0.0 or relative_y < 0.0:
-            print("node outside (1)")
+            print("visit_layout_node: out of bounds, returning false")
             return False
         if relative_x > layout_node.get_absolute_width() or relative_y > layout_node.get_absolute_height():
-            print("node outside (2)")
+            print("visit_layout_node: out of bounds, returning false")
             return False
 
         debug_rects.append(layout_node.get_qrect())
@@ -39,7 +49,7 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
         # Only call the hook for layout nodes that define a model node.
         # Otherwise, we can't really associate this with the model tree.
         if layout_node.get_model_node():
-            print(f"visited {id(layout_node)=} ({id(layout_node.get_model_node())=})")
+            print(f"visit_layout_node: calling hook for {id(layout_node)=}")
 
             b_event_consumed = layout_node.on_mouse_click(
                 relative_x=relative_x,
@@ -53,7 +63,7 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
             b_event_consumed = False
 
         if b_event_consumed:
-            print("event_consumed!")
+            print(f"visit_layout_node: event consumed by current layout node {id(layout_node)=}")
             return True
 
         for layout_child_node in layout_node.get_children():
@@ -63,7 +73,7 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
             else:
                 b_added_parent_node = False
 
-            print(f"recursive call: {relative_x=} {layout_node.get_relative_x()=} {relative_y=} {layout_node.get_relative_y()=}")
+            print(f"visit_layout_node: recursive call by {id(layout_node)=}")
             b_event_consumed = visit_layout_node(
                 layout_child_node,
                 relative_x=relative_x - layout_node.get_relative_x(),
@@ -74,6 +84,7 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
                 model_parent_nodes.pop()
 
             if b_event_consumed:
+                print(f"visit_layout_node: event consumed by child layout node {id(layout_node)=} {id(layout_child_node)=}")
                 return True
 
         return False

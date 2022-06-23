@@ -19,6 +19,11 @@ class Node:
         assert self.is_mutable
         self.__is_mutable = False
 
+    def make_mutable_copy(self):
+        copy_ = copy.copy(self)
+        copy_.__is_mutable = True
+        return copy_
+
     def append_child(self, child_node: "Node"):
         assert self.is_mutable
         self.__children.append(child_node)
@@ -78,7 +83,7 @@ def partition_with_sentinel(list_: list, *, sentinel: any):
 # Returns the root node of a new tree where the modifications were applied to the node.
 def new_tree_with_modified_node(position: Position, /, **kwargs):
     # Create a copy of the original node.
-    new_node = copy.copy(position.node)
+    new_node = position.node.make_mutable_copy()
 
     # Update some of the properties based on keyword arguments.
     # In the C++ version we would have to implement this for each class manually.
@@ -90,7 +95,7 @@ def new_tree_with_modified_node(position: Position, /, **kwargs):
     if len(position.parent_nodes) >= 1:
         # If we have parent nodes, recursively update the child nodes of parents.
         parent_node = position.parent_nodes[-1]
-        assert position.node in parent_node
+        assert position.node in parent_node.children
 
         siblings_before, _, siblings_after = partition_with_sentinel(parent_node.children, sentinel=position.node)
 

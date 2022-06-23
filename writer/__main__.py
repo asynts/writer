@@ -72,9 +72,16 @@ class WriterWidget(QtWidgets.QWidget):
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
         super().mousePressEvent(event)
 
-        print(">>> mousePressEvent before")
+        print(">>> mousePressEvent: model_tree (before)")
         print(
             history.global_history_manager.get_model_tree().dump(),
+            end="",
+        )
+        print("<<<")
+
+        print(">>> mousePressEvent: layout_tree (before)")
+        print(
+            self._layout_tree.to_string(),
             end="",
         )
         print("<<<")
