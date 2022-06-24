@@ -47,18 +47,13 @@ When clicking on a node in the bigger example document, we crash when generating
 
 ### Ideas
 
--   I should create a copy of the layout nodes when I want to reuse them.
-    My though was, that this would make it possible to compute the layout in a different thread, however, that won't work
-    because I need the layout to be able to edit the model.
-
-    However, for some actions that could work, like typing on a keyboard, that only requires the model not the actual layout.
-
 ### Theories
-
--   I suspect, that the problem is that we lazily compute the absolute position and this information might not be avaliable.
 
 ### Actions
 
 -   I incorrectly used `content_node.get_max_width` instead of `content_node.get_max_inner_width`.
 
 -   Instead of comparing floating point numbers directly, I added `util.approximately_equal`.
+
+-   My `on_reused_with_new_parent` logic assumed, that the absolute position was computed already.
+    However, this is done lazily and isn't actually required.

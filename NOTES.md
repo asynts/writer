@@ -67,3 +67,12 @@ I didn't know where else to put it after removing it from the code.
     The difficulty here is that we need to ensure that this hierachy is complete.
 
 -   If we modify the model tree from a hook in the layout tree, we must not modify any layout nodes because the calling code might rely on it still.
+
+-   I was thinking about creating copies of the layout nodes before reusing them.
+    This doesn't appear to be necessary.
+
+    -   At first I thought, this could be used to compute the layout in another thread.
+        That would not work, because we must only interact with the most recent layout tree.
+
+    -   On that note, some other things could be done without waiting for the layout computation to be finished.
+        For example when adding new text by typing normally, we can simply update the model directly and wait for the layout to finish.

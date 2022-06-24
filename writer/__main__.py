@@ -43,6 +43,10 @@ class WriterWidget(QtWidgets.QWidget):
 
     # Override.
     def paintEvent(self, event: QtGui.QPaintEvent):
+        print(">>> paintEvent: layout_tree:")
+        print(self._layout_tree.to_string(), end="")
+        print("<<<")
+
         painter = QtGui.QPainter(self)
         painter.setClipRect(event.rect())
 
