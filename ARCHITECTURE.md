@@ -1,105 +1,138 @@
 ### Model Tree
 
+Primary Files:
+
+-   [writer/engine/model.py](writer/engine/model.py)
+
+-   [writer/engine/tree.py](writer/engine/tree.py)
+
 The model tree represents the document in memory at a very high level of abstraction.
 
-It has the following structure:
+-   The model tree is not concerned with paging and there is no concept of pages in the model.
 
--   *DocumentNode*
+-   The model tree is immutable, to change it, a copy must be created an all parents must recursively be updated.
 
-    -   *HeaderNode* (special, not a child)
+    -   This is very important since we are able to create a snapshot of the document without much effort.
+        That is mandatory to implement undo and redo logic properly.
 
-    -   *FooterNode* (special, not a child)
+-   Since the model nodes are immutable, we can not reference the parent model node.
 
-    -   *ParagraphNode*
+    -   Therefore, we always need to keep track of the parent hierarchy when iterating through the tree.
 
-        Can overflow pages and might be split into multiple layout nodes.
+-   It is possible to cache some mutable information in the model tree, when switching between models, we have to be
+    extremely careful to keep these values consistent.
 
-        -   *ChunkNode*
+    -   The layout nodes are cached in the model nodes.
+        That is useful for incremental rebuilds.
 
-            Adjacent chunks with the same style must be merged.
+To manage the complexity, model nodes go through several phases that determine which operations are valid.
 
-        -   *FieldNode*
+-   First, a model node is mutable, this is used to create the model node.
 
-            The most obvious one would be page numbers, but there could be others.
+-   Then, a model node can become immutable which is it's final state.
+
+-   To modify a model node, a mutable copy can be created.
+    This will clear any cached values from this node.
+
+-   It is not possible for model nodes to have mutable child nodes.
 
 ### Layout Tree
 
+Primary Files:
+
+-   [writer/engine/layout.py](writer/engine/layout.py)
+
 The layout tree describes how the model tree is rendered.
 
--   We need to know where we put things to process things like click events.
+-   There can be multiple layout nodes for a single model node.
 
--   An important part is, that the layout tree needs to be invalidated when the model is changed.
+    -   For example, every line in every paragraph is a separate layout node.
 
--   The layout logic that converts the model nodes into layout nodes must be deterministic, otherwise, we get issues
-    when we are invalidating too aggressively.
+    -   For example, every word in every line is a separate layout node.
 
--   There can be multiple layout nodes for a single model node, for example the dot used by a list, or the headers and footers on each page.
+-   We need to know where things are rendered to process mouse events.
 
--   In some cases, we need to fill in some information like page numbers that are abstracted in the model.
+-   Layout nodes sometimes reference model nodes.
+    The important part is, that the parent hierarchy must match the model node.
 
--   The layout nodes can reference model nodes.
-    If so, then the parent of that model node is referenced by a parent of the layout node.
+    -   If a layout node references a model node, then the parent model node must be referenced by the next parent layout node.
 
-    In other words, the hierarchy is consistent with the model tree.
+To manage the complexity, layout nodes go through several phases that determine which operations are valid.
 
-It has the following structure:
+-   First, the layout node is crated, a temporary parent layout node is referenced in the constructor.
 
--   *PageNode*
+    -   No space is reserved and no position is assigned.
 
--   *BlockLayoutNode*
+    -   The parent node is informed, but this is only used for assertions.
 
--   *InlineLayoutNode*
+        Nodes can only have a single pending layout node, to discard a layout node, the parent must be changed or it needs to be
+        disassociated.
 
-    -   *WordChunkNode*
+        -   This is important, because layout nodes will cache the remaining space in the parent node which would change if other
+            layout nodes were added.
 
-### Immutable Model Tree
+-   Second, the parent is permanently assigned and can no longer be changed.
 
--   The model tree needs to be immutable because we want to add undo/redo functionality to the codebase.
+    -   The parent now considers the node a child node.
 
-    Usually this is done by a fancy "command" pattern where instead of making modifications directly, a new object is created with an `redo()` and
-    `undo()` method.
-    These commands can then be stored in a stack structure.
+    -   Space is reserved and a position relative to the parent is assigned.
 
--   When we change a node further down in the tree, we need to update all the parent nodes with new children.
-    All remaining nodes remain unchanged.
+    -   Layout nodes in this phase may be reused.
 
--   Notice, that we automatically discard any caches when we create a copy of a node.
-    This means that if we make modifications all of our cached values are gone before we can make changes.
-    This is another layer of protection.
+-   Third, if all nodes in the tree are in the second phase, then we start caching absolute information in the nodes.
+
+    -   This is done lazily and some nodes will never enter this phase.
+
+    -   Layout nodes in this phase may be reused.
+
+-   In the future it will become necessary to introduce another phase.
+    Instead of placing nodes directly, we need to reserve space and then do the placement later.
+    This will be mandatory for flexible containers.
+
+-   It is possible to reuse layout nodes.
+
+    -   They are transferred into the first phase and the absolute information is cleared.
+
+    -   We also need to clear the information of all child nodes recursively and thus move them into the second phase.
+
+### Conversion Logic
+
+Primary Files:
+
+-   [writer/engine/converter.py](writer/engine/converter.py)
+
+Transforming the model tree into the layout tree is not trivial.
+
+-   We need to create a new page if a paragraph doesn't fit.
+
+    -   If the first line of the paragraph fits, we split the paragraph and only move
+        the overflow to the next page.
+
+-   We need to create a new line, when a text chunk is too long to fit in the current line.
+
+-   When wraping text, we need to be extremely careful where we can wrap.
+    If the formatting changes in the middle of the word, we still need to wrap the entire word.
+
+-   Sometimes, we reuse layout nodes, if a model node was unchanged.
+
+    -   We try to reuse paragraphs, if they only have a single layout node assigned to them and if they fit on the page.
+        That is the common case and drastically reduces the render time.
+
+    -   The conversion logic must be very deterministic, because we sometimes reuse layout nodes.
+        We do not want flickering effects.
 
 ### Event Handling
 
-With the complex model and layout structures, we need to be careful what we can modify in event handers.
-Currently, my approach is, that I am allowed to change the model in the event handler (by creating a new root node).
-However, I am not allowed to modify the layout nodes in any way.
+Primary Files:
 
-In the future, I will have to adjust this because I need some way of invalidating layout nodes that can not be reused.
-Since the model nodes do not reference the layout nodes, this would be difficult otherwise.
+-   [writer/engine/events.py](writer/engine/events.py)
 
-### Layout Phases
+Processing events is not trivial due to the rather complex layout and model tree structures.
 
-Not all of the layout operation can be performed in a single step.
-We need to place child nodes before we can place the parent since we don't know the height of the parent before the children are placed.
-Therefore, there are two phases:
+-   We need to be careful what we modify in event handers, because the event handers themselves are iterating through the trees.
 
--   In the first phase, a temporary parent is assigned that can be changed.
-    The parent doesn't know about this at this point.
-    No space is reserved and no position is assigned.
+    -   We must not modify the layout tree in any way.
+        Often, we are iterating through layout nodes and since they are mutable we must not change them.
 
-    Note, that nothing else can be placed in a parent if it is referenced by a child node.
-    This is, because the child node will cache the remaining width of the parent and it assumes that all of it can be used.
-
-    If a node will never be added to the parent, the parent can freely be changed.
-
--   We might have to add another phase here.
-    Instead of placing children directly, we could reserve space and figure out the placement later.
-    That is needed for flexible containers where children can influence each other.
-
--   In the second phase, the parent is permanently assigned and can no longer be changed.
-    The parent now knows about this child.
-    Space is reserved and a position relative to the parent is assigned.
-
--   When all nodes have been placed, we compute all of the absolute positions and sizes and cache them in the nodes.
-
-    Previously, this was done in one big step, however, this can be optimized to take advantage of culling.
-    We lazily switch to this phase when they become visible on the screen.
+    -   The model tree may be modified, by creating a new tree, however, cached values must not be invalidated.
+        Note, that new values may be cached implicitly.
