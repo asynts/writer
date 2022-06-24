@@ -1,5 +1,4 @@
 import dataclasses
-import math
 import string
 
 import writer.engine.model as model
@@ -294,7 +293,7 @@ class Placer:
 
         # Check if this node has exactly one cached layout node.
         # If there are multiple, then we can't easily reuse them.
-        if paragraph_model_node.layout_nodes is not None and len(paragraph_model_node.layout_nodes) == 1 and False:
+        if paragraph_model_node.layout_nodes is not None and len(paragraph_model_node.layout_nodes) == 1:
             layout_node = paragraph_model_node.layout_nodes[0]
             content_node = self._current_page.get_content_node()
 
@@ -347,7 +346,4 @@ class Placer:
 
 def generate_layout_for_model(document_model_node: model.DocumentModelNode) -> layout.BlockLayoutNode:
     placer = Placer(document_model_node=document_model_node)
-
-    # FIXME: We should clear the saved layout nodes before we start here, or we should ignore them entirely.
-
     return placer.finalize()

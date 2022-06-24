@@ -1,14 +1,12 @@
 ### Current
 
--   Go through the codebase and clean up a bit.
-
 ### Next Up
-
-### Backlog
 
 -   Implement undo and redo logic.
 
     -   When we switch to another model tree, we have to be extremely careful with invalidating layout nodes.
+
+### Backlog
 
 -   I should add a ton of helper methods to `tree.Position` like `Position.previous_sibling`.
     That should make interactions with the model tree significantly easier.

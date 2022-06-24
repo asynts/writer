@@ -12,8 +12,6 @@ class HistoryManager:
         self.__model_tree_after: list[model.DocumentModelNode] = []
 
     def modify(self, position: "tree.Position", **kwargs):
-        print("HistoryManager.modify")
-
         new_model_tree = tree.new_tree_with_modified_node(position, **kwargs)
 
         self.__model_tree_after.clear()

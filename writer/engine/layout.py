@@ -52,7 +52,6 @@ class Phase(enum.Enum):
             return False
         return self.value.__ge__(__o.value)
 
-# Properties must not be changed, unless this is explicitly allowed.
 class LayoutNode:
     __slots__ = (
         "__phase",
@@ -86,55 +85,34 @@ class LayoutNode:
 
         # The phase in which the layout node is in.
         # Some operations can only be performed in some phases.
-        # Variable (PHASE_1_CREATED).
-        # Constant (PHASE_2_PLACED).
-        # Assigned on initialization.
-        # Assigned during placed in parent.
         self.__phase = Phase.PHASE_1_CREATED
 
         # References parent node.
-        # Variable (PHASE_1_CREATED).
-        # Constant (PHASE_2_PLACED).
         self.__parent_node = parent_node
 
         # Can reference the corresponding model node, or 'None'.
-        # Variable.
         self.__model_node = model_node
 
         # There can only be one child associated with this node.
         # To enforce this, we keep track of the associated child.
-        # Variable (PHASE_1_CREATED).
-        # Constant (PHASE_2_PLACED).
         self.__associated_child_node = None
 
         # Name of the node for debugging.
-        # Constant.
         self.__name = name
 
         # Position relative to parent node.
-        # Includes the padding and border of the parent node.
-        # Variable (PHASE_1_CREATED).
-        # Constant (PHASE_2_PLACED).
-        # Assigned when placed in parent node.
+        # Includes the inner spacing of the parent node.
         self._relative_x: int = None
         self._relative_y: int = None
 
         # How much space is needed to fit all children.
-        # Variable (PHASE_1_CREATED).
-        # Constant (PHASE_2_PLACED).
-        # Assigned when children are added.
         self._width_of_children = 0
         self._height_of_children = 0
 
         # Style applied to this node.
-        # Constant.
         self.__style = style
 
         # The absolute position and size of the node.
-        # Constant (PHASE_1_CREATED).
-        # Variable (PHASE_2_PLACED).
-        # Constant (PHASE_3_FINAL).
-        # Assigned during final layout calculation.
         self.__absolute_x = None
         self.__absolute_y = None
         self._absolute_width = None
