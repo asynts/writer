@@ -1,7 +1,11 @@
-import string
-from . import model, layout, style
-
 import dataclasses
+import math
+import string
+
+import writer.engine.model as model
+import writer.engine.layout as layout
+import writer.engine.style as style
+import writer.engine.util as util
 
 # We can't use PyQt from the PyTest environment.
 b_simplify_font_metrics = False
@@ -294,11 +298,10 @@ class Placer:
             layout_node = paragraph_model_node.layout_nodes[0]
             content_node = self._current_page.get_content_node()
 
-            # FIXME: What about floating point inaccuracies?
-
             # Check if this cached layout node can be reused in this context.
-            b_width_exactly_equal = (layout_node.get_absolute_width() == content_node.get_max_width())
-            b_fits_on_page = (layout_node.get_absolute_height() <= content_node.get_max_remaining_height())
+            b_width_exactly_equal = util.approximately_equal(layout_node.get_width(), content_node.get_max_inner_width())
+            b_fits_on_page = util.approximately_less(layout_node.get_height(), content_node.get_max_remaining_height())
+            print(f"{b_width_exactly_equal=} {b_fits_on_page=} lhs={repr(layout_node.get_width())} rhs={repr(content_node.get_max_inner_width())}")
             if b_width_exactly_equal and b_fits_on_page:
                 # Place the existing layout node in this new environment.
                 layout_node.on_reused_with_new_parent(parent_node=content_node)

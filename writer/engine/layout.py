@@ -67,8 +67,8 @@ class LayoutNode:
         "__style",
         "__absolute_x",
         "__absolute_y",
-        "__absolute_width",
-        "__absolute_height",
+        "_absolute_width",
+        "_absolute_height",
     )
 
     def __init__(
@@ -137,8 +137,8 @@ class LayoutNode:
         # Assigned during final layout calculation.
         self.__absolute_x = None
         self.__absolute_y = None
-        self.__absolute_width = None
-        self.__absolute_height = None
+        self._absolute_width = None
+        self._absolute_height = None
 
     def get_phase(self):
         return self.__phase
@@ -168,9 +168,23 @@ class LayoutNode:
 
     def on_reused_with_new_parent(self, *, parent_node: "LayoutNode"):
         assert self.get_phase() == Phase.PHASE_3_FINAL
-
         self.__phase = Phase.PHASE_1_CREATED
-        self.__parent_node = parent_node
+
+        print(f"LayoutNode.on_reused_with_new_parent: {id(self)=}")
+
+        # Remove all the absolute position information.
+        def visit_layout_node(layout_node: LayoutNode):
+            layout_node.__absolute_x = None
+            layout_node.__absolute_y = None
+            layout_node._absolute_width = None
+            layout_node._absolute_height = None
+
+            for child_node in layout_node.get_children():
+                visit_layout_node(child_node)
+        visit_layout_node(self)
+
+        # Update the reference to the parent node.
+        self.set_parent(parent_node)
 
     # Virtual.
     def on_child_associated(self, child_node: "LayoutNode"):
@@ -215,8 +229,8 @@ class LayoutNode:
             self.__absolute_x = self.__parent_node.__absolute_x + self._relative_x
             self.__absolute_y = self.__parent_node.__absolute_y + self._relative_y
 
-        self.__absolute_width = self.get_width()
-        self.__absolute_height = self.get_height()
+        self._absolute_width = self.get_width()
+        self._absolute_height = self.get_height()
 
         self.__phase = Phase.PHASE_3_FINAL
 
@@ -252,14 +266,14 @@ class LayoutNode:
             self.on_final_layout_calculation()
         assert self.get_phase() == Phase.PHASE_3_FINAL
 
-        return self.__absolute_width
+        return self._absolute_width
 
     def get_absolute_height(self) -> float:
         if self.get_phase() == Phase.PHASE_2_PLACED:
             self.on_final_layout_calculation()
         assert self.get_phase() == Phase.PHASE_3_FINAL
 
-        return self.__absolute_height
+        return self._absolute_height
 
     def get_fixed_width(self) -> float:
         return self.__style.fixed_width
@@ -277,6 +291,10 @@ class LayoutNode:
 
     # Virtual.
     def get_width(self) -> float:
+        if self._absolute_width is not None:
+            assert self.get_phase() == Phase.PHASE_3_FINAL
+            return self._absolute_width
+
         assert self.get_phase() == Phase.PHASE_2_PLACED
         return self.get_min_width()
 
@@ -289,6 +307,10 @@ class LayoutNode:
             return self._height_of_children + self.get_style().inner_spacing.y
 
     def get_height(self) -> float:
+        if self._absolute_height is not None:
+            assert self.get_phase() == Phase.PHASE_3_FINAL
+            return self._absolute_height
+
         assert self.get_phase() == Phase.PHASE_2_PLACED
         return self.get_min_height()
 
@@ -312,8 +334,8 @@ class LayoutNode:
         return QtCore.QRectF(
             self.__absolute_x,
             self.__absolute_y,
-            self.__absolute_width,
-            self.__absolute_height,
+            self._absolute_width,
+            self._absolute_height,
         )
 
     def get_inner_qrect(self):
@@ -517,6 +539,10 @@ class VerticalLayoutNode(BlockLayoutNode):
 
     # Override.
     def get_width(self) -> float:
+        if self._absolute_width is not None:
+            assert self.get_phase() == Phase.PHASE_3_FINAL
+            return self._absolute_width
+
         assert self.get_phase() == Phase.PHASE_2_PLACED
 
         if self.get_fixed_width():
