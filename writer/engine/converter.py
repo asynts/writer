@@ -294,7 +294,7 @@ class Placer:
 
         # Check if this node has exactly one cached layout node.
         # If there are multiple, then we can't easily reuse them.
-        if paragraph_model_node.layout_nodes is not None and len(paragraph_model_node.layout_nodes) == 1:
+        if paragraph_model_node.layout_nodes is not None and len(paragraph_model_node.layout_nodes) == 1 and False:
             layout_node = paragraph_model_node.layout_nodes[0]
             content_node = self._current_page.get_content_node()
 

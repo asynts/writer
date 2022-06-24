@@ -41,7 +41,7 @@ class WriterWidget(QtWidgets.QWidget):
             layout_tree=self._layout_tree,
         )
 
-        print(f"Rebuild  {after_ns - before_ns:>14}ns ({(after_ns - before_ns) / (1000 * 1000 * 1000):>10.4}s)")
+        print(f"Rebuild  {after_ns - before_ns:>14}ns ({int((after_ns - before_ns) / (1000 * 1000)):>10}ms)")
 
     # Override.
     def paintEvent(self, event: QtGui.QPaintEvent):
@@ -52,7 +52,7 @@ class WriterWidget(QtWidgets.QWidget):
         self._layout_tree.paint(painter=painter, visible_rect=QtCore.QRectF(event.rect()))
         after_ns = time.perf_counter_ns()
 
-        print(f"Painting {after_ns - before_ns:>14}ns ({(after_ns - before_ns) / (1000 * 1000 * 1000):>10.4}s)")
+        print(f"Painting {after_ns - before_ns:>14}ns ({int((after_ns - before_ns) / (1000 * 1000)):>10}ms)")
 
     # Override.
     def sizeHint(self):

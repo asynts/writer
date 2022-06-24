@@ -73,6 +73,30 @@ My goal is to continue the optimization efforts, but in a more structured way, f
 
         To implement this, I should replicate the placement code and figure out how to merge both implementations later on.
 
+-   I changed quite a few things and the old numbers are not really meaningful anymore.
+    However, after adding incremental builds, here is what changed:
+
+    ```none
+    # BEFORE
+    layout_initial                       119ms    119139404ns
+    layout_change_nothing                107ms    107460200ns
+    layout_change_start                  111ms    111448119ns
+    layout_change_end                    107ms    107833042ns
+    ```
+
+    ```none
+    # AFTER
+    layout_initial                       121ms    121115583ns
+    layout_change_nothing                 21ms     21807813ns
+    layout_change_start                   21ms     21970484ns
+    layout_change_end                     21ms     21644802ns
+    ```
+
+    That's an 81% improvement for incremental rebuilds, that's insane.
+    On top of that, this is fast enough for real usage.
+    Anything below 50 ms is 20 FPS, and even 10 FPS could be sufficent for large files.
+    We are at 47 FPS which is insane.
+
 ### Actions
 
 -   I started caching the font in the `TextChunkModelNode`.

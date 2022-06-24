@@ -30,7 +30,7 @@ normal_heading_text_chunk_style = model.ModelStyle(
 )
 
 def create_model_tree(*, b_print_document_name: bool = True):
-    return create_model_tree_1(b_print_document_name=b_print_document_name)
+    return create_model_tree_study(b_print_document_name=b_print_document_name)
 
 def create_model_tree_2(*, b_print_document_name: bool):
     if b_print_document_name:
@@ -100,7 +100,7 @@ def create_paragraph_subtree(
 
     return paragraph
 
-def create_model_tree_1(*, b_print_document_name: bool):
+def create_model_tree_study(*, b_print_document_name: bool):
     # This is generated from 'Meta/study-in-scarlet.txt'.
     # Obviously, that text wasn't written by me, but it's in public domain.
     #
