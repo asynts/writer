@@ -32,11 +32,6 @@ class WriterWidget(QtWidgets.QWidget):
         self.build_layout_tree()
 
     def build_layout_tree(self):
-        if self._layout_tree:
-            print(">>> build_layout_tree: layout_tree")
-            print(self._layout_tree.to_string(), end="")
-            print("<<<")
-
         before_ns = time.perf_counter_ns()
         self._layout_tree = create_layout_tree(history.global_history_manager.get_model_tree())
         after_ns = time.perf_counter_ns()

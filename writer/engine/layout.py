@@ -171,8 +171,6 @@ class LayoutNode:
         self.__absolute_x = None
         self.__absolute_x = None
 
-        print(f"LayoutNode.on_reused_with_new_parent: {id(self)=}")
-
         # Undo the final layout calculations.
         def visit_layout_node(layout_node: LayoutNode):
             layout_node.__phase = Phase.PHASE_2_PLACED
@@ -313,11 +311,6 @@ class LayoutNode:
 
     def get_height(self) -> float:
         if self._absolute_height is not None:
-            if self.get_phase() != Phase.PHASE_3_FINAL:
-                print(">>> get_height: self")
-                print(self.to_string(), end="")
-                print("<<<")
-
             assert self.get_phase() == Phase.PHASE_3_FINAL
             return self._absolute_height
 

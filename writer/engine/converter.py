@@ -301,7 +301,6 @@ class Placer:
             # Check if this cached layout node can be reused in this context.
             b_width_exactly_equal = util.approximately_equal(layout_node.get_width(), content_node.get_max_inner_width())
             b_fits_on_page = util.approximately_less(layout_node.get_height(), content_node.get_max_remaining_height())
-            print(f"{b_width_exactly_equal=} {b_fits_on_page=} lhs={repr(layout_node.get_width())} rhs={repr(content_node.get_max_inner_width())}")
             if b_width_exactly_equal and b_fits_on_page:
                 # Place the existing layout node in this new environment.
                 layout_node.on_reused_with_new_parent(parent_node=content_node)
