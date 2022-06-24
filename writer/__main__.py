@@ -23,6 +23,8 @@ class WriterWidget(QtWidgets.QWidget):
 
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.MinimumExpanding)
 
+        self._layout_tree = None
+
         writer.engine.history.global_history_manager = history.HistoryManager(
             model_tree=example.create_model_tree(),
         )
@@ -30,6 +32,11 @@ class WriterWidget(QtWidgets.QWidget):
         self.build_layout_tree()
 
     def build_layout_tree(self):
+        if self._layout_tree:
+            print(">>> build_layout_tree: layout_tree")
+            print(self._layout_tree.to_string(), end="")
+            print("<<<")
+
         before_ns = time.perf_counter_ns()
         self._layout_tree = create_layout_tree(history.global_history_manager.get_model_tree())
         after_ns = time.perf_counter_ns()
@@ -43,10 +50,6 @@ class WriterWidget(QtWidgets.QWidget):
 
     # Override.
     def paintEvent(self, event: QtGui.QPaintEvent):
-        print(">>> paintEvent: layout_tree:")
-        print(self._layout_tree.to_string(), end="")
-        print("<<<")
-
         painter = QtGui.QPainter(self)
         painter.setClipRect(event.rect())
 

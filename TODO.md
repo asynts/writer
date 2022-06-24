@@ -2,7 +2,8 @@
 
 ### Next Up
 
--   Remove the logic used to debug the mouse click bug.
+-   Go through the codebase and make sure we are consistent with the architecture file.
+    This is starting to become messy.
 
 ### Backlog
 

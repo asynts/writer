@@ -33,13 +33,8 @@ def create_model_tree(*, b_print_document_name: bool = True):
     return create_model_tree_1(b_print_document_name=b_print_document_name)
 
 def create_model_tree_2(*, b_print_document_name: bool):
-    # This is generated from 'Meta/study-in-scarlet.txt'.
-    # Obviously, that text wasn't written by me, but it's in public domain.
-    #
-    # awk '{ if (NF > 0) { printf "    model_tree.append_child(create_paragraph_subtree(\n        text=\"%s\",\n    ))\n", $0 } }' Meta/study-in-scarlet.txt
-
     if b_print_document_name:
-        print("Document: 'Immutable Tree Example'")
+        print("Document: 'Small Document'")
 
     model_tree = model.DocumentModelNode(
         style=default_style,
@@ -54,6 +49,22 @@ def create_model_tree_2(*, b_print_document_name: bool):
     text_chunk = model.TextChunkModelNode(
         style=normal_heading_text_chunk_style,
         text="Title",
+        children=[],
+    )
+    text_chunk.make_immutable()
+    paragraph.append_child(text_chunk)
+
+    paragraph.make_immutable()
+    model_tree.append_child(paragraph)
+
+    paragraph = model.ParagraphModelNode(
+        style=normal_paragraph_style,
+        children=[],
+    )
+
+    text_chunk = model.TextChunkModelNode(
+        style=normal_normal_text_chunk_style,
+        text="This is a paragraph. With multiple sentences in it.",
         children=[],
     )
     text_chunk.make_immutable()
@@ -90,6 +101,11 @@ def create_paragraph_subtree(
     return paragraph
 
 def create_model_tree_1(*, b_print_document_name: bool):
+    # This is generated from 'Meta/study-in-scarlet.txt'.
+    # Obviously, that text wasn't written by me, but it's in public domain.
+    #
+    # awk '{ if (NF > 0) { printf "    model_tree.append_child(create_paragraph_subtree(\n        text=\"%s\",\n    ))\n", $0 } }' Meta/study-in-scarlet.txt
+
     # This is from "A STUDY IN SCARLET." by "A. Conan Doyle".
     # It is in public domain and can therefore easily be used for this purpose.
 

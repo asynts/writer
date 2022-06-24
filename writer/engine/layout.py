@@ -168,11 +168,12 @@ class LayoutNode:
 
     def on_reused_with_new_parent(self, *, parent_node: "LayoutNode"):
         assert self.get_phase() >= Phase.PHASE_2_PLACED
-        self.__phase = Phase.PHASE_1_CREATED
+        self.__absolute_x = None
+        self.__absolute_x = None
 
         print(f"LayoutNode.on_reused_with_new_parent: {id(self)=}")
 
-        # Remove all the absolute position information.
+        # Undo the final layout calculations.
         def visit_layout_node(layout_node: LayoutNode):
             layout_node.__phase = Phase.PHASE_2_PLACED
             layout_node.__absolute_x = None
@@ -182,8 +183,10 @@ class LayoutNode:
 
             for child_node in layout_node.get_children():
                 visit_layout_node(child_node)
-        for child_node in self.get_children():
-            visit_layout_node(child_node)
+        visit_layout_node(self)
+
+        # Undo the placement of this node, children remain placed.
+        self.__phase = Phase.PHASE_1_CREATED
 
         # Update the reference to the parent node.
         self.set_parent(parent_node)
@@ -310,6 +313,11 @@ class LayoutNode:
 
     def get_height(self) -> float:
         if self._absolute_height is not None:
+            if self.get_phase() != Phase.PHASE_3_FINAL:
+                print(">>> get_height: self")
+                print(self.to_string(), end="")
+                print("<<<")
+
             assert self.get_phase() == Phase.PHASE_3_FINAL
             return self._absolute_height
 
