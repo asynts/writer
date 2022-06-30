@@ -105,3 +105,7 @@ def validate_parent_hierachy_event(*, model_tree: "model.DocumentModelNode", lay
             assert current_model_parents.pop() == layout_node.get_model_node()
 
     visit_layout_node(layout_tree)
+
+# There must only be one
+def validate_cursor_unique_event(*, model_tree: "model.DocumentModelNode", layout_tree: "layout.LayoutNode"):
+    pass

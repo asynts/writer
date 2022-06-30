@@ -66,7 +66,6 @@ def create_model_tree_small_document(*, b_print_document_name: bool):
         style=normal_normal_text_chunk_style,
         text="This is a paragraph. With multiple sentences in it.",
         children=[],
-        cursor_offset=4,
     )
     text_chunk.make_immutable()
     paragraph.append_child(text_chunk)

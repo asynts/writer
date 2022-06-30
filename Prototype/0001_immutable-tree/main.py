@@ -253,11 +253,11 @@ next(text_node_iterator)
 old_position = next(text_node_iterator)
 
 print(">>> before")
-print(old_position.parent_nodes[0].dump(), end="")
+print(old_position.root.dump(), end="")
 print("<<<")
 
 new_position = mutate(old_position, text="Paul")
 
 print(">>> after")
-print(new_position.parent_nodes[0].dump(), end="")
+print(new_position.root.dump(), end="")
 print("<<<")
