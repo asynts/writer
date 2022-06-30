@@ -30,7 +30,7 @@ normal_heading_text_chunk_style = model.ModelStyle(
 )
 
 def create_model_tree(*, b_print_document_name: bool = True):
-    return create_model_tree_study(b_print_document_name=b_print_document_name)
+    return create_model_tree_small_document(b_print_document_name=b_print_document_name)
 
 def create_model_tree_small_document(*, b_print_document_name: bool):
     if b_print_document_name:
@@ -66,6 +66,7 @@ def create_model_tree_small_document(*, b_print_document_name: bool):
         style=normal_normal_text_chunk_style,
         text="This is a paragraph. With multiple sentences in it.",
         children=[],
+        cursor_offset=4,
     )
     text_chunk.make_immutable()
     paragraph.append_child(text_chunk)

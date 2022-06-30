@@ -268,13 +268,48 @@ class Placer:
 
         excerpt = None
         for excerpt in word_group.excerpts:
-            self._current_line.place_child_node(layout.TextChunkLayoutNode(
-                text=excerpt.text,
-                parent_node=self._current_line,
+            if excerpt.text_chunk_model_node.cursor_offset is not None:
+                b_cursor_is_out_of_bounds_left = (excerpt.text_chunk_model_node.cursor_offset < excerpt.offset_into_model_node)
+                b_cursor_is_out_of_bounds_right = (excerpt.text_chunk_model_node.cursor_offset > excerpt.offset_into_model_node + len(excerpt.text))
 
-                model_node=excerpt.text_chunk_model_node,
-                model_node_offset=excerpt.offset_into_model_node,
-            ))
+                b_place_cursor = (not b_cursor_is_out_of_bounds_left) and (not b_cursor_is_out_of_bounds_right)
+            else:
+                b_place_cursor = False
+
+            if b_place_cursor:
+                self._current_line.place_child_node(layout.TextChunkLayoutNode(
+                    text=excerpt.text_chunk_model_node.text[excerpt.offset_into_model_node:excerpt.text_chunk_model_node.cursor_offset],
+                    parent_node=self._current_line,
+
+                    model_node=excerpt.text_chunk_model_node,
+                    model_node_offset=excerpt.offset_into_model_node,
+                ))
+
+                print(f"before placing cursor: {self._current_line.get_max_remaining_width()}")
+
+                self._current_line.place_child_node(layout.CursorLayoutNode(
+                    parent_node=self._current_line,
+                    model_node=excerpt.text_chunk_model_node,
+                    model_node_offset=excerpt.offset_into_model_node + excerpt.text_chunk_model_node.cursor_offset,
+                ))
+
+                print(f"after placing cursor: {self._current_line.get_max_remaining_width()}")
+
+                self._current_line.place_child_node(layout.TextChunkLayoutNode(
+                    text=excerpt.text_chunk_model_node.text[excerpt.text_chunk_model_node.cursor_offset:excerpt.offset_into_model_node + len(excerpt.text)],
+                    parent_node=self._current_line,
+
+                    model_node=excerpt.text_chunk_model_node,
+                    model_node_offset=excerpt.offset_into_model_node + excerpt.text_chunk_model_node.cursor_offset,
+                ))
+            else:
+                self._current_line.place_child_node(layout.TextChunkLayoutNode(
+                    text=excerpt.text,
+                    parent_node=self._current_line,
+
+                    model_node=excerpt.text_chunk_model_node,
+                    model_node_offset=excerpt.offset_into_model_node,
+                ))
 
         # We are taking the formatting from the last excerpt from the loop.
         assert excerpt is not None

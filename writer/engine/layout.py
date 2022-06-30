@@ -1,5 +1,6 @@
 import enum
 import functools
+from re import M
 
 from PyQt6 import QtGui, QtCore
 from PyQt6.QtGui import QColor
@@ -643,6 +644,48 @@ class PageLayoutNode(VerticalLayoutNode):
 
     def get_footer_node(self):
         return self.__footer_node
+
+class CursorLayoutNode(LayoutNode):
+    __slots__ = (
+        "_model_node",
+        "_model_node_offset",
+    )
+
+    def __init__(self, *, parent_node: LayoutNode, model_node: "model.TextChunkModelNode", model_node_offset: int):
+        assert isinstance(model_node, model.TextChunkModelNode)
+        assert model_node.cursor_offset is not None
+
+        rendered_size = model_node.font_metrics.size(0, "")
+
+        super().__init__(
+            name="CursorLayoutNode",
+            parent_node=parent_node,
+            model_node=model_node,
+
+            style=LayoutStyle(
+                fixed_width=0,
+                fixed_height=rendered_size.height(),
+            ),
+        )
+
+        self._model_node_offset = model_node_offset
+
+    # Override.
+    def paint_decoration(self, *, painter: QtGui.QPainter):
+        super().paint_decoration(painter=painter)
+
+        # FIXME: Somehow, this is never called.
+
+        painter.setBrush(COLOR_BLUE)
+        painter.setPen(COLOR_BLUE)
+        painter.fillRect(
+            QtCore.QRectF(
+                self.get_absolute_x() - 1,
+                self.get_absolute_y() - 2,
+                2,
+                self.get_absolute_height(),
+            )
+        )
 
 class TextChunkLayoutNode(LayoutNode):
     __slots__ = (
