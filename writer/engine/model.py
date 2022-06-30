@@ -87,13 +87,17 @@ class TextChunkModelNode(ModelNode):
         "__text",
         "__font",
         "__font_metrics",
+        "__cursor_offset",
     )
 
-    def __init__(self, *, text: str, **kwargs):
+    def __init__(self, *, text: str, cursor_offset: int = None, **kwargs):
         super().__init__(**kwargs)
 
         # Property.
         self.__text = text
+
+        # Property.
+        self.__cursor_offset: int = cursor_offset
 
         # Cache.
         self.__font: QtGui.QFont = None
@@ -103,11 +107,20 @@ class TextChunkModelNode(ModelNode):
 
     # Override.
     def dump_properties(self):
-        return f"text={repr(self.text)}"
+        return f"text={repr(self.text)} cursor_offset={repr(self.cursor_offset)}"
 
     # Override.
     def dump(self, *, name: str = "TextChunkModelNode", indent: int = 0):
         return super().dump(name=name, indent=indent)
+
+    @property
+    def cursor_offset(self):
+        return self.__cursor_offset
+
+    @cursor_offset.setter
+    def cursor_offset(self, value: int):
+        assert self.is_mutable
+        self.__cursor_offset = value
 
     @property
     def text(self):

@@ -76,3 +76,7 @@ I didn't know where else to put it after removing it from the code.
 
     -   On that note, some other things could be done without waiting for the layout computation to be finished.
         For example when adding new text by typing normally, we can simply update the model directly and wait for the layout to finish.
+
+-   I decided to add a cursor offset to the model text chunk nodes.
+    Not sure if this is smart or not.
+    The alternative would be to add a custom cursor node and splice around it.

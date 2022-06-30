@@ -2,17 +2,13 @@
 
 ### Next Up
 
+### Backlog
+
 -   Get rid of global `global_history_manager` variable.
 
-### Backlog
+    -   On that node, I should add some sort of `Engine` class that contains all the other stuff.
 
 -   I should add a ton of helper methods to `tree.Position` like `Position.previous_sibling`.
     That should make interactions with the model tree significantly easier.
-
--   At some point, I need to go through the codebase
-
-    -   Add comments to each module in the codebase.
-
-    -   What is good or bad about the codebase?
 
 -   Create a lossless video to show of the project.
