@@ -25,9 +25,11 @@ class WriterWidget(QtWidgets.QWidget):
 
         self._layout_tree = None
 
-        writer.engine.history.global_history_manager = history.HistoryManager(
+        history.global_history_manager = history.HistoryManager(
             model_tree=example.create_model_tree(),
         )
+
+        history.global_history_manager.notify_on_history_change(self.on_history_change)
 
         self.build_layout_tree()
 
@@ -42,6 +44,10 @@ class WriterWidget(QtWidgets.QWidget):
         )
 
         print(f"Rebuild  {after_ns - before_ns:>14}ns ({int((after_ns - before_ns) / (1000 * 1000)):>10}ms)")
+
+    def on_history_change(self):
+        self.build_layout_tree()
+        self.update()
 
     # Override.
     def paintEvent(self, event: QtGui.QPaintEvent):
@@ -69,10 +75,6 @@ class WriterWidget(QtWidgets.QWidget):
             layout_tree=self._layout_tree
         )
 
-        # Redraw the widget.
-        self.build_layout_tree()
-        self.update()
-
 class Window(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
@@ -94,10 +96,32 @@ class Window(QtWidgets.QMainWindow):
         self._scrollArea.setWidget(scrollAreaContent)
         self._scrollArea.setWidgetResizable(True)
 
+        menubar = QtWidgets.QMenuBar()
+        file_menu = menubar.addMenu("File")
+        edit_menu = menubar.addMenu("Edit")
+        self._edit_undo_action = edit_menu.addAction("Undo")
+        self._edit_undo_action.triggered.connect(self.on_edit_undo_action)
+        self._edit_redo_action = edit_menu.addAction("Redo")
+        self._edit_redo_action.triggered.connect(self.on_edit_redo_action)
+        self.setMenuBar(menubar)
+
+        history.global_history_manager.notify_on_history_change(self.on_history_changed)
+        self.on_history_changed()
+
         self.setCentralWidget(self._scrollArea)
 
         self.setWindowTitle("Writer")
         self.show()
+
+    def on_history_changed(self):
+        self._edit_undo_action.setEnabled(history.global_history_manager.is_undo_possible())
+        self._edit_redo_action.setEnabled(history.global_history_manager.is_redo_possible())
+
+    def on_edit_undo_action(self):
+        history.global_history_manager.undo()
+
+    def on_edit_redo_action(self):
+        history.global_history_manager.redo()
 
 def main():
     app = QtWidgets.QApplication(sys.argv)

@@ -2,9 +2,7 @@
 
 ### Next Up
 
--   Implement undo and redo logic.
-
-    -   When we switch to another model tree, we have to be extremely careful with invalidating layout nodes.
+-   Get rid of global `global_history_manager` variable.
 
 ### Backlog
 
