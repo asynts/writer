@@ -2,6 +2,8 @@
 
 ### Next Up
 
+-   Create some clear documentation about how the cursor is tracked and how we deal with it.
+
 ### Backlog
 
 -   Get rid of global `global_history_manager` variable.

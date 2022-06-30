@@ -724,12 +724,33 @@ class TextChunkLayoutNode(LayoutNode):
 
     # Override.
     def on_mouse_click(self, *, relative_x: float, relative_y: float, model_position: "tree.Position"):
-        # Delete the text chunk that the user clicked on.
-        text = self.get_model_node().text
-        new_text = text[:self._model_node_offset] + text[self._model_node_offset + len(self._text):]
-        history.global_history_manager.modify(
+        # Remove the cursor at the previous cursor position.
+        if model_position.root._text_chunk_with_cursor is not None:
+            history.global_history_manager.modify(
+                model_position.root._text_chunk_with_cursor,
+                cursor_offset=None,
+            )
+
+        # FIXME: Compute the exact offset based on the 'relative_x'.
+
+        # FIXME: How can we make multiple changes at the same time?
+        #        The problem is, that we continue to reference the same model tree but we don't have the new model position.
+        #        This is a very serious problem and I don't see a solution for it.
+        #
+        #        We need some way to retain a reference, when we switch to the updated model.
+
+        # Place the cursor in the current layout node.
+        new_model_position = history.global_history_manager.modify(
             model_position,
-            text=new_text,
+            cursor_offset=self._model_node_offset
+        )
+
+        history.global_history_manager.modify(
+            tree.Position(
+                node=model_position.root,
+                parent_nodes=[],
+            ),
+            _text_chunk_with_cursor=new_model_position,
         )
 
         return True

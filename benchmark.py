@@ -90,7 +90,7 @@ def modify_first_paragraph(*, model_tree: writer.engine.model.DocumentModelNode)
             ],
         ),
         text="This is a new title!"
-    )
+    ).root
 
 def modify_last_paragraph(*, model_tree: writer.engine.model.DocumentModelNode):
     paragraph_node = model_tree.children[-1]
@@ -105,7 +105,7 @@ def modify_last_paragraph(*, model_tree: writer.engine.model.DocumentModelNode):
             ],
         ),
         text=text_chunk_node.text + " THIS HAS BEEN ADDED!",
-    )
+    ).root
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("benchmark")

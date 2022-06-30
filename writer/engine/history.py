@@ -21,7 +21,7 @@ class HistoryManager:
             callback()
 
     def modify(self, position: "tree.Position", **kwargs):
-        new_model_tree = tree.new_tree_with_modified_node(position, **kwargs)
+        new_model_tree = tree.new_tree_with_modified_node(position, **kwargs).root
 
         self.__model_tree_after.clear()
         self.__model_tree_before.append(self.__model_tree)

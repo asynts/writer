@@ -76,7 +76,20 @@ class ModelNode(tree.Node):
         self.__style = value
 
 class DocumentModelNode(ModelNode):
-    __slots__ = tuple()
+    __slots__ = (
+        "_text_chunk_with_cursor",
+    )
+
+    def __init__(
+        self,
+        *,
+        style: ModelStyle,
+        **kwargs
+    ):
+        super().__init__(style=style, **kwargs)
+
+        # Cache.
+        self._text_chunk_with_cursor: tree.Position = None
 
     # Override.
     def dump(self, *, name: str = "DocumentModelNode", indent: int = 0):
