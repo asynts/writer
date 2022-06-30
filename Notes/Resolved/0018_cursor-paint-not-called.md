@@ -41,3 +41,8 @@ The cursor isn't painted for some reason.
     ```
 
 -   Somehow, the `CursorLayoutNode.paint_decorations` method is never called, I do not understand why.
+
+### Conclusions
+
+-   The problem was that `QRectF.intersects` doesn't consider the case where the width of one of the rects is zero.
+    In my opinion, this is a bug, but whatever.

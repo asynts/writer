@@ -285,15 +285,11 @@ class Placer:
                     model_node_offset=excerpt.offset_into_model_node,
                 ))
 
-                print(f"before placing cursor: {self._current_line.get_max_remaining_width()}")
-
                 self._current_line.place_child_node(layout.CursorLayoutNode(
                     parent_node=self._current_line,
                     model_node=excerpt.text_chunk_model_node,
                     model_node_offset=excerpt.offset_into_model_node + excerpt.text_chunk_model_node.cursor_offset,
                 ))
-
-                print(f"after placing cursor: {self._current_line.get_max_remaining_width()}")
 
                 self._current_line.place_child_node(layout.TextChunkLayoutNode(
                     text=excerpt.text_chunk_model_node.text[excerpt.text_chunk_model_node.cursor_offset:excerpt.offset_into_model_node + len(excerpt.text)],

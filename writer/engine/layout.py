@@ -17,6 +17,9 @@ COLOR_RED = QColor(255, 0, 0)
 COLOR_GREEN = QColor(0, 255, 0)
 COLOR_BLUE = QColor(0, 0, 255)
 COLOR_PINK = QColor(255, 53, 184)
+COLOR_YELLOW = QColor(255, 255, 0)
+
+b_draw_debug_text_outline = False
 
 # This is initialized on startup by Qt.
 dots_per_cm = None
@@ -384,7 +387,8 @@ class LayoutNode:
         assert self.get_phase() == Phase.PHASE_3_FINAL
 
         # If this element is not visible, we do not draw it.
-        if not self.get_qrect().intersects(visible_rect):
+        # Somehow, a rect with zero width never intersects.
+        if not self.get_qrect().intersects(visible_rect) and self.get_qrect().width() > 0.0:
             return
 
         self.paint_background(painter=painter)
@@ -674,17 +678,14 @@ class CursorLayoutNode(LayoutNode):
     def paint_decoration(self, *, painter: QtGui.QPainter):
         super().paint_decoration(painter=painter)
 
-        # FIXME: Somehow, this is never called.
-
-        painter.setBrush(COLOR_BLUE)
-        painter.setPen(COLOR_BLUE)
         painter.fillRect(
             QtCore.QRectF(
                 self.get_absolute_x() - 1,
                 self.get_absolute_y() - 2,
                 2,
-                self.get_absolute_height(),
-            )
+                self.get_absolute_height() + 4,
+            ),
+            COLOR_YELLOW,
         )
 
 class TextChunkLayoutNode(LayoutNode):
@@ -744,5 +745,6 @@ class TextChunkLayoutNode(LayoutNode):
         painter.setFont(self.get_model_node().font)
         painter.drawText(self.get_inner_qrect(), self.get_text())
 
-        painter.setPen(COLOR_RED)
-        painter.drawRect(self.get_inner_qrect())
+        if b_draw_debug_text_outline:
+            painter.setPen(COLOR_RED)
+            painter.drawRect(self.get_inner_qrect())
