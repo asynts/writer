@@ -80,3 +80,10 @@ I didn't know where else to put it after removing it from the code.
 -   I decided to add a cursor offset to the model text chunk nodes.
     Not sure if this is smart or not.
     The alternative would be to add a custom cursor node and splice around it.
+
+-   Changing multiple things in a single step is difficult in an immutable tree,
+    because all the references break.
+
+    The same problem would occur, if we always created deep copies, so no work saved there.
+
+-   Maybe it is possible to resolve this problems by keeping ids that do not change if nodes are modified.
