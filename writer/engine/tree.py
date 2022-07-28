@@ -45,45 +45,6 @@ class Node:
         copy_.__is_mutable = True
         return copy_
 
-    # Finds a node in the subtree spanned by this node.
-    def lookup_node_recursively(self, *, key_path: list[int]) -> "Node":
-        assert len(key_path) >= 0
-        assert key_path[0] == self.key
-
-        if len(key_path) == 1:
-            return self
-
-        for child_node in self.children:
-            if child_node.key == key_path[1]:
-                return child_node.lookup_node_recursively(key_path=key_path[1:])
-
-        raise NodeNotFound
-
-    # Replace a node in the subtree spanned by this node.
-    # Returns a copy of the current node with updated parents.
-    # If they key path references this node, returns the new node.
-    def replace_node_recursively(self, *, key_path: list[int], new_node: "Node") -> "Node":
-        assert len(key_path) >= 0
-        assert key_path[0] == self.key
-
-        if len(key_path) == 1:
-            return new_node
-
-        for child_index, child_node in enumerate(self.children):
-            if child_node.key == key_path[1]:
-                mutable_copy = self.make_mutable_copy()
-
-                mutable_copy.children = [
-                    *self.children[:child_index],
-                    child_node.replace_node_recursively(key_path=key_path[1:], new_node=new_node),
-                    *self.children[child_index+1:],
-                ]
-
-                mutable_copy.make_immutable()
-                return mutable_copy
-
-        raise NodeNotFound
-
     def append_child(self, child_node: "Node"):
         assert self.is_mutable
         self.__children.append(child_node)
@@ -122,50 +83,90 @@ class Node:
         assert self.is_mutable
         self.__children = value
 
-# FIXME: Use this everywhere instead of the raw 'list[int]'.
-class KeyPathHelper:
+# FIXME: There is tons of redundancy in this function.
+#        Many of these functions could be implemented by a single complex function.
+class NodePath:
     __slots__ = (
-        "key_path",
+        "_key_list",
     )
 
-    def __init__(self, key_path: list[int]):
-        self.key_path = key_path
+    def __init__(self, key_list: list[int]):
+        assert isinstance(key_list, list)
+        assert len(key_list) >= 1
+        self._key_list = key_list
 
-    def with_child(self, *, child_node: Node) -> "KeyPathHelper":
-        return KeyPathHelper(self.key_path + [child_node.key])
+    def lookup(self, *, root_node: Node) -> Node:
+        def visit_node(node: Node, *, remaining_key_list: list[int]):
+            assert len(remaining_key_list) >= 1
+            assert remaining_key_list[0] == node.key
 
-    def parent(self, *, root_node: Node) -> "KeyPathHelper":
-        assert len(self.key_path) >= 2
-        return KeyPathHelper(self.key_path[:-1])
+            if len(remaining_key_list) == 1:
+                return node
 
-    # FIXME: There is a ton of overlap with the 'lookup' and the future 'next_sibling'.
-    #        I should write one generic iterator function that does all of that at once.
-    def previous_sibling(self, *, root_node: Node) -> typing.Tuple[Node, list[int]]:
-        def visit_node(node: Node, *, key_path: list[int]):
-            assert len(key_path) >= 1
-            assert key_path[0] == node.key
+            for child_node in node.children:
+                if child_node.key == remaining_key_list[1]:
+                    return visit_node(child_node, remaining_key_list=remaining_key_list[1:])
 
-            # Are we the parent of the target node?
-            if len(key_path) == 2:
+            raise NodeNotFound
+
+        return visit_node(root_node)
+
+    def replace(self, new_node: Node, *, root_node: Node) -> Node:
+        def visit_node(node: Node, *, remaining_key_list: list[int]):
+            assert len(remaining_key_list) >= 1
+            assert remaining_key_list[0] == node.key
+
+            if len(remaining_key_list) == 1:
+                return new_node
+            else:
+                for child_index, child_node in enumerate(node.children):
+                    if child_node.key == remaining_key_list[1]:
+                        patched_node = node.make_mutable_copy()
+                        patched_node.children = [
+                            *patched_node.children[:child_index],
+                            visit_node(child_node, remaining_key_list=remaining_key_list[1:]),
+                            *patched_node.children[child_index+1:],
+                        ]
+                        patched_node.make_immutable()
+                        return patched_node
+
+                raise NodeNotFound
+
+        return visit_node(root_node)
+
+    def parent_path(self, *, root_node: Node) -> "NodePath":
+        assert len(self._key_list) >= 2
+        return self._key_list[:-1]
+
+    def child_path(self, child_node: Node, *, root_node: Node) -> "NodePath":
+        return self._key_list + [child_node.key]
+
+    def previous_sibling_path(self, *, root_node: Node) -> "NodePath":
+        def visit_node(node: Node, *, remaining_key_list: list[int]):
+            assert len(remaining_key_list) >= 1
+            assert remaining_key_list[0] == node.key
+
+            # If we are the parent of the target node.
+            if len(remaining_key_list) == 2:
                 previous_node = None
                 for child_node in node.children:
-                    if child_node.key == key_path[1]:
+                    if child_node.key == remaining_key_list[1]:
                         if previous_node is None:
-                            return None, None
+                            return None
                         else:
-                            return previous_node, self.key_path[:-1] + [previous_node.key]
+                            return self._key_list[:-1] + [previous_node.key]
 
                     previous_node = child_node
 
                 raise NodeNotFound
 
             for child_node in node.children:
-                if child_node.key == key_path[1]:
-                    return visit_node(child_node, key_path=key_path[1:])
+                if child_node.key == remaining_key_list[1]:
+                    return visit_node(child_node, remaining_key_list=remaining_key_list[1:])
 
             raise NodeNotFound
 
-        return visit_node(root_node, key_path=self.key_path)
+        return visit_node(root_node, remaining_key_list=self._key_list)
 
 # Splits a list when it encounters a sentinel, returns a partition of the input list.
 def partition_with_sentinel(list_: list, *, sentinel: any):
