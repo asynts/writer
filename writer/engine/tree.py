@@ -44,11 +44,14 @@ class Node:
 
     # Finds a node in the subtree spanned by this node.
     def lookup_node_recursively(self, *, key_path: list[int]) -> "Node":
-        if len(key_path) == 0:
+        assert len(key_path) >= 0
+        assert key_path[0] == self.key
+
+        if len(key_path) == 1:
             return self
 
         for child_node in self.children:
-            if child_node.key == key_path[0]:
+            if child_node.key == key_path[1]:
                 return child_node.lookup_node_recursively(key_path=key_path[1:])
 
         raise NodeNotFound
@@ -57,11 +60,14 @@ class Node:
     # Returns a copy of the current node with updated parents.
     # If they key path references this node, returns the new node.
     def replace_node_recursively(self, *, key_path: list[int], new_node: "Node") -> "Node":
-        if len(key_path) == 0:
+        assert len(key_path) >= 0
+        assert key_path[0] == self.key
+
+        if len(key_path) == 1:
             return new_node
 
         for child_index, child_node in enumerate(self.children):
-            if child_node.key == key_path[0]:
+            if child_node.key == key_path[1]:
                 mutable_copy = self.make_mutable_copy()
 
                 mutable_copy.children = [

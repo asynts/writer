@@ -22,13 +22,13 @@ class HistoryManager:
 
     def lookup_node(self, *, key_path: list[int]) -> model.ModelNode:
         assert key_path[0] == self.__model_tree.key
-        return self.__model_tree.lookup_node_recursively(key_path=key_path[1:])
+        return self.__model_tree.lookup_node_recursively(key_path=key_path)
 
     def replace_node(self, *, key_path: list[int], new_node: model.ModelNode):
         assert key_path[0] == self.__model_tree.key
 
         new_model_tree = self.__model_tree.replace_node_recursively(
-            key_path=key_path[1:],
+            key_path=key_path,
             new_node=new_node,
         )
 

@@ -734,7 +734,7 @@ class TextChunkLayoutNode(LayoutNode):
             new_node.make_immutable()
 
             assert previous_cursor_key_path[0] == new_model_tree.key
-            new_model_tree = new_model_tree.replace_node_recursively(key_path=previous_cursor_key_path[1:], new_node=new_node)
+            new_model_tree = new_model_tree.replace_node_recursively(key_path=previous_cursor_key_path, new_node=new_node)
 
         # FIXME: Compute the exact offset based on the 'relative_x'.
 
@@ -744,13 +744,13 @@ class TextChunkLayoutNode(LayoutNode):
         new_node.make_immutable()
 
         assert key_path[0] == new_model_tree.key
-        new_model_tree = new_model_tree.replace_node_recursively(key_path=key_path[1:], new_node=new_node)
+        new_model_tree = new_model_tree.replace_node_recursively(key_path=key_path, new_node=new_node)
 
         # Update the reference that the document node keeps on the node with the cursor in it.
         new_node = new_model_tree.make_mutable_copy()
         new_node._key_path_to_text_chunk_with_cursor = key_path
         new_node.make_immutable()
-        new_model_tree = new_model_tree.replace_node_recursively(key_path=[], new_node=new_node);
+        new_model_tree = new_node
 
         history.global_history_manager.update_model_tree(new_model_tree=new_model_tree)
 
