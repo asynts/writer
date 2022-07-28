@@ -722,6 +722,23 @@ class TextChunkLayoutNode(LayoutNode):
         self._model_node_offset = model_node_offset
         self._text = text
 
+    def _offset_into_model_node(self, *, relative_x: float) -> int:
+        font_metrics: QtGui.QFontMetricsF = self.get_model_node().font_metrics
+
+        offset = self._model_node_offset
+
+        x = 0.0
+        for character in self._text:
+            character_width = font_metrics.size(0, character).width()
+
+            if relative_x >= x + character_width / 2:
+                offset += 1
+                x += character_width
+            else:
+                break
+
+        return offset
+
     # Override.
     def on_mouse_click(self, *, relative_x: float, relative_y: float, key_path: list[int]):
         new_model_tree = history.global_history_manager.get_model_tree()
@@ -736,11 +753,9 @@ class TextChunkLayoutNode(LayoutNode):
             assert previous_cursor_key_path[0] == new_model_tree.key
             new_model_tree = new_model_tree.replace_node_recursively(key_path=previous_cursor_key_path, new_node=new_node)
 
-        # FIXME: Compute the exact offset based on the 'relative_x'.
-
         # Place the cursor in the current layout node.
         new_node = self.get_model_node().make_mutable_copy()
-        new_node.cursor_offset = self._model_node_offset
+        new_node.cursor_offset = self._offset_into_model_node(relative_x=relative_x)
         new_node.make_immutable()
 
         assert key_path[0] == new_model_tree.key
