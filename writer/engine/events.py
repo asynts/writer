@@ -8,8 +8,8 @@ import writer.engine.layout as layout
 import writer.engine.tree as tree
 
 def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.LayoutNode):
-    key_path_to_cursor_node = model_tree._key_path_to_text_chunk_with_cursor
-    text_chunk_model_node = history.global_history_manager.lookup_node(key_path=key_path_to_cursor_node)
+    key_path_helper = tree.KeyPathHelper(model_tree._key_path_to_text_chunk_with_cursor)
+    text_chunk_model_node = history.global_history_manager.lookup_node(key_path=key_path_helper.key_path)
 
     # If are in the middle of a text chunk, delete character before cursor.
     if text_chunk_model_node.cursor_offset >= 1:
@@ -17,13 +17,40 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
         new_node.text = new_node.text[:new_node.cursor_offset-1] + new_node.text[new_node.cursor_offset:]
         new_node.cursor_offset -= 1
         new_node.make_immutable()
-        history.global_history_manager.replace_node(key_path=key_path_to_cursor_node, new_node=new_node)
+        history.global_history_manager.replace_node(key_path=key_path_helper.key_path, new_node=new_node)
 
         return True
 
-    # FIXME: If we are at the start of a text chunk, merge into the previous text chunk.
+    # We are at the start of a text chunk, is there a preceding text chunk?
+    previous_text_chunk_node, previous_text_chunk_node_path = key_path_helper.previous_sibling(root_node=model_tree)
+    if previous_text_chunk_node is not None:
+        new_model_tree = model_tree
 
-    # FIXME: If we are at the start of a paragraph, merge into the previous paragraph.
+        # Remove last character of previous text chunk.
+        new_node = previous_text_chunk_node.make_mutable_copy()
+        new_node.text = new_node.text[:-1]
+        new_node.cursor_offset = len(new_node.text)
+        new_node.make_immutable()
+        new_model_tree = new_model_tree.replace_node_recursively(key_path=previous_text_chunk_node_path, new_node=new_node)
+
+        # Remove cursor from current node.
+        new_node = text_chunk_model_node.make_mutable_copy()
+        new_node.cursor_offset = None
+        new_node.make_immutable()
+        new_model_tree = new_model_tree.replace_node_recursively(key_path=key_path_helper.key_path, new_node=new_node)
+
+        # Update the reference to the new cursor node.
+        new_node = new_model_tree.make_mutable_copy()
+        new_node._key_path_to_text_chunk_with_cursor = previous_text_chunk_node_path
+        new_node.make_immutable()
+        new_model_tree = new_node
+
+        history.global_history_manager.update_model_tree(new_model_tree=new_model_tree)
+
+        return True
+    else:
+        # FIXME: Remove last character of last text chunk of previous paragarph.
+        pass
 
     return False
 

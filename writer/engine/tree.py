@@ -1,4 +1,7 @@
 import copy
+import typing
+
+from writer.engine import model
 
 # Each node is assigned a unique id on creation.
 # When we want to change a node we create a copy but keep the same key.
@@ -118,6 +121,41 @@ class Node:
     def children(self, value: list["Node"]):
         assert self.is_mutable
         self.__children = value
+
+# FIXME: Use this everywhere instead of the raw 'list[int]'.
+class KeyPathHelper:
+    __slots__ = (
+        "key_path",
+    )
+
+    def __init__(self, key_path: list[int]):
+        self.key_path = key_path
+
+    # FIXME: There is a ton of overlap with the 'lookup' and the future 'next_sibling'.
+    #        I should write one generic iterator function that does all of that at once.
+    def previous_sibling(self, *, root_node: Node) -> typing.Tuple[Node, list[int]]:
+        def visit_node(node: Node, *, key_path: list[int]):
+            assert len(key_path) >= 1
+            assert key_path[0] == node.key
+
+            # Are we the parent of the target node?
+            if len(key_path) == 2:
+                previous_node = None
+                for child_node in node.children:
+                    if child_node.key == key_path[1]:
+                        return previous_node, self.key_path[:-1] + [previous_node.key]
+
+                    previous_node = child_node
+
+                raise NodeNotFound
+
+            for child_node in node.children:
+                if child_node.key == key_path[1]:
+                    return visit_node(child_node, key_path=key_path[1:])
+
+            raise NodeNotFound
+
+        return visit_node(root_node, key_path=self.key_path)
 
 # Splits a list when it encounters a sentinel, returns a partition of the input list.
 def partition_with_sentinel(list_: list, *, sentinel: any):
