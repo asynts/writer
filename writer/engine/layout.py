@@ -724,15 +724,17 @@ class TextChunkLayoutNode(LayoutNode):
 
     # Override.
     def on_mouse_click(self, *, relative_x: float, relative_y: float, key_path: list[int]):
-        model_document_node = history.global_history_manager.get_model_tree()
+        new_model_tree = history.global_history_manager.get_model_tree()
 
         # Remove the cursor from the the previously selected node.
-        previous_cursor_key_path = model_document_node._key_path_to_text_chunk_with_cursor
+        previous_cursor_key_path = new_model_tree._key_path_to_text_chunk_with_cursor
         if previous_cursor_key_path is not None:
             new_node = history.global_history_manager.lookup_node(key_path=previous_cursor_key_path).make_mutable_copy()
             new_node.cursor_offset = None
             new_node.make_immutable()
-            history.global_history_manager.replace_node(key_path=previous_cursor_key_path, new_node=new_node)
+
+            assert previous_cursor_key_path[0] == new_model_tree.key
+            new_model_tree = new_model_tree.replace_node_recursively(key_path=previous_cursor_key_path[1:], new_node=new_node)
 
         # FIXME: Compute the exact offset based on the 'relative_x'.
 
@@ -740,13 +742,17 @@ class TextChunkLayoutNode(LayoutNode):
         new_node = self.get_model_node().make_mutable_copy()
         new_node.cursor_offset = self._model_node_offset
         new_node.make_immutable()
-        history.global_history_manager.replace_node(key_path=key_path, new_node=new_node)
+
+        assert key_path[0] == new_model_tree.key
+        new_model_tree = new_model_tree.replace_node_recursively(key_path=key_path[1:], new_node=new_node)
 
         # Update the reference that the document node keeps on the node with the cursor in it.
-        new_node = model_document_node.make_mutable_copy()
+        new_node = new_model_tree.make_mutable_copy()
         new_node._key_path_to_text_chunk_with_cursor = key_path
         new_node.make_immutable()
-        history.global_history_manager.replace_node(key_path=[model_document_node.key], new_node=new_node)
+        new_model_tree = new_model_tree.replace_node_recursively(key_path=[], new_node=new_node);
+
+        history.global_history_manager.update_model_tree(new_model_tree=new_model_tree)
 
         return True
 

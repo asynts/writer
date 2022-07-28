@@ -65,9 +65,9 @@ class Node:
                 mutable_copy = self.make_mutable_copy()
 
                 mutable_copy.children = [
-                    self.children[:child_index],
+                    *self.children[:child_index],
                     child_node.replace_node_recursively(key_path=key_path[1:], new_node=new_node),
-                    self.children[child_index+1:],
+                    *self.children[child_index+1:],
                 ]
 
                 mutable_copy.make_immutable()
