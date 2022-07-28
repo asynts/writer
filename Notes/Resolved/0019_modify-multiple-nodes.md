@@ -35,3 +35,9 @@ With an immutable model tree, we are not able to make multiple changes easily be
     -   https://github.com/stanch/reftree
 
     -   https://github.com/stanch/zipper
+
+### Result
+
+-   The key here is, that we keep a `key` property in every node which is unique upon creation.
+    If we want to modify a node we can copy this key to the new one.
+    Therefore, all the references will stay intact.

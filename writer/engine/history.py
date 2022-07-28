@@ -20,9 +20,21 @@ class HistoryManager:
         for callback in self.__on_history_change_callbacks:
             callback()
 
-    def modify(self, position: "tree.Position", **kwargs):
-        new_model_tree = tree.new_tree_with_modified_node(position, **kwargs).root
+    def lookup_node(self, *, key_path: list[int]) -> model.ModelNode:
+        assert key_path[0] == self.__model_tree.key
+        return self.__model_tree.lookup_node_recursively(key_path=key_path[1:])
 
+    def replace_node(self, *, key_path: list[int], new_node: model.ModelNode):
+        assert key_path[0] == self.__model_tree.key
+
+        new_model_tree = self.__model_tree.replace_node_recursively(
+            key_path=key_path[1:],
+            new_node=new_node,
+        )
+
+        self.update_model_tree(new_model_tree=new_model_tree)
+
+    def update_model_tree(self, *, new_model_tree: model.DocumentModelNode):
         self.__model_tree_after.clear()
         self.__model_tree_before.append(self.__model_tree)
         self.__model_tree = new_model_tree

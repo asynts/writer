@@ -220,7 +220,7 @@ class LayoutNode:
         self.__phase = Phase.PHASE_3_FINAL
 
     # Virtual.
-    def on_mouse_click(self, *, relative_x: float, relative_y: float, model_position: "tree.Position"):
+    def on_mouse_click(self, *, relative_x: float, relative_y: float, key_path: list[int]):
         return False
 
     def get_parent_node(self) -> "LayoutNode":
@@ -709,7 +709,7 @@ class TextChunkLayoutNode(LayoutNode):
         rendered_size = model_node.font_metrics.size(0, text)
 
         super().__init__(
-            name="InlineTextChunkLayoutNode",
+            name="TextChunkLayoutNode",
             parent_node=parent_node,
             model_node=model_node,
 
@@ -723,35 +723,36 @@ class TextChunkLayoutNode(LayoutNode):
         self._text = text
 
     # Override.
-    def on_mouse_click(self, *, relative_x: float, relative_y: float, model_position: "tree.Position"):
-        # Remove the cursor at the previous cursor position.
-        if model_position.root._text_chunk_with_cursor is not None:
-            history.global_history_manager.modify(
-                model_position.root._text_chunk_with_cursor,
-                cursor_offset=None,
-            )
+    def on_mouse_click(self, *, relative_x: float, relative_y: float, key_path: list[int]):
+        new_model_tree = history.global_history_manager.get_model_tree()
+
+        # Remove the cursor from the the previously selected node.
+        previous_cursor_key_path = new_model_tree._key_path_to_text_chunk_with_cursor
+        if previous_cursor_key_path is not None:
+            new_node = history.global_history_manager.lookup_node(key_path=previous_cursor_key_path).make_mutable_copy()
+            new_node.cursor_offset = None
+            new_node.make_immutable()
+
+            assert previous_cursor_key_path[0] == new_model_tree.key
+            new_model_tree = new_model_tree.replace_node_recursively(key_path=previous_cursor_key_path[1:], new_node=new_node)
 
         # FIXME: Compute the exact offset based on the 'relative_x'.
 
-        # FIXME: How can we make multiple changes at the same time?
-        #        The problem is, that we continue to reference the same model tree but we don't have the new model position.
-        #        This is a very serious problem and I don't see a solution for it.
-        #
-        #        We need some way to retain a reference, when we switch to the updated model.
-
         # Place the cursor in the current layout node.
-        new_model_position = history.global_history_manager.modify(
-            model_position,
-            cursor_offset=self._model_node_offset
-        )
+        new_node = self.get_model_node().make_mutable_copy()
+        new_node.cursor_offset = self._model_node_offset
+        new_node.make_immutable()
 
-        history.global_history_manager.modify(
-            tree.Position(
-                node=model_position.root,
-                parent_nodes=[],
-            ),
-            _text_chunk_with_cursor=new_model_position,
-        )
+        assert key_path[0] == new_model_tree.key
+        new_model_tree = new_model_tree.replace_node_recursively(key_path=key_path[1:], new_node=new_node)
+
+        # Update the reference that the document node keeps on the node with the cursor in it.
+        new_node = new_model_tree.make_mutable_copy()
+        new_node._key_path_to_text_chunk_with_cursor = key_path
+        new_node.make_immutable()
+        new_model_tree = new_model_tree.replace_node_recursively(key_path=[], new_node=new_node);
+
+        history.global_history_manager.update_model_tree(new_model_tree=new_model_tree)
 
         return True
 
