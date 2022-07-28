@@ -8,6 +8,9 @@ import writer.engine.layout as layout
 import writer.engine.tree as tree
 
 def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.LayoutNode):
+    # FIXME: We are a bit inconsistent here.
+    #        If we reference a node it should always belong to the current tree, otherwise, we should look it up again.
+
     key_path_helper = tree.KeyPathHelper(model_tree._key_path_to_text_chunk_with_cursor)
     text_chunk_model_node = history.global_history_manager.lookup_node(key_path=key_path_helper.key_path)
 
@@ -17,8 +20,8 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
         new_node.text = new_node.text[:new_node.cursor_offset-1] + new_node.text[new_node.cursor_offset:]
         new_node.cursor_offset -= 1
         new_node.make_immutable()
-        history.global_history_manager.replace_node(key_path=key_path_helper.key_path, new_node=new_node)
 
+        history.global_history_manager.replace_node(key_path=key_path_helper.key_path, new_node=new_node)
         return True
 
     # We are at the start of a text chunk, is there a preceding text chunk?
@@ -46,11 +49,43 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
         new_model_tree = new_node
 
         history.global_history_manager.update_model_tree(new_model_tree=new_model_tree)
-
         return True
     else:
-        # FIXME: Remove last character of last text chunk of previous paragarph.
-        pass
+        new_model_tree = model_tree
+
+        # Is there a preceding paragraph?
+        parent_node_path = key_path_helper.parent(root_node=new_model_tree)
+        parent_node = history.global_history_manager.lookup_node(key_path=parent_node_path.key_path)
+
+        prev_paragraph_node, prev_paragraph_path = parent_node_path.previous_sibling(root_node=new_model_tree)
+
+        if prev_paragraph_node is not None:
+            last_chunk = prev_paragraph_node.children[-1]
+            last_chunk_path = parent_node_path.with_child(child_node=last_chunk)
+
+            # Remove last character of last text chunk of previous paragarph.
+            new_node = last_chunk.make_mutable_copy()
+            new_node.text = new_node.text[:-1]
+            new_node.cursor_offset = len(new_node.text)
+            new_node.make_immutable()
+            new_model_tree = new_model_tree.replace_node_recursively(key_path=last_chunk_path.key_path, new_node=new_node)
+
+            # Merge the following paragraph into the previous paragraph.
+            new_node = prev_paragraph_node.make_mutable_copy()
+            new_node.children += parent_node.children
+            new_node.make_immutable()
+            new_model_tree = new_model_tree.replace_node_recursively(key_path=prev_paragraph_path, new_node=new_node)
+
+            # Delete the following paragraph.
+            parent_parent_path = parent_node_path.parent()
+            parent_parent_node = history.global_history_manager.lookup_node(key_path=parent_parent_path)
+            new_node = parent_parent_node.make_mutable_copy()
+            new_node.children.remove(parent_node)
+            new_node.make_immutable()
+            new_model_tree = new_model_tree.replace_node_recursively(key_path=parent_parent_path, new_node=new_node)
+
+            history.global_history_manager.update_model_tree(new_model_tree=new_model_tree)
+            return True
 
     return False
 

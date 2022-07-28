@@ -131,6 +131,13 @@ class KeyPathHelper:
     def __init__(self, key_path: list[int]):
         self.key_path = key_path
 
+    def with_child(self, *, child_node: Node) -> "KeyPathHelper":
+        return KeyPathHelper(self.key_path + [child_node.key])
+
+    def parent(self, *, root_node: Node) -> "KeyPathHelper":
+        assert len(self.key_path) >= 2
+        return KeyPathHelper(self.key_path[:-1])
+
     # FIXME: There is a ton of overlap with the 'lookup' and the future 'next_sibling'.
     #        I should write one generic iterator function that does all of that at once.
     def previous_sibling(self, *, root_node: Node) -> typing.Tuple[Node, list[int]]:
@@ -143,7 +150,10 @@ class KeyPathHelper:
                 previous_node = None
                 for child_node in node.children:
                     if child_node.key == key_path[1]:
-                        return previous_node, self.key_path[:-1] + [previous_node.key]
+                        if previous_node is None:
+                            return None, None
+                        else:
+                            return previous_node, self.key_path[:-1] + [previous_node.key]
 
                     previous_node = child_node
 
