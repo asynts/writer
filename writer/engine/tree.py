@@ -113,27 +113,6 @@ class Node:
         assert self.is_mutable
         self.__children = value
 
-# Since nodes become immutable before being inserted in their parent node,
-# we can not add a reference to the parent node inside the node.
-#
-# Instead, all code that interacts with the tree must remember the parent nodes itself.
-class Position:
-    __slots__ = (
-        "node",
-        "parent_nodes",
-    )
-
-    def __init__(self, *, node: Node, parent_nodes: list[Node]):
-        self.node = node
-        self.parent_nodes = parent_nodes
-
-    @property
-    def root(self) -> Node:
-        if len(self.parent_nodes) >= 1:
-            return self.parent_nodes[0]
-        else:
-            return self.node
-
 # Splits a list when it encounters a sentinel, returns a partition of the input list.
 def partition_with_sentinel(list_: list, *, sentinel: any):
     for index in range(len(list_)):
@@ -141,48 +120,3 @@ def partition_with_sentinel(list_: list, *, sentinel: any):
             return list_[:index], list_[index:index+1], list_[index+1:]
 
     return list_, [], []
-
-# Returns the root node of a new tree where the modifications were applied to the node.
-def new_tree_with_modified_node(position: Position, /, **kwargs) -> Position:
-    # Create a copy of the original node.
-    new_node = position.node.make_mutable_copy()
-
-    # Update some of the properties based on keyword arguments.
-    # In the C++ version we would have to implement this for each class manually.
-    for property_, value in { **kwargs }.items():
-        setattr(new_node, property_, value)
-
-    new_node.make_immutable()
-
-    if len(position.parent_nodes) >= 1:
-        # If we have parent nodes, recursively update the child nodes of parents.
-        parent_node = position.parent_nodes[-1]
-        assert position.node in parent_node.children
-
-        siblings_before, _, siblings_after = partition_with_sentinel(parent_node.children, sentinel=position.node)
-
-        new_parent_model_position = new_tree_with_modified_node(
-            Position(
-                node=parent_node,
-                parent_nodes=position.parent_nodes[:-1]
-            ),
-            children=[
-                *siblings_before,
-                new_node,
-                *siblings_after,
-            ],
-        )
-
-        return Position(
-            node=new_node,
-            parent_nodes=[
-                *new_parent_model_position.parent_nodes,
-                new_parent_model_position.node,
-            ],
-        )
-    else:
-        # We are the root node.
-        return Position(
-            node=new_node,
-            parent_nodes=[],
-        )

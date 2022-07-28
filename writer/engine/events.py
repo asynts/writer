@@ -15,10 +15,10 @@ import writer.engine.tree as tree
 # Invariant: When we mutate the model tree in the layout node hooks, the layout tree remains valid and keeps referencing the same model nodes.
 #            This is important for the algorithm to finish properly.
 def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model.DocumentModelNode, layout_tree: layout.LayoutNode):
-    model_parent_nodes: list[model.ModelNode] = []
+    key_path: list[int] = []
 
     def visit_layout_node(layout_node: layout.LayoutNode, *, relative_x: float, relative_y: float):
-        nonlocal model_parent_nodes
+        nonlocal key_path
 
         assert layout_node.get_phase() == layout.Phase.PHASE_3_FINAL
 
@@ -34,10 +34,7 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
             b_event_consumed = layout_node.on_mouse_click(
                 relative_x=relative_x,
                 relative_y=relative_y,
-                model_position=tree.Position(
-                    node=layout_node.get_model_node(),
-                    parent_nodes=model_parent_nodes,
-                ),
+                key_path=key_path + [layout_node.get_model_node().key]
             )
         else:
             b_event_consumed = False
@@ -48,7 +45,7 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
         for layout_child_node in layout_node.get_children():
             if layout_node.get_model_node():
                 b_added_parent_node = True
-                model_parent_nodes.append(layout_node.get_model_node())
+                key_path.append(layout_node.get_model_node().key)
             else:
                 b_added_parent_node = False
 
@@ -59,14 +56,22 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
             )
 
             if b_added_parent_node:
-                model_parent_nodes.pop()
+                key_path.pop()
 
             if b_event_consumed:
                 return True
 
         return False
 
+    print(">>> mouse_click_event: before")
+    print(model_tree.dump(), end="")
+    print("<<<")
+
     visit_layout_node(layout_tree, relative_x=absolute_x, relative_y=absolute_y)
+
+    print(">>> mouse_click_event: after")
+    print(model_tree.dump(), end="")
+    print("<<<")
 
 # Layout nodes can reference model nodes.
 # This "event" verifies that the layout tree is consistent with the model tree.
