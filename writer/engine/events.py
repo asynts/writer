@@ -1,10 +1,36 @@
 import typing
+
+from PyQt6 import QtGui
+from writer.engine import history
+
 import writer.engine.model as model
 import writer.engine.layout as layout
 import writer.engine.tree as tree
 
 # FIXME: Maybe I could rewrite this as a coroutine?
 #        Just spit out the next sensible layout node with the model tree position.
+
+def key_press_event(*, event: QtGui.QKeyEvent, model_tree: model.DocumentModelNode, layout_tree: layout.LayoutNode):
+    # Ignore key press events when no cursor is placed.
+    if model_tree._key_path_to_text_chunk_with_cursor is None:
+        return False
+
+    # FIXME: Deal with deleting characters.
+    # FIXME: I had all of this implemented already, port that here.
+
+    # Ignore key press events for unprintable characters.
+    if not event.text().isprintable():
+        return False
+
+    # FIXME: Use the actual character from the keyboard here.
+    new_node = model_tree.lookup_node_recursively(key_path=model_tree._key_path_to_text_chunk_with_cursor).make_mutable_copy()
+    new_node.text = new_node.text[:new_node.cursor_offset] + event.text() + new_node.text[new_node.cursor_offset:]
+    new_node.cursor_offset += 1
+    new_node.make_immutable()
+
+    history.global_history_manager.replace_node(key_path=model_tree._key_path_to_text_chunk_with_cursor, new_node=new_node)
+
+    return True
 
 # Calls 'LayoutNode.on_mouse_click' on any node that contains this position which has a model node assigned to it.
 # It keeps track of the parent model nodes, since this information is required to describe a position in the model tree.
@@ -63,15 +89,7 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
 
         return False
 
-    print(">>> mouse_click_event: before")
-    print(model_tree.dump(), end="")
-    print("<<<")
-
-    visit_layout_node(layout_tree, relative_x=absolute_x, relative_y=absolute_y)
-
-    print(">>> mouse_click_event: after")
-    print(model_tree.dump(), end="")
-    print("<<<")
+    return visit_layout_node(layout_tree, relative_x=absolute_x, relative_y=absolute_y)
 
 # Layout nodes can reference model nodes.
 # This "event" verifies that the layout tree is consistent with the model tree.

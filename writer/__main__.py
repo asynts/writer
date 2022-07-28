@@ -22,6 +22,7 @@ class WriterWidget(QtWidgets.QWidget):
         super().__init__()
 
         self.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.MinimumExpanding)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.ClickFocus)
 
         self._layout_tree = None
 
@@ -68,12 +69,28 @@ class WriterWidget(QtWidgets.QWidget):
     def mousePressEvent(self, event: QtGui.QMouseEvent) -> None:
         super().mousePressEvent(event)
 
-        events.mouse_click_event(
+        if events.mouse_click_event(
             absolute_x=event.position().x(),
             absolute_y=event.position().y(),
             model_tree=history.global_history_manager.get_model_tree(),
             layout_tree=self._layout_tree
-        )
+        ):
+            print("Focus set.")
+            self.setFocus(QtCore.Qt.FocusReason.MouseFocusReason)
+        else:
+            print("Focus cleared.")
+            self.clearFocus()
+
+    # Override.
+    def keyPressEvent(self, event: QtGui.QKeyEvent):
+        super().keyPressEvent(event)
+
+        if events.key_press_event(
+            event=event,
+            model_tree=history.global_history_manager.get_model_tree(),
+            layout_tree=self._layout_tree,
+        ):
+            event.accept()
 
 class Window(QtWidgets.QMainWindow):
     def __init__(self):
