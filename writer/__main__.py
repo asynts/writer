@@ -44,6 +44,11 @@ class WriterWidget(QtWidgets.QWidget):
             layout_tree=self._layout_tree,
         )
 
+        events.validate_cursor_unique_event(
+            model_tree=history.global_history_manager.get_model_tree(),
+            layout_tree=self._layout_tree,
+        )
+
         print(f"Rebuild  {after_ns - before_ns:>14}ns ({int((after_ns - before_ns) / (1000 * 1000)):>10}ms)")
 
     def on_history_change(self):

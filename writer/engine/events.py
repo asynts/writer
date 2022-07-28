@@ -129,6 +129,31 @@ def validate_parent_hierachy_event(*, model_tree: "model.DocumentModelNode", lay
 
     visit_layout_node(layout_tree)
 
+    return True
+
 # There must only be one
 def validate_cursor_unique_event(*, model_tree: "model.DocumentModelNode", layout_tree: "layout.LayoutNode"):
-    pass
+    b_cursor_seen = False
+    key_path: list[int] = []
+    def visit_model_node(*, model_node: model.ModelNode):
+        nonlocal b_cursor_seen
+        nonlocal key_path
+
+        key_path.append(model_node.key)
+
+        if isinstance(model_node, model.TextChunkModelNode):
+            if model_node.cursor_offset is not None:
+                assert not b_cursor_seen
+                assert model_tree._key_path_to_text_chunk_with_cursor is not None
+                assert key_path == model_tree._key_path_to_text_chunk_with_cursor
+
+                b_cursor_seen = True
+
+        for child_node in model_node.children:
+            visit_model_node(model_node=child_node)
+
+        key_path.pop()
+
+    visit_model_node(model_node=model_tree)
+
+    return True
