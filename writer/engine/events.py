@@ -1,19 +1,39 @@
 import typing
 
-from PyQt6 import QtGui
+from PyQt6 import QtGui, QtCore
 from writer.engine import history
 
 import writer.engine.model as model
 import writer.engine.layout as layout
 import writer.engine.tree as tree
 
-# FIXME: Maybe I could rewrite this as a coroutine?
-#        Just spit out the next sensible layout node with the model tree position.
+def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.LayoutNode):
+    key_path_to_cursor_node = model_tree._key_path_to_text_chunk_with_cursor
+    text_chunk_model_node = history.global_history_manager.lookup_node(key_path=key_path_to_cursor_node)
+
+    # If are in the middle of a text chunk, delete character before cursor.
+    if text_chunk_model_node.cursor_offset >= 1:
+        new_node = text_chunk_model_node.make_mutable_copy()
+        new_node.text = new_node.text[:new_node.cursor_offset-1] + new_node.text[new_node.cursor_offset:]
+        new_node.cursor_offset -= 1
+        new_node.make_immutable()
+        history.global_history_manager.replace_node(key_path=key_path_to_cursor_node, new_node=new_node)
+
+        return True
+
+    # FIXME: If we are at the start of a text chunk, merge into the previous text chunk.
+
+    # FIXME: If we are at the start of a paragraph, merge into the previous paragraph.
+
+    return False
 
 def key_press_event(*, event: QtGui.QKeyEvent, model_tree: model.DocumentModelNode, layout_tree: layout.LayoutNode):
     # Ignore key press events when no cursor is placed.
     if model_tree._key_path_to_text_chunk_with_cursor is None:
         return False
+
+    if event.key() == QtCore.Qt.Key.Key_Backspace:
+        return backspace_event(model_tree=model_tree, layout_tree=layout_tree)
 
     # FIXME: Deal with deleting characters.
     # FIXME: I had all of this implemented already, port that here.
@@ -41,6 +61,9 @@ def key_press_event(*, event: QtGui.QKeyEvent, model_tree: model.DocumentModelNo
 # Invariant: When we mutate the model tree in the layout node hooks, the layout tree remains valid and keeps referencing the same model nodes.
 #            This is important for the algorithm to finish properly.
 def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model.DocumentModelNode, layout_tree: layout.LayoutNode):
+    # FIXME: Maybe I could rewrite this as a coroutine?
+    #        Just spit out the next sensible layout node with the model tree position.
+
     key_path: list[int] = []
 
     def visit_layout_node(layout_node: layout.LayoutNode, *, relative_x: float, relative_y: float):
