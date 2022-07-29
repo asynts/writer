@@ -14,8 +14,23 @@ class ModelStyle:
 # This class keeps track of the model styles that we encountered.
 # Each style can override some properties, the most recent one is returned by the helpers.
 class ModelStyleCascade:
-    def __init__(self, model_style_list: list[ModelStyle]):
+    __slots__ = (
+        "__model_style_list",
+        "__font",
+        "__font_metrics",
+        "__is_mutable",
+    )
+
+    def __init__(self, model_style_list: list[ModelStyle], *, is_mutable: bool = True):
         self.__model_style_list = model_style_list
+
+        # Cache.
+        self.__font: QtGui.QFont = None
+
+        # Cache.
+        self.__font_metrics: QtGui.QFontMetricsF = None
+
+        self.__is_mutable = is_mutable
 
     def _recursive_lookup(self, name: str):
         for model_style in reversed(self.__model_style_list):
@@ -24,11 +39,24 @@ class ModelStyleCascade:
         raise AssertionError
 
     def push_style(self, model_style: ModelStyle):
+        assert self.__is_mutable
+
         self.__model_style_list.append(model_style)
 
+        self.__font = None
+        self.__font_metrics = None
+
     def pop_style(self, model_style: ModelStyle):
+        assert self.__is_mutable
+
         poped_model_style = self.__model_style_list.pop()
         assert model_style == poped_model_style
+
+        self.__font = None
+        self.__font_metrics = None
+
+    def copy_with(self, model_style: ModelStyle) -> "ModelStyleCascade":
+        return ModelStyleCascade(self.__model_style_list + [model_style], is_mutable=False)
 
     @property
     def is_bold(self) -> bool:
@@ -41,6 +69,26 @@ class ModelStyleCascade:
     @property
     def font_size(self) -> int:
         return self._recursive_lookup("font_size")
+
+    @property
+    def font(self):
+        if self.__font is not None:
+            return self.__font
+
+        weight = QtGui.QFont.Weight.Normal
+        if self.is_bold:
+            weight = QtGui.QFont.Weight.Bold
+
+        self.__font = QtGui.QFont("monospace", int(self.font_size), weight, self.is_italic)
+        return self.__font
+
+    @property
+    def font_metrics(self):
+        if self.__font_metrics is not None:
+            return self.__font_metrics
+
+        self.__font_metrics = QtGui.QFontMetricsF(self.font)
+        return self.__font_metrics
 
 class ModelNode(tree.Node):
     __slots__ = (
