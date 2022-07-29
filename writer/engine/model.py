@@ -77,7 +77,7 @@ class ModelNode(tree.Node):
 
 class DocumentModelNode(ModelNode):
     __slots__ = (
-        "_key_path_to_text_chunk_with_cursor",
+        "_cursor_node_path",
     )
 
     def __init__(
@@ -89,7 +89,7 @@ class DocumentModelNode(ModelNode):
         super().__init__(style=style, **kwargs)
 
         # Cache.
-        self._key_path_to_text_chunk_with_cursor: tree.Position = None
+        self._cursor_node_path: tree.NodePath = None
 
     # Override.
     def dump(self, *, name: str = "DocumentModelNode", indent: int = 0):

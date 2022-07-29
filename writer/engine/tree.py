@@ -109,7 +109,7 @@ class NodePath:
 
             raise NodeNotFound
 
-        return visit_node(root_node)
+        return visit_node(root_node, remaining_key_list=self._key_list)
 
     def replace(self, new_node: Node, *, root_node: Node) -> Node:
         def visit_node(node: Node, *, remaining_key_list: list[int]):
@@ -132,7 +132,7 @@ class NodePath:
 
                 raise NodeNotFound
 
-        return visit_node(root_node)
+        return visit_node(root_node, remaining_key_list=self._key_list)
 
     def parent_path(self, *, root_node: Node) -> "NodePath":
         assert len(self._key_list) >= 2

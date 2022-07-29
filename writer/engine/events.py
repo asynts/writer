@@ -11,7 +11,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
     # FIXME: We are a bit inconsistent here.
     #        If we reference a node it should always belong to the current tree, otherwise, we should look it up again.
 
-    key_path_helper = tree.KeyPathHelper(model_tree._key_path_to_text_chunk_with_cursor)
+    key_path_helper = tree.KeyPathHelper(model_tree._cursor_node_path)
     text_chunk_model_node = history.global_history_manager.lookup_node(key_path=key_path_helper.key_path)
 
     # If are in the middle of a text chunk, delete character before cursor.
@@ -91,7 +91,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
 
 def key_press_event(*, event: QtGui.QKeyEvent, model_tree: model.DocumentModelNode, layout_tree: layout.LayoutNode):
     # Ignore key press events when no cursor is placed.
-    if model_tree._key_path_to_text_chunk_with_cursor is None:
+    if model_tree._cursor_node_path is None:
         return False
 
     if event.key() == QtCore.Qt.Key.Key_Backspace:
@@ -105,12 +105,12 @@ def key_press_event(*, event: QtGui.QKeyEvent, model_tree: model.DocumentModelNo
         return False
 
     # FIXME: Use the actual character from the keyboard here.
-    new_node = model_tree.lookup_node_recursively(key_path=model_tree._key_path_to_text_chunk_with_cursor).make_mutable_copy()
+    new_node = model_tree.lookup_node_recursively(key_path=model_tree._cursor_node_path).make_mutable_copy()
     new_node.text = new_node.text[:new_node.cursor_offset] + event.text() + new_node.text[new_node.cursor_offset:]
     new_node.cursor_offset += 1
     new_node.make_immutable()
 
-    history.global_history_manager.replace_node(key_path=model_tree._key_path_to_text_chunk_with_cursor, new_node=new_node)
+    history.global_history_manager.replace_node(key_path=model_tree._cursor_node_path, new_node=new_node)
 
     return True
 
@@ -126,10 +126,10 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
     # FIXME: Maybe I could rewrite this as a coroutine?
     #        Just spit out the next sensible layout node with the model tree position.
 
-    key_path: list[int] = []
+    key_list: list[int] = []
 
     def visit_layout_node(layout_node: layout.LayoutNode, *, relative_x: float, relative_y: float):
-        nonlocal key_path
+        nonlocal key_list
 
         assert layout_node.get_phase() == layout.Phase.PHASE_3_FINAL
 
@@ -145,7 +145,7 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
             b_event_consumed = layout_node.on_mouse_click(
                 relative_x=relative_x,
                 relative_y=relative_y,
-                key_path=key_path + [layout_node.get_model_node().key]
+                path=tree.NodePath(key_list + [layout_node.get_model_node().key]),
             )
         else:
             b_event_consumed = False
@@ -156,7 +156,7 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
         for layout_child_node in layout_node.get_children():
             if layout_node.get_model_node():
                 b_added_parent_node = True
-                key_path.append(layout_node.get_model_node().key)
+                key_list.append(layout_node.get_model_node().key)
             else:
                 b_added_parent_node = False
 
@@ -167,7 +167,7 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
             )
 
             if b_added_parent_node:
-                key_path.pop()
+                key_list.pop()
 
             if b_event_consumed:
                 return True
@@ -219,25 +219,25 @@ def validate_parent_hierachy_event(*, model_tree: "model.DocumentModelNode", lay
 # There must only be one
 def validate_cursor_unique_event(*, model_tree: "model.DocumentModelNode", layout_tree: "layout.LayoutNode"):
     b_cursor_seen = False
-    key_path: list[int] = []
+    key_list: list[int] = []
     def visit_model_node(*, model_node: model.ModelNode):
         nonlocal b_cursor_seen
-        nonlocal key_path
+        nonlocal key_list
 
-        key_path.append(model_node.key)
+        key_list.append(model_node.key)
 
         if isinstance(model_node, model.TextChunkModelNode):
             if model_node.cursor_offset is not None:
                 assert not b_cursor_seen
-                assert model_tree._key_path_to_text_chunk_with_cursor is not None
-                assert key_path == model_tree._key_path_to_text_chunk_with_cursor
+                assert model_tree._cursor_node_path is not None
+                assert key_list == model_tree._cursor_node_path._key_list
 
                 b_cursor_seen = True
 
         for child_node in model_node.children:
             visit_model_node(model_node=child_node)
 
-        key_path.pop()
+        key_list.pop()
 
     visit_model_node(model_node=model_tree)
 

@@ -220,7 +220,7 @@ class LayoutNode:
         self.__phase = Phase.PHASE_3_FINAL
 
     # Virtual.
-    def on_mouse_click(self, *, relative_x: float, relative_y: float, key_path: list[int]):
+    def on_mouse_click(self, *, relative_x: float, relative_y: float, path: tree.NodePath):
         return False
 
     def get_parent_node(self) -> "LayoutNode":
@@ -740,30 +740,27 @@ class TextChunkLayoutNode(LayoutNode):
         return offset
 
     # Override.
-    def on_mouse_click(self, *, relative_x: float, relative_y: float, key_path: list[int]):
+    def on_mouse_click(self, *, relative_x: float, relative_y: float, path: tree.NodePath):
         new_model_tree = history.global_history_manager.get_model_tree()
 
         # Remove the cursor from the the previously selected node.
-        previous_cursor_key_path = new_model_tree._key_path_to_text_chunk_with_cursor
-        if previous_cursor_key_path is not None:
-            new_node = history.global_history_manager.lookup_node(key_path=previous_cursor_key_path).make_mutable_copy()
+        previous_cursor_path = new_model_tree._cursor_node_path
+        if previous_cursor_path is not None:
+            new_node = previous_cursor_path.lookup(root_node=new_model_tree).make_mutable_copy()
             new_node.cursor_offset = None
             new_node.make_immutable()
 
-            assert previous_cursor_key_path[0] == new_model_tree.key
-            new_model_tree = new_model_tree.replace_node_recursively(key_path=previous_cursor_key_path, new_node=new_node)
+            new_model_tree = previous_cursor_path.replace(new_node, root_node=new_model_tree)
 
         # Place the cursor in the current layout node.
         new_node = self.get_model_node().make_mutable_copy()
         new_node.cursor_offset = self._offset_into_model_node(relative_x=relative_x)
         new_node.make_immutable()
-
-        assert key_path[0] == new_model_tree.key
-        new_model_tree = new_model_tree.replace_node_recursively(key_path=key_path, new_node=new_node)
+        new_model_tree = path.replace(new_node, root_node=new_model_tree)
 
         # Update the reference that the document node keeps on the node with the cursor in it.
         new_node = new_model_tree.make_mutable_copy()
-        new_node._key_path_to_text_chunk_with_cursor = key_path
+        new_node._cursor_node_path = path
         new_node.make_immutable()
         new_model_tree = new_node
 
