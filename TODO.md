@@ -16,3 +16,5 @@
     That should make interactions with the model tree significantly easier.
 
 -   Create a lossless video to show of the project.
+
+-   Update the README file to present the current state of the application.

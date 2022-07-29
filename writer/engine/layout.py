@@ -703,10 +703,10 @@ class TextChunkLayoutNode(LayoutNode):
 
         model_node: "model.TextChunkModelNode",
         model_node_offset: int,
+
+        rendered_size: QtCore.QSizeF,
     ):
         assert isinstance(model_node, model.TextChunkModelNode)
-
-        rendered_size = model_node.font_metrics.size(0, text)
 
         super().__init__(
             name="TextChunkLayoutNode",

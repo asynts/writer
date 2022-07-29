@@ -1,3 +1,4 @@
+import copy
 import dataclasses
 import string
 
@@ -16,6 +17,7 @@ class TextExcerpt:
     text_chunk_model_node: model.TextChunkModelNode
     text: str
     offset_into_model_node: int
+    style_cascade: model.ModelStyleCascade
 
 # Represents one word that should be wrapped as one.
 # Words can span over multiple text chunks in the model.
@@ -62,7 +64,7 @@ class WordGroup:
             # In block mode, we won't actually draw that space but we still need to reserve space for it.
             text = excerpt.text + " "
 
-            size = excerpt.text_chunk_model_node.font_metrics.size(0, text)
+            size = excerpt.style_cascade.font_metrics.size(0, text)
 
             self.width += size.width()
             self.height = max(self.height, size.height())
@@ -94,7 +96,7 @@ def partition_at_whitespace(string_: str):
 # Wrapping text is more complicated than one might think at first.
 # The formatting can change in the middle of a word and one chunk of text can contain multiple words.
 # This function takes a paragraph and prepares word groups that should be wrapped together.
-def compute_word_groups_in_paragraph(paragraph_model_node: model.ParagraphModelNode) -> list[WordGroup]:
+def compute_word_groups_in_paragraph(paragraph_model_node: model.ParagraphModelNode, style_cascade: model.ModelStyleCascade) -> list[WordGroup]:
     word_groups: list[WordGroup] = []
 
     current_word_group = WordGroup()
@@ -129,6 +131,7 @@ def compute_word_groups_in_paragraph(paragraph_model_node: model.ParagraphModelN
                 text_chunk_model_node=text_chunk_model_node,
                 offset_into_model_node=offset_into_model_node_before,
                 text=text,
+                style_cascade=style_cascade.copy_with(text_chunk_model_node.style),
             ))
 
             # If a separator was encountered, open a new word group.
@@ -147,6 +150,10 @@ class Placer:
             model_node=document_model_node,
             style=style.LayoutStyle(),
         )
+
+        self._style_cascade = model.ModelStyleCascade([
+            document_model_node.style,
+        ])
 
         self._current_page: layout.PageLayoutNode = None
         self._current_paragraph: layout.VerticalLayoutNode = None
@@ -268,6 +275,8 @@ class Placer:
 
         excerpt = None
         for excerpt in word_group.excerpts:
+            self._style_cascade.push_style(excerpt.text_chunk_model_node.style)
+
             if excerpt.text_chunk_model_node.cursor_offset is not None:
                 b_cursor_is_out_of_bounds_left = (excerpt.text_chunk_model_node.cursor_offset < excerpt.offset_into_model_node)
                 b_cursor_is_out_of_bounds_right = (excerpt.text_chunk_model_node.cursor_offset > excerpt.offset_into_model_node + len(excerpt.text))
@@ -277,12 +286,15 @@ class Placer:
                 b_place_cursor = False
 
             if b_place_cursor:
+                text=excerpt.text_chunk_model_node.text[excerpt.offset_into_model_node:excerpt.text_chunk_model_node.cursor_offset]
                 self._current_line.place_child_node(layout.TextChunkLayoutNode(
-                    text=excerpt.text_chunk_model_node.text[excerpt.offset_into_model_node:excerpt.text_chunk_model_node.cursor_offset],
+                    text=text,
                     parent_node=self._current_line,
 
                     model_node=excerpt.text_chunk_model_node,
                     model_node_offset=excerpt.offset_into_model_node,
+
+                    rendered_size=excerpt.style_cascade.font_metrics.size(0, text),
                 ))
 
                 self._current_line.place_child_node(layout.CursorLayoutNode(
@@ -291,32 +303,43 @@ class Placer:
                     model_node_offset=excerpt.offset_into_model_node + excerpt.text_chunk_model_node.cursor_offset,
                 ))
 
+                text=excerpt.text_chunk_model_node.text[excerpt.text_chunk_model_node.cursor_offset:excerpt.offset_into_model_node + len(excerpt.text)]
                 self._current_line.place_child_node(layout.TextChunkLayoutNode(
-                    text=excerpt.text_chunk_model_node.text[excerpt.text_chunk_model_node.cursor_offset:excerpt.offset_into_model_node + len(excerpt.text)],
+                    text=text,
                     parent_node=self._current_line,
 
                     model_node=excerpt.text_chunk_model_node,
                     model_node_offset=excerpt.offset_into_model_node + excerpt.text_chunk_model_node.cursor_offset,
+
+                    rendered_size=excerpt.style_cascade.font_metrics.size(0, text),
                 ))
             else:
+                text = excerpt.text
                 self._current_line.place_child_node(layout.TextChunkLayoutNode(
-                    text=excerpt.text,
+                    text=text,
                     parent_node=self._current_line,
 
                     model_node=excerpt.text_chunk_model_node,
                     model_node_offset=excerpt.offset_into_model_node,
+
+                    rendered_size=excerpt.style_cascade.font_metrics.size(0, text),
                 ))
+
+            self._style_cascade.pop_style(excerpt.text_chunk_model_node.style)
 
         # We are taking the formatting from the last excerpt from the loop.
         assert excerpt is not None
 
         # FIXME: Do the spacing separately.
+        text=" "
         self._current_line.place_child_node(layout.TextChunkLayoutNode(
-            text=" ",
+            text=text,
             parent_node=self._current_line,
 
             model_node=excerpt.text_chunk_model_node,
             model_node_offset=excerpt.offset_into_model_node + len(excerpt.text),
+
+            rendered_size=excerpt.style_cascade.font_metrics.size(0, text),
         ))
 
     def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode):
@@ -343,10 +366,12 @@ class Placer:
         assert self._current_paragraph_layout_nodes is None
         self._current_paragraph_layout_nodes = []
 
+        self._style_cascade.push_style(paragraph_model_node.style)
+
         self.create_new_paragraph()
         self.create_new_line()
 
-        word_groups = compute_word_groups_in_paragraph(paragraph_model_node)
+        word_groups = compute_word_groups_in_paragraph(style_cascade=self._style_cascade, paragraph_model_node=paragraph_model_node)
 
         for word_group in word_groups:
             if self._current_line.get_max_remaining_width() >= word_group.width:
@@ -365,6 +390,8 @@ class Placer:
         self._current_paragraph_layout_nodes = None
 
         self._current_model_paragraph_node = None
+
+        self._style_cascade.pop_style(paragraph_model_node.style)
 
     def place_document(self, document_model_node: model.DocumentModelNode):
         assert isinstance(document_model_node, model.DocumentModelNode)
