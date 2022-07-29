@@ -97,20 +97,19 @@ def key_press_event(*, event: QtGui.QKeyEvent, model_tree: model.DocumentModelNo
     if event.key() == QtCore.Qt.Key.Key_Backspace:
         return backspace_event(model_tree=model_tree, layout_tree=layout_tree)
 
-    # FIXME: Deal with deleting characters.
-    # FIXME: I had all of this implemented already, port that here.
-
     # Ignore key press events for unprintable characters.
     if not event.text().isprintable():
         return False
 
-    # FIXME: Use the actual character from the keyboard here.
-    new_node = model_tree.lookup_node_recursively(key_path=model_tree._cursor_node_path).make_mutable_copy()
+    new_model_tree = model_tree
+
+    new_node = model_tree._cursor_node_path.lookup(root_node=model_tree).make_mutable_copy()
     new_node.text = new_node.text[:new_node.cursor_offset] + event.text() + new_node.text[new_node.cursor_offset:]
     new_node.cursor_offset += 1
     new_node.make_immutable()
+    new_model_tree = model_tree._cursor_node_path.replace(new_node, root_node=new_model_tree)
 
-    history.global_history_manager.replace_node(key_path=model_tree._cursor_node_path, new_node=new_node)
+    history.global_history_manager.update_model_tree(new_model_tree=new_model_tree)
 
     return True
 
