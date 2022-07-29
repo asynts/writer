@@ -655,11 +655,11 @@ class CursorLayoutNode(LayoutNode):
         "_model_node_offset",
     )
 
-    def __init__(self, *, parent_node: LayoutNode, model_node: "model.TextChunkModelNode", model_node_offset: int):
+    def __init__(self, *, parent_node: LayoutNode, model_node: "model.TextChunkModelNode", model_node_offset: int, style_cascade: "model.ModelStyleCascade"):
         assert isinstance(model_node, model.TextChunkModelNode)
         assert model_node.cursor_offset is not None
 
-        rendered_size = model_node.font_metrics.size(0, "")
+        rendered_size = style_cascade.font_metrics.size(0, "")
 
         super().__init__(
             name="CursorLayoutNode",
@@ -692,7 +692,8 @@ class TextChunkLayoutNode(LayoutNode):
     __slots__ = (
         "_model_node",
         "_model_node_offset",
-        "_text"
+        "_text",
+        "_style_cascade"
     )
 
     def __init__(
@@ -704,9 +705,11 @@ class TextChunkLayoutNode(LayoutNode):
         model_node: "model.TextChunkModelNode",
         model_node_offset: int,
 
-        rendered_size: QtCore.QSizeF,
+        style_cascade: "model.ModelStyleCascade",
     ):
         assert isinstance(model_node, model.TextChunkModelNode)
+
+        rendered_size = style_cascade.font_metrics.size(0, text)
 
         super().__init__(
             name="TextChunkLayoutNode",
@@ -721,9 +724,10 @@ class TextChunkLayoutNode(LayoutNode):
 
         self._model_node_offset = model_node_offset
         self._text = text
+        self._style_cascade = style_cascade
 
     def _offset_into_model_node(self, *, relative_x: float) -> int:
-        font_metrics: QtGui.QFontMetricsF = self.get_model_node().font_metrics
+        font_metrics = self._style_cascade.font_metrics
 
         offset = self._model_node_offset
 
@@ -776,7 +780,7 @@ class TextChunkLayoutNode(LayoutNode):
         super().paint_decoration(painter=painter)
 
         painter.setPen(COLOR_BLACK)
-        painter.setFont(self.get_model_node().font)
+        painter.setFont(self._style_cascade.font)
         painter.drawText(self.get_inner_qrect(), self.get_text())
 
         if b_draw_debug_text_outline:

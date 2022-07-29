@@ -286,43 +286,42 @@ class Placer:
                 b_place_cursor = False
 
             if b_place_cursor:
-                text=excerpt.text_chunk_model_node.text[excerpt.offset_into_model_node:excerpt.text_chunk_model_node.cursor_offset]
                 self._current_line.place_child_node(layout.TextChunkLayoutNode(
-                    text=text,
+                    text=excerpt.text_chunk_model_node.text[excerpt.offset_into_model_node:excerpt.text_chunk_model_node.cursor_offset],
                     parent_node=self._current_line,
 
                     model_node=excerpt.text_chunk_model_node,
                     model_node_offset=excerpt.offset_into_model_node,
 
-                    rendered_size=excerpt.style_cascade.font_metrics.size(0, text),
+                    style_cascade=excerpt.style_cascade,
                 ))
 
                 self._current_line.place_child_node(layout.CursorLayoutNode(
                     parent_node=self._current_line,
                     model_node=excerpt.text_chunk_model_node,
                     model_node_offset=excerpt.offset_into_model_node + excerpt.text_chunk_model_node.cursor_offset,
+
+                    style_cascade=excerpt.style_cascade,
                 ))
 
-                text=excerpt.text_chunk_model_node.text[excerpt.text_chunk_model_node.cursor_offset:excerpt.offset_into_model_node + len(excerpt.text)]
                 self._current_line.place_child_node(layout.TextChunkLayoutNode(
-                    text=text,
+                    text=excerpt.text_chunk_model_node.text[excerpt.text_chunk_model_node.cursor_offset:excerpt.offset_into_model_node + len(excerpt.text)],
                     parent_node=self._current_line,
 
                     model_node=excerpt.text_chunk_model_node,
                     model_node_offset=excerpt.offset_into_model_node + excerpt.text_chunk_model_node.cursor_offset,
 
-                    rendered_size=excerpt.style_cascade.font_metrics.size(0, text),
+                    style_cascade=excerpt.style_cascade,
                 ))
             else:
-                text = excerpt.text
                 self._current_line.place_child_node(layout.TextChunkLayoutNode(
-                    text=text,
+                    text=excerpt.text,
                     parent_node=self._current_line,
 
                     model_node=excerpt.text_chunk_model_node,
                     model_node_offset=excerpt.offset_into_model_node,
 
-                    rendered_size=excerpt.style_cascade.font_metrics.size(0, text),
+                    style_cascade=excerpt.style_cascade,
                 ))
 
             self._style_cascade.pop_style(excerpt.text_chunk_model_node.style)
@@ -331,15 +330,14 @@ class Placer:
         assert excerpt is not None
 
         # FIXME: Do the spacing separately.
-        text=" "
         self._current_line.place_child_node(layout.TextChunkLayoutNode(
-            text=text,
+            text=" ",
             parent_node=self._current_line,
 
             model_node=excerpt.text_chunk_model_node,
             model_node_offset=excerpt.offset_into_model_node + len(excerpt.text),
 
-            rendered_size=excerpt.style_cascade.font_metrics.size(0, text),
+                    style_cascade=excerpt.style_cascade,
         ))
 
     def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode):
