@@ -1,32 +1,24 @@
 import writer.engine.model as model
 import writer.engine.tree as tree
 
-default_style = model.ModelStyle(
-    parent_model_style=None,
-    is_bold=False,
-    is_italic=False,
-    font_size=None,
-)
+default_style = model.ModelStyle()
 
 normal_paragraph_style = model.ModelStyle(
-    parent_model_style=default_style,
     font_size=12.0,
-)
-normal_normal_text_chunk_style = model.ModelStyle(
-    parent_model_style=normal_paragraph_style,
-)
-bold_normal_text_chunk_style = model.ModelStyle(
-    parent_model_style=normal_paragraph_style,
-    is_bold=True,
+    is_bold=False,
+    is_italic=False,
 )
 
 heading_paragraph_style = model.ModelStyle(
-    parent_model_style=default_style,
-    is_bold=True,
     font_size=18.0,
+    is_bold=True,
+    is_italic=False,
 )
-normal_heading_text_chunk_style = model.ModelStyle(
-    parent_model_style=heading_paragraph_style,
+
+normal_text_chunk_style = model.ModelStyle()
+
+bold_text_chunk_style = model.ModelStyle(
+    is_bold=True,
 )
 
 def create_model_tree(*, b_print_document_name: bool = True):
@@ -47,7 +39,7 @@ def create_model_tree_small_document(*, b_print_document_name: bool):
     )
 
     text_chunk = model.TextChunkModelNode(
-        style=normal_heading_text_chunk_style,
+        style=normal_text_chunk_style,
         text="Title",
         children=[],
     )
@@ -63,7 +55,7 @@ def create_model_tree_small_document(*, b_print_document_name: bool):
     )
 
     text_chunk = model.TextChunkModelNode(
-        style=normal_normal_text_chunk_style,
+        style=normal_text_chunk_style,
         text="This is a paragraph. With multiple sentences in it.",
         children=[],
     )
@@ -71,7 +63,7 @@ def create_model_tree_small_document(*, b_print_document_name: bool):
     paragraph.append_child(text_chunk)
 
     text_chunk = model.TextChunkModelNode(
-        style=bold_normal_text_chunk_style,
+        style=bold_text_chunk_style,
         text=" This is bold",
         children=[],
     )
@@ -89,7 +81,7 @@ def create_paragraph_subtree(
     *,
     text: str,
     paragraph_style: model.ModelStyle = normal_paragraph_style,
-    text_chunk_style: model.ModelStyle = normal_normal_text_chunk_style,
+    text_chunk_style: model.ModelStyle = normal_text_chunk_style,
 ):
     paragraph = model.ParagraphModelNode(
         style=paragraph_style,
@@ -128,7 +120,7 @@ def create_model_tree_study(*, b_print_document_name: bool):
     model_tree.append_child(create_paragraph_subtree(
         text="CHAPTER I. MR. SHERLOCK HOLMES.",
         paragraph_style=heading_paragraph_style,
-        text_chunk_style=normal_heading_text_chunk_style,
+        text_chunk_style=normal_text_chunk_style,
     ))
 
     model_tree.append_child(create_paragraph_subtree(
