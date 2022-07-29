@@ -68,9 +68,14 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
             # Remove last character of last text chunk of previous paragarph.
             new_node = last_chunk_node.make_mutable_copy()
             new_node.text = new_node.text[:-1]
-            new_node.cursor_offset = len(new_node.text)
             new_node.make_immutable()
             new_model_tree = last_chunk_path.replace(new_node, root_node=new_model_tree)
+
+            # Update the reference to the cursor.
+            new_node = new_model_tree.make_mutable_copy()
+            new_node.cursor_node_path = prev_paragraph_path.child_path(cursor_node, root_node=new_model_tree)
+            new_node.make_immutable()
+            new_model_tree = new_node
 
             # Merge the following paragraph into the previous paragraph.
             new_node = prev_paragraph_node.make_mutable_copy()

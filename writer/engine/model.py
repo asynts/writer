@@ -160,7 +160,7 @@ class TextChunkModelNode(ModelNode):
 
     # Override.
     def dump_properties(self):
-        return f"text={repr(self.text)} cursor_offset={repr(self.cursor_offset)}"
+        return f"text={repr(self.text)}, cursor_offset={repr(self.cursor_offset)}"
 
     # Override.
     def dump(self, *, name: str = "TextChunkModelNode", indent: int = 0):
