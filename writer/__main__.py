@@ -97,6 +97,10 @@ class WriterWidget(QtWidgets.QWidget):
         ):
             event.accept()
 
+        print(">>>")
+        print(history.global_history_manager.get_model_tree().dump(), end="")
+        print("<<<")
+
 class Window(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()

@@ -16,6 +16,7 @@ b_simplify_font_metrics = False
 class TextExcerpt:
     text_chunk_model_node: model.TextChunkModelNode
     text: str
+    raw_text: str
     offset_into_model_node: int
     style_cascade: model.ModelStyleCascade
 
@@ -131,6 +132,7 @@ def compute_word_groups_in_paragraph(paragraph_model_node: model.ParagraphModelN
                 text_chunk_model_node=text_chunk_model_node,
                 offset_into_model_node=offset_into_model_node_before,
                 text=text,
+                raw_text=text + separator,
                 style_cascade=style_cascade.copy_with(text_chunk_model_node.style),
             ))
 
@@ -278,14 +280,16 @@ class Placer:
             self._style_cascade.push_style(excerpt.text_chunk_model_node.style)
 
             if excerpt.text_chunk_model_node.cursor_offset is not None:
-                b_cursor_is_out_of_bounds_left = (excerpt.text_chunk_model_node.cursor_offset < excerpt.offset_into_model_node)
-                b_cursor_is_out_of_bounds_right = (excerpt.text_chunk_model_node.cursor_offset > excerpt.offset_into_model_node + len(excerpt.text))
+                b_cursor_is_out_of_bounds_left = (excerpt.text_chunk_model_node.cursor_offset <= excerpt.offset_into_model_node)
+                b_cursor_is_out_of_bounds_right = (excerpt.text_chunk_model_node.cursor_offset > excerpt.offset_into_model_node + len(excerpt.raw_text))
 
                 b_place_cursor = (not b_cursor_is_out_of_bounds_left) and (not b_cursor_is_out_of_bounds_right)
             else:
                 b_place_cursor = False
 
             if b_place_cursor:
+                # FIXME: We sometimes place a space too much here.
+
                 self._current_line.place_child_node(layout.TextChunkLayoutNode(
                     text=excerpt.text_chunk_model_node.text[excerpt.offset_into_model_node:excerpt.text_chunk_model_node.cursor_offset],
                     parent_node=self._current_line,
