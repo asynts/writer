@@ -136,10 +136,10 @@ class NodePath:
 
     def parent_path(self, *, root_node: Node) -> "NodePath":
         assert len(self._key_list) >= 2
-        return self._key_list[:-1]
+        return NodePath(self._key_list[:-1])
 
     def child_path(self, child_node: Node, *, root_node: Node) -> "NodePath":
-        return self._key_list + [child_node.key]
+        return NodePath(self._key_list + [child_node.key])
 
     def previous_sibling_path(self, *, root_node: Node) -> "NodePath":
         def visit_node(node: Node, *, remaining_key_list: list[int]):
@@ -154,7 +154,7 @@ class NodePath:
                         if previous_node is None:
                             return None
                         else:
-                            return self._key_list[:-1] + [previous_node.key]
+                            return NodePath(self._key_list[:-1] + [previous_node.key])
 
                     previous_node = child_node
 

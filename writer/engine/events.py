@@ -11,78 +11,80 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
     # FIXME: We are a bit inconsistent here.
     #        If we reference a node it should always belong to the current tree, otherwise, we should look it up again.
 
-    key_path_helper = tree.KeyPathHelper(model_tree._cursor_node_path)
-    text_chunk_model_node = history.global_history_manager.lookup_node(key_path=key_path_helper.key_path)
+    new_model_tree = model_tree
+
+    cursor_path = model_tree._cursor_node_path
+    cursor_node = cursor_path.lookup(root_node=model_tree)
 
     # If are in the middle of a text chunk, delete character before cursor.
-    if text_chunk_model_node.cursor_offset >= 1:
-        new_node = text_chunk_model_node.make_mutable_copy()
+    if cursor_node.cursor_offset >= 1:
+        new_node = cursor_node.make_mutable_copy()
         new_node.text = new_node.text[:new_node.cursor_offset-1] + new_node.text[new_node.cursor_offset:]
         new_node.cursor_offset -= 1
         new_node.make_immutable()
+        new_model_tree = cursor_path.replace(new_node, root_node=new_model_tree)
 
-        history.global_history_manager.replace_node(key_path=key_path_helper.key_path, new_node=new_node)
+        history.global_history_manager.update_model_tree(new_model_tree=new_model_tree)
         return True
 
     # We are at the start of a text chunk, is there a preceding text chunk?
-    previous_text_chunk_node, previous_text_chunk_node_path = key_path_helper.previous_sibling(root_node=model_tree)
-    if previous_text_chunk_node is not None:
-        new_model_tree = model_tree
+    previous_path = cursor_path.previous_sibling_path(root_node=new_model_tree)
+    if previous_path is not None:
+        previous_node = previous_path.lookup(root_node=new_model_tree)
 
         # Remove last character of previous text chunk.
-        new_node = previous_text_chunk_node.make_mutable_copy()
+        new_node = previous_node.make_mutable_copy()
         new_node.text = new_node.text[:-1]
         new_node.cursor_offset = len(new_node.text)
         new_node.make_immutable()
-        new_model_tree = new_model_tree.replace_node_recursively(key_path=previous_text_chunk_node_path, new_node=new_node)
+        new_model_tree = previous_path.replace(new_node, root_node=new_model_tree)
 
         # Remove cursor from current node.
-        new_node = text_chunk_model_node.make_mutable_copy()
+        new_node = cursor_node.make_mutable_copy()
         new_node.cursor_offset = None
         new_node.make_immutable()
-        new_model_tree = new_model_tree.replace_node_recursively(key_path=key_path_helper.key_path, new_node=new_node)
+        new_model_tree = cursor_path.replace(new_node, root_node=new_model_tree)
 
         # Update the reference to the new cursor node.
         new_node = new_model_tree.make_mutable_copy()
-        new_node._key_path_to_text_chunk_with_cursor = previous_text_chunk_node_path
+        new_node._cursor_node_path = previous_path
         new_node.make_immutable()
         new_model_tree = new_node
 
         history.global_history_manager.update_model_tree(new_model_tree=new_model_tree)
         return True
     else:
-        new_model_tree = model_tree
+        parent_path = cursor_path.parent_path(root_node=new_model_tree)
+        parent_node = parent_path.lookup(root_node=new_model_tree)
 
-        # Is there a preceding paragraph?
-        parent_node_path = key_path_helper.parent(root_node=new_model_tree)
-        parent_node = history.global_history_manager.lookup_node(key_path=parent_node_path.key_path)
+        # We are at the start of a paragraph, is there a preceding paragraph?
+        prev_paragraph_path = parent_path.previous_sibling_path(root_node=new_model_tree)
+        if prev_paragraph_path is not None:
+            prev_paragraph_node = prev_paragraph_path.lookup(root_node=new_model_tree)
 
-        prev_paragraph_node, prev_paragraph_path = parent_node_path.previous_sibling(root_node=new_model_tree)
-
-        if prev_paragraph_node is not None:
-            last_chunk = prev_paragraph_node.children[-1]
-            last_chunk_path = parent_node_path.with_child(child_node=last_chunk)
+            last_chunk_node = prev_paragraph_node.children[-1]
+            last_chunk_path = prev_paragraph_path.child_path(last_chunk_node, root_node=new_model_tree)
 
             # Remove last character of last text chunk of previous paragarph.
-            new_node = last_chunk.make_mutable_copy()
+            new_node = last_chunk_node.make_mutable_copy()
             new_node.text = new_node.text[:-1]
             new_node.cursor_offset = len(new_node.text)
             new_node.make_immutable()
-            new_model_tree = new_model_tree.replace_node_recursively(key_path=last_chunk_path.key_path, new_node=new_node)
+            new_model_tree = last_chunk_path.replace(new_node, root_node=new_model_tree)
 
             # Merge the following paragraph into the previous paragraph.
             new_node = prev_paragraph_node.make_mutable_copy()
             new_node.children += parent_node.children
             new_node.make_immutable()
-            new_model_tree = new_model_tree.replace_node_recursively(key_path=prev_paragraph_path, new_node=new_node)
+            new_model_tree = prev_paragraph_path.replace(new_node, root_node=new_model_tree)
 
             # Delete the following paragraph.
-            parent_parent_path = parent_node_path.parent()
-            parent_parent_node = history.global_history_manager.lookup_node(key_path=parent_parent_path)
+            parent_parent_path = parent_path.parent_path(root_node=new_model_tree)
+            parent_parent_node = parent_parent_path.lookup(root_node=new_model_tree)
             new_node = parent_parent_node.make_mutable_copy()
             new_node.children.remove(parent_node)
             new_node.make_immutable()
-            new_model_tree = new_model_tree.replace_node_recursively(key_path=parent_parent_path, new_node=new_node)
+            new_model_tree = parent_parent_path.replace(new_node, root_node=new_model_tree)
 
             history.global_history_manager.update_model_tree(new_model_tree=new_model_tree)
             return True
