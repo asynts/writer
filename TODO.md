@@ -6,6 +6,8 @@
 
 ### Backlog
 
+-   I could cache the word groups in the model paragraph nodes.
+
 -   Get rid of global `global_history_manager` variable.
 
     -   On that node, I should add some sort of `Engine` class that contains all the other stuff.

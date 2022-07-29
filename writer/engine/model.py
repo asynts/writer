@@ -72,12 +72,12 @@ class ModelNode(tree.Node):
 
     @style.setter
     def style(self, value: ModelStyle):
-        assert self._is_mutable
+        assert self.is_mutable
         self.__style = value
 
 class DocumentModelNode(ModelNode):
     __slots__ = (
-        "_cursor_node_path",
+        "__cursor_node_path",
     )
 
     def __init__(
@@ -88,12 +88,21 @@ class DocumentModelNode(ModelNode):
     ):
         super().__init__(style=style, **kwargs)
 
-        # Cache.
-        self._cursor_node_path: tree.NodePath = None
+        # Property.
+        self.__cursor_node_path: tree.NodePath = None
 
     # Override.
     def dump(self, *, name: str = "DocumentModelNode", indent: int = 0):
         return super().dump(name=name, indent=indent)
+
+    @property
+    def cursor_node_path(self):
+        return self.__cursor_node_path
+
+    @cursor_node_path.setter
+    def cursor_node_path(self, value: tree.NodePath):
+        assert self.is_mutable
+        self.__cursor_node_path = value
 
 class TextChunkModelNode(ModelNode):
     __slots__ = (

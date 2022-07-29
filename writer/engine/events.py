@@ -13,7 +13,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
 
     new_model_tree = model_tree
 
-    cursor_path = model_tree._cursor_node_path
+    cursor_path = model_tree.cursor_node_path
     cursor_node = cursor_path.lookup(root_node=model_tree)
 
     # If are in the middle of a text chunk, delete character before cursor.
@@ -47,7 +47,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
 
         # Update the reference to the new cursor node.
         new_node = new_model_tree.make_mutable_copy()
-        new_node._cursor_node_path = previous_path
+        new_node.cursor_node_path = previous_path
         new_node.make_immutable()
         new_model_tree = new_node
 
@@ -93,7 +93,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
 
 def key_press_event(*, event: QtGui.QKeyEvent, model_tree: model.DocumentModelNode, layout_tree: layout.LayoutNode):
     # Ignore key press events when no cursor is placed.
-    if model_tree._cursor_node_path is None:
+    if model_tree.cursor_node_path is None:
         return False
 
     if event.key() == QtCore.Qt.Key.Key_Backspace:
@@ -105,11 +105,11 @@ def key_press_event(*, event: QtGui.QKeyEvent, model_tree: model.DocumentModelNo
 
     new_model_tree = model_tree
 
-    new_node = model_tree._cursor_node_path.lookup(root_node=model_tree).make_mutable_copy()
+    new_node = model_tree.cursor_node_path.lookup(root_node=model_tree).make_mutable_copy()
     new_node.text = new_node.text[:new_node.cursor_offset] + event.text() + new_node.text[new_node.cursor_offset:]
     new_node.cursor_offset += 1
     new_node.make_immutable()
-    new_model_tree = model_tree._cursor_node_path.replace(new_node, root_node=new_model_tree)
+    new_model_tree = model_tree.cursor_node_path.replace(new_node, root_node=new_model_tree)
 
     history.global_history_manager.update_model_tree(new_model_tree=new_model_tree)
 
@@ -230,8 +230,8 @@ def validate_cursor_unique_event(*, model_tree: "model.DocumentModelNode", layou
         if isinstance(model_node, model.TextChunkModelNode):
             if model_node.cursor_offset is not None:
                 assert not b_cursor_seen
-                assert model_tree._cursor_node_path is not None
-                assert key_list == model_tree._cursor_node_path._key_list
+                assert model_tree.cursor_node_path is not None
+                assert key_list == model_tree.cursor_node_path._key_list
 
                 b_cursor_seen = True
 

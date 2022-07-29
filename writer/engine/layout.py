@@ -744,7 +744,7 @@ class TextChunkLayoutNode(LayoutNode):
         new_model_tree = history.global_history_manager.get_model_tree()
 
         # Remove the cursor from the the previously selected node.
-        previous_cursor_path = new_model_tree._cursor_node_path
+        previous_cursor_path = new_model_tree.cursor_node_path
         if previous_cursor_path is not None:
             new_node = previous_cursor_path.lookup(root_node=new_model_tree).make_mutable_copy()
             new_node.cursor_offset = None
@@ -760,7 +760,7 @@ class TextChunkLayoutNode(LayoutNode):
 
         # Update the reference that the document node keeps on the node with the cursor in it.
         new_node = new_model_tree.make_mutable_copy()
-        new_node._cursor_node_path = path
+        new_node.cursor_node_path = path
         new_node.make_immutable()
         new_model_tree = new_node
 
