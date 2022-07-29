@@ -15,6 +15,10 @@ The model tree represents the document in memory at a very high level of abstrac
     -   This is very important since we are able to create a snapshot of the document without much effort.
         That is mandatory to implement undo and redo logic properly.
 
+    -   In order to be able to reference nodes in the tree, each node is assigned a unique key upon creation.
+        If a node is changed, it can keep the same key thus allowing references to stay intact.
+        This is crutial, because we constantly need to update the parent hierarchy when a new child is created.
+
 -   Since the model nodes are immutable, we can not reference the parent model node.
 
     -   Therefore, we always need to keep track of the parent hierarchy when iterating through the tree.
