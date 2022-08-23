@@ -20,7 +20,7 @@ class HistoryManager:
         for callback in self.__on_history_change_callbacks:
             callback()
 
-    def update_model_tree(self, *, new_model_tree: model.DocumentModelNode):
+    def update_model_tree(self, *, new_model_tree: "model.DocumentModelNode"):
         self.__model_tree_after.clear()
         self.__model_tree_before.append(self.__model_tree)
         self.__model_tree = new_model_tree
