@@ -69,3 +69,16 @@ Sometimes when I remove something with `Key_Backspace`, the cursor is no longer 
 
 -   Instead of doing any of this, I could do more work ahead of time doring the word group calculation and simply create a sequence of
     instructions that are used during rendering, like "put cursor here", not sure if that would help though.
+
+-   I just realized, that there are two major problems remaining:
+
+    -   The scenario `foo <CURSOR> bar` isn't displayed correctly, because it will be rendered as `foo <CURSOR>bar`.
+
+    -   We can't just normalize the spaces, that only makes sense if the text is in block mode.
+
+    I think doing a workaround here is fine:
+
+    -   For now, I can just implement block mode by default and deal with the rest later.
+
+    -   If the cursor is inbetween spacing, we add spacing before and after.
+        We can add an empty `WordPlacementInstruction` to avoid dealing with this elsewhere.
