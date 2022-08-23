@@ -29,3 +29,43 @@ Sometimes when I remove something with `Key_Backspace`, the cursor is no longer 
 
     In my opinion, this strategy could work, but the code can't deal with it right now.
     In `Placer.place_word_group_in_current_line` we end up placing a space too much, I don't yet know why this happens.
+
+-   I suspect, this is because we split because of the cursor and create a node with no text in it which somehow still reserves space.
+
+-   I printed out the text before the cursor and somehow it includes a space:
+
+    ```none
+    text_before_cursor='in ' text_after_cursor=''
+    ```
+
+-   I tried creating a workaround by simply detecting this and not printing the space if it is the last chunk.
+    However, that is wrong and not only puts the cursor at the wrong position, but it also defeats the purpose of word groups.
+
+    Instead, I could introduce some sort of invariant but I can't think exactly what would work.
+
+-   This whole thing will not work if we use block formatting.
+    I think the trick here is to separate the cursor rendering from the text chunk that mentions the cursor.
+
+    We should keep track if the cursor should be rendered in front of the next chunk.
+    And if it's the last chunk, we manually place it after.
+
+    But this leaves the edge case where the cursor is within a text chunk.
+
+-   Here are all the edge cases that I can think of:
+
+    -   The cursor is at the start of the text excerpt ...
+
+        -   ... it is left bound (space at start).
+
+        -   ... it is right bound.
+
+    -   The cursor is at the end of the text excerpt ...
+
+        -   ... it is left bound.
+
+        -   ... it is right bound (space at end).
+
+    -   The cursor is within the text excerpt.
+
+-   Instead of doing any of this, I could do more work ahead of time doring the word group calculation and simply create a sequence of
+    instructions that are used during rendering, like "put cursor here", not sure if that would help though.
