@@ -14,15 +14,17 @@ import writer.engine.model as model
 
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class TextExcerpt:
-    pass
+    model_node: "model.TextChunkModelNode"
+    model_offset: int
+    text: str
 
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class PlacementInstruction:
     pass
 
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
-class WordGroup(PlacementInstruction):
-    pass
+class WordPlacementInstruction(PlacementInstruction):
+    excerpts: list[TextExcerpt]
 
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class WhitespaceMarker(PlacementInstruction):
@@ -57,8 +59,28 @@ def starts_with_whitespace(text: string) -> bool:
     else:
         return text[0] in string.whitespace
 
-def compute_placement_instructions_for_paragraph(paragraph_node: model.ParagraphModelNode) -> list[PlacementInstruction]:
+def print_placement_instructions(placement_instructions: list[PlacementInstruction]):
+    for placement_instruction in placement_instructions:
+        assert isinstance(placement_instruction, WordPlacementInstruction)
+        print("WordPlacementInstruction")
+
+        for excerpt in placement_instruction.excerpts:
+            print(f"  {excerpt}")
+
+def compute_placement_instructions_for_paragraph(paragraph_node: "model.ParagraphModelNode") -> list[PlacementInstruction]:
     placement_instructions: list[PlacementInstruction] = []
+
+    pending_excerpts: list[TextExcerpt] = []
+
+    def finish_pending_word_group():
+        nonlocal placement_instructions
+        nonlocal pending_excerpts
+
+        if len(pending_excerpts) >= 1:
+            placement_instructions.append(WordPlacementInstruction(
+                excerpts=pending_excerpts,
+            ))
+            pending_excerpts=[]
 
     for text_chunk_node in paragraph_node.children:
         assert isinstance(text_chunk_node, model.TextChunkModelNode)
@@ -68,7 +90,7 @@ def compute_placement_instructions_for_paragraph(paragraph_node: model.Paragraph
 
         while len(remaining_text) >= 1:
             if starts_with_whitespace(remaining_text):
-                # FIXME
+                finish_pending_word_group()
 
                 # Consume whitespace.
                 text_before, text_separator, text_after = partition_at_whitespace(remaining_text)
@@ -76,12 +98,26 @@ def compute_placement_instructions_for_paragraph(paragraph_node: model.Paragraph
                 model_node_offset += len(text_separator)
                 remaining_text = text_after
 
-            if len(remaining_text) >= 0:
+            if len(remaining_text) >= 1:
+                model_node_offset_before = model_node_offset
+
                 # Consume excerpt.
                 text_before, text_separator, text_after = partition_at_whitespace(remaining_text)
+                assert len(text_before) >= 1
                 model_node_offset += len(text_before) + len(text_separator)
                 remaining_text = text_after
 
-                # FIXME
+                # Add to pending word group.
+                pending_excerpts.append(TextExcerpt(
+                    model_node=text_chunk_node,
+                    model_offset=model_node_offset_before,
+                    text=text_before,
+                ))
+
+                # Finish the word group if whitespace consumed.
+                if len(text_separator) >= 1:
+                    finish_pending_word_group()
+
+    finish_pending_word_group()
 
     return placement_instructions
