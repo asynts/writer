@@ -40,5 +40,5 @@ cases = [
 def case(request):
     return request.param
 
-def test_partition_remaining_text(case):
+def test_partition_remaining_text(case: Case):
     assert writer.engine.converter.partition_at_whitespace(case.input_) == case.expected

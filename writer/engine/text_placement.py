@@ -163,7 +163,7 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
 
                     pending_whitespace_instruction = WhitespacePlacementInstruction(
                         model_node=text_chunk_node,
-                        model_offset=model_node_offset_before,
+                        model_offset=model_node_offset_before + len(text_before),
                     )
 
         # If the cursor is within the separator, we must deal with it later and mark it as pending.
