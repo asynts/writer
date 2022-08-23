@@ -8,8 +8,8 @@ def test_algorithm_terminates_1():
             children=[
                 model.TextChunkModelNode(
                     style=None,
-                    text=" Hello, world!",
-                    cursor_offset=None,
+                    text=" Hello,  world!",
+                    cursor_offset=1,
                     children=[],
                 ),
                 model.TextChunkModelNode(
