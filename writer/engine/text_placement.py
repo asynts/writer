@@ -32,8 +32,9 @@ class WhitespacePlacementInstruction(PlacementInstruction):
     model_offset: "model.TextChunkModelNode"
 
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
-class CursorMarker(PlacementInstruction):
-    pass
+class CursorPlacementInstruction(PlacementInstruction):
+    model_node: "model.TextChunkModelNode"
+    model_offset: int
 
 # This works similar to 'str.partition'.
 # The string is split into three parts, the text before the separator, the separator and the text after.
@@ -68,7 +69,9 @@ def print_placement_instructions(placement_instructions: list[PlacementInstructi
             for excerpt in placement_instruction.excerpts:
                 print(f"  {excerpt}")
         elif isinstance(placement_instruction, WhitespacePlacementInstruction):
-            print(f"WhitespacePlacementInstruction(model_node={placement_instruction.model_node}, model_offset={placement_instruction.model_offset}")
+            print(placement_instruction)
+        elif isinstance(placement_instruction, CursorPlacementInstruction):
+            print(placement_instruction)
         else:
             raise NotImplementedError
 
@@ -77,16 +80,22 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
 
     pending_excerpts: list[TextExcerpt] = []
     pending_whitespace_instruction: WhitespacePlacementInstruction = None
+    pending_cursor_instruction: CursorPlacementInstruction = None
 
     def finish_pending_word_group():
         nonlocal placement_instructions
         nonlocal pending_excerpts
         nonlocal pending_whitespace_instruction
+        nonlocal pending_cursor_instruction
 
         if len(pending_excerpts) >= 1:
             if pending_whitespace_instruction is not None:
                 placement_instructions.append(pending_whitespace_instruction)
                 pending_whitespace_instruction = None
+
+            if pending_cursor_instruction is not None:
+                placement_instructions.append(pending_cursor_instruction)
+                pending_cursor_instruction = None
 
             placement_instructions.append(WordPlacementInstruction(
                 excerpts=pending_excerpts,
@@ -111,6 +120,8 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
                 model_node_offset += len(text_separator)
                 remaining_text = text_after
 
+                # FIXME: Somewhere around here, we need to deal with the cursor as well.
+
                 pending_whitespace_instruction = WhitespacePlacementInstruction(
                     model_node=text_chunk_node,
                     model_offset=model_node_offset_before,
@@ -126,6 +137,7 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
                 remaining_text = text_after
 
                 # Add to pending word group.
+                # If the cursor is within this text excerpt, we do not care.
                 pending_excerpts.append(TextExcerpt(
                     model_node=text_chunk_node,
                     model_offset=model_node_offset_before,
@@ -140,6 +152,16 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
                         model_node=text_chunk_node,
                         model_offset=model_node_offset_before,
                     )
+
+                # If the cursor is within the separator, we must deal with it later and mark it as pending.
+                if text_chunk_node.cursor_offset is not None:
+                    b_cursor_offset_after_consumed_text = text_chunk_node.cursor_offset > model_node_offset_before + len(text_before)
+                    b_cursor_offset_before_consumed_separator = text_chunk_node.cursor_offset <= model_node_offset
+                    if b_cursor_offset_after_consumed_text and b_cursor_offset_before_consumed_separator:
+                        pending_cursor_instruction = CursorPlacementInstruction(
+                            model_node=text_chunk_node,
+                            model_offset=text_chunk_node.cursor_offset,
+                        )
 
     finish_pending_word_group()
 
