@@ -26,11 +26,15 @@ class PlacementInstruction:
 class WordPlacementInstruction(PlacementInstruction):
     excerpts: list[TextExcerpt]
 
+# Indicates that spacing should be added before the next word is placed.
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class WhitespacePlacementInstruction(PlacementInstruction):
     model_node: "model.TextChunkModelNode"
     model_offset: "model.TextChunkModelNode"
 
+# Indicates that the cursor should be rendered when the next word is placed.
+# This happens if the cursor is placed at the end of a node after whitespace.
+# In that case it doesn't belong to the previous word and sticks to the next one.
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class CursorPlacementInstruction(PlacementInstruction):
     model_node: "model.TextChunkModelNode"
