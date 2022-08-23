@@ -106,6 +106,13 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
             ))
             pending_excerpts=[]
 
+    def add_pending_whitespace(whitespace_instruction: WhitespacePlacementInstruction):
+        nonlocal pending_whitespace_instruction
+
+        # By convention, if there are multiple spaces, we render the first one.
+        if pending_whitespace_instruction is None:
+            pending_whitespace_instruction = whitespace_instruction
+
     for text_chunk_node in paragraph_node.children:
         assert isinstance(text_chunk_node, model.TextChunkModelNode)
 
@@ -135,10 +142,10 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
                             model_offset=text_chunk_node.cursor_offset,
                         )
 
-                pending_whitespace_instruction = WhitespacePlacementInstruction(
+                add_pending_whitespace(WhitespacePlacementInstruction(
                     model_node=text_chunk_node,
                     model_offset=model_node_offset_before,
-                )
+                ))
 
             if len(remaining_text) >= 1:
                 model_node_offset_before = model_node_offset
@@ -161,10 +168,10 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
                 if len(text_separator) >= 1:
                     finish_pending_word()
 
-                    pending_whitespace_instruction = WhitespacePlacementInstruction(
+                    add_pending_whitespace(WhitespacePlacementInstruction(
                         model_node=text_chunk_node,
                         model_offset=model_node_offset_before + len(text_before),
-                    )
+                    ))
 
         # If the cursor is within the separator, we must deal with it later and mark it as pending.
         if text_chunk_node.cursor_offset is not None:
