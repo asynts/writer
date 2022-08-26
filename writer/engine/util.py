@@ -6,5 +6,11 @@ def approximately_equal(lhs: any, rhs: any):
 def approximately_less(lhs: any, rhs: any):
     if lhs < rhs:
         return True
+    else:
+        return approximately_equal(lhs, rhs)
 
-    return math.isclose(abs(lhs - rhs), 0)
+def approximately_greater(lhs: any, rhs: any):
+    if lhs > rhs:
+        return True
+    else:
+        return approximately_equal(lhs, rhs)
