@@ -33,6 +33,7 @@ class Case:
     expected: list[text_placement.PlacementInstruction]
 
 cases = [
+    # [0]
     Case(
         input_=model.ParagraphModelNode(
             style=None,
@@ -76,6 +77,7 @@ cases = [
             ),
         ]
     ),
+    # [1]
     Case(
         input_=model.ParagraphModelNode(
             style=None,
@@ -130,6 +132,7 @@ cases = [
             ),
         ],
     ),
+    # [2]
     Case(
         input_=model.ParagraphModelNode(
             style=None,
@@ -173,6 +176,7 @@ cases = [
             ),
         ]
     ),
+    # [3]
     Case(
         input_=model.ParagraphModelNode(
             style=None,
@@ -209,11 +213,61 @@ cases = [
                 model_node=None,
                 model_offset=4,
             ),
+            text_placement.WhitespacePlacementInstruction(
+                model_node=None,
+                model_offset=0,
+            ),
             text_placement.WordPlacementInstruction(
                 excerpts=[
                     text_placement.TextExcerpt(
                         model_node=None,
                         model_offset=1,
+                        text="bar",
+                    ),
+                ],
+            ),
+        ],
+    ),
+    # [4]
+    Case(
+        input_=model.ParagraphModelNode(
+            style=None,
+            children=[
+                model.TextChunkModelNode(
+                    style=None,
+                    children=[],
+                    text="foo  bar",
+                    cursor_offset=4,
+                ),
+            ],
+        ),
+        expected=[
+            text_placement.WordPlacementInstruction(
+                excerpts=[
+                    text_placement.TextExcerpt(
+                        model_node=None,
+                        model_offset=0,
+                        text="foo",
+                    ),
+                ],
+            ),
+            text_placement.WhitespacePlacementInstruction(
+                model_node=None,
+                model_offset=3,
+            ),
+            text_placement.CursorPlacementInstruction(
+                model_node=None,
+                model_offset=4,
+            ),
+            text_placement.WhitespacePlacementInstruction(
+                model_node=None,
+                model_offset=4,
+            ),
+            text_placement.WordPlacementInstruction(
+                excerpts=[
+                    text_placement.TextExcerpt(
+                        model_node=None,
+                        model_offset=5,
                         text="bar",
                     ),
                 ],
