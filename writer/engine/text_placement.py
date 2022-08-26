@@ -7,55 +7,86 @@
 
 # FIXME: Provide some examples where weird things need to happen.
 
+from PyQt6 import QtCore
+
 import dataclasses
 import string
 
 import writer.engine.model as model
 
-@dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
+# Invariant: Immutable after creation.
+@dataclasses.dataclass(kw_only=True, slots=True)
 class TextExcerpt:
     model_node: "model.TextChunkModelNode"
     model_offset: int
     text: str
     style_cascade: "model.ModelStyleCascade"
+    __size: QtCore.QSizeF = None
 
-    def get_width(self):
-        width, height = self.style_cascade.font_metrics.size(0, self.text)
-        return width
+    @property
+    def width(self):
+        if self.__size is None:
+            self.__size = self.style_cascade.font_metrics.size(0, self.text)
+        return self.__size.width()
 
-@dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
+    @property
+    def height(self):
+        if self.__size is None:
+            self.__size = self.style_cascade.font_metrics.size(0, self.text)
+        return self.__size.width()
+
+# Invariant: Immutable after creation.
+@dataclasses.dataclass(kw_only=True, slots=True)
 class PlacementInstruction:
     pass
 
-@dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
+# Invariant: Immutable after creation.
+@dataclasses.dataclass(kw_only=True, slots=True)
 class WordPlacementInstruction(PlacementInstruction):
     excerpts: list[TextExcerpt]
     __width: float = None
+    __height: float = None
 
     @property
     def width(self):
         if self.__width is None:
-            self.__width = sum(excerpt.get_width() for excerpt in self.excerpts)
+            self.__width = sum(excerpt.width for excerpt in self.excerpts)
         return self.__width
 
+    @property
+    def height(self):
+        if self.__height is None:
+            self.__height = max(excerpt.height for excerpt in self.excerpts)
+        return self.__height
+
 # Indicates that spacing should be added before the next word is placed.
-@dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
+#
+# Invariant: Immutable after creation.
+@dataclasses.dataclass(kw_only=True, slots=True)
 class WhitespacePlacementInstruction(PlacementInstruction):
     model_node: "model.TextChunkModelNode"
     model_offset: "model.TextChunkModelNode"
     style_cascade: "model.ModelStyleCascade"
-    __width: float = None
+    __size: QtCore.QSizeF = None
 
     @property
     def width(self):
-        if self.__width is None:
-            self.__width, _ = self.style_cascade.font_metrics.size(0, " ")
-        return self.__width
+        if self.__size is None:
+            self.__size = self.style_cascade.font_metrics.size(0, " ")
+        return self.__size.width()
+
+    @property
+    def height(self):
+        if self.__size is None:
+            self.__size = self.style_cascade.font_metrics.size(0, " ")
+        return self.__size.height()
 
 # Indicates that the cursor should be rendered when the next word is placed.
 # This happens if the cursor is placed at the end of a node after whitespace.
 # In that case it doesn't belong to the previous word and sticks to the next one.
-@dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
+#
+# Invariant: Immutable after creation.
+@dataclasses.dataclass(kw_only=True, slots=True)
 class CursorPlacementInstruction(PlacementInstruction):
     model_node: "model.TextChunkModelNode"
     model_offset: int
