@@ -4,8 +4,6 @@ import writer.engine.style as style
 import writer.engine.util as util
 import writer.engine.text_placement as text_placement
 
-# FIXME: Rewrite this to work wit the new 'text_placement'.
-
 # We can't use PyQt from the PyTest environment.
 b_simplify_font_metrics = False
 
@@ -209,6 +207,50 @@ class Placer:
         ))
 
     def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode):
+        self._style_cascade.push_style(paragraph_model_node.style)
+
+        placement_instructions = text_placement.compute_placement_instructions_for_paragraph(
+            paragraph_node=paragraph_model_node,
+            paragraph_style_cascade=self._style_cascade,
+        )
+
+        # FIXME: We need to terminate at some point.
+        while True:
+            self.create_new_paragraph()
+
+            maximum_line_width = self._current_paragraph.get_width()
+
+            current_line_placement_instructions = []
+            current_line_width = 0.0
+            pending_whitespace_instruction = None
+            pending_cursor_instruction = None
+            for placement_instruction in placement_instructions:
+                if isinstance(placement_instruction, text_placement.WordPlacementInstruction):
+                    if pending_whitespace_instruction is not None:
+                        spacing_width = pending_whitespace_instruction.width
+                    else:
+                        spacing_width = 0.0
+
+                    if util.approximately_less(current_line_width + spacing_width + placement_instruction.width, maximum_line_width):
+                        if pending_whitespace_instruction:
+                            current_line_placement_instructions.append(pending_whitespace_instruction)
+                            pending_whitespace_instruction = None
+
+                        current_line_placement_instructions.append(placement_instruction)
+                    else:
+                        # FIXME: Create new line.
+                        pass
+                elif isinstance(placement_instruction, text_placement.WhitespacePlacementInstruction):
+                    assert pending_whitespace_instruction is None
+                    pending_whitespace_instruction = placement_instruction
+                elif isinstance(placement_instruction, text_placement.CursorPlacementInstruction):
+                    # FIXME: Deal with pending cursor instruction
+                    pass
+
+
+        self._style_cascade.pop_style(paragraph_model_node.style)
+
+    def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode):
         assert isinstance(paragraph_model_node, model.ParagraphModelNode)
 
         # Check if this node has exactly one cached layout node.
@@ -237,7 +279,10 @@ class Placer:
         self.create_new_paragraph()
         self.create_new_line()
 
-        word_groups = compute_word_groups_in_paragraph(style_cascade=self._style_cascade, paragraph_model_node=paragraph_model_node)
+        placement_instructions = text_placement.compute_placement_instructions_for_paragraph(paragraph_model_node)
+
+        for placement_instruction in placement_instructions:
+
 
         for word_group in word_groups:
             if self._current_line.get_max_remaining_width() >= word_group.width:

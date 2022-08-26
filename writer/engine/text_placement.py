@@ -17,6 +17,11 @@ class TextExcerpt:
     model_node: "model.TextChunkModelNode"
     model_offset: int
     text: str
+    style_cascade: "model.ModelStyleCascade"
+
+    def get_width(self):
+        width, height = self.style_cascade.font_metrics.size(0, self.text)
+        return width
 
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class PlacementInstruction:
@@ -25,12 +30,27 @@ class PlacementInstruction:
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class WordPlacementInstruction(PlacementInstruction):
     excerpts: list[TextExcerpt]
+    __width: float = None
+
+    @property
+    def width(self):
+        if self.__width is None:
+            self.__width = sum(excerpt.get_width() for excerpt in self.excerpts)
+        return self.__width
 
 # Indicates that spacing should be added before the next word is placed.
 @dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
 class WhitespacePlacementInstruction(PlacementInstruction):
     model_node: "model.TextChunkModelNode"
     model_offset: "model.TextChunkModelNode"
+    style_cascade: "model.ModelStyleCascade"
+    __width: float = None
+
+    @property
+    def width(self):
+        if self.__width is None:
+            self.__width, _ = self.style_cascade.font_metrics.size(0, " ")
+        return self.__width
 
 # Indicates that the cursor should be rendered when the next word is placed.
 # This happens if the cursor is placed at the end of a node after whitespace.
@@ -79,7 +99,11 @@ def print_placement_instructions(placement_instructions: list[PlacementInstructi
         else:
             raise NotImplementedError
 
-def compute_placement_instructions_for_paragraph(paragraph_node: "model.ParagraphModelNode") -> list[PlacementInstruction]:
+def compute_placement_instructions_for_paragraph(
+    *,
+    paragraph_node: "model.ParagraphModelNode",
+    paragraph_style_cascade: "model.ModelStyleCascade",
+) -> list[PlacementInstruction]:
     placement_instructions: list[PlacementInstruction] = []
 
     pending_excerpts: list[TextExcerpt] = []
@@ -127,6 +151,8 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
     for text_chunk_node in paragraph_node.children:
         assert isinstance(text_chunk_node, model.TextChunkModelNode)
 
+        text_chunk_style_cascade = paragraph_style_cascade.copy_with(text_chunk_node.style),
+
         remaining_text = text_chunk_node.text
         model_node_offset = 0
 
@@ -156,6 +182,7 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
                 add_pending_whitespace(WhitespacePlacementInstruction(
                     model_node=text_chunk_node,
                     model_offset=model_node_offset_before,
+                    style_cascade=text_chunk_style_cascade,
                 ))
 
             if len(remaining_text) >= 1:
@@ -173,6 +200,7 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
                     model_node=text_chunk_node,
                     model_offset=model_node_offset_before,
                     text=text_before,
+                    style_cascade=text_chunk_style_cascade,
                 ))
 
                 # Finish the word group if whitespace consumed.
@@ -182,6 +210,7 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
                     add_pending_whitespace(WhitespacePlacementInstruction(
                         model_node=text_chunk_node,
                         model_offset=model_node_offset_before + len(text_before),
+                        style_cascade=text_chunk_style_cascade,
                     ))
 
                     # If the cursor is within the separator, we must deal with it later and mark it as pending.
@@ -202,6 +231,7 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
                                 add_pending_whitespace(WhitespacePlacementInstruction(
                                     model_node=text_chunk_node,
                                     model_offset=text_chunk_node.cursor_offset,
+                                    style_cascade=text_chunk_style_cascade,
                                 ))
 
     finish_pending_word()
