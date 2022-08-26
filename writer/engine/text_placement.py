@@ -92,15 +92,17 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
         nonlocal pending_whitespace_instruction
         nonlocal pending_cursor_instruction
 
-        if len(pending_excerpts) >= 1:
-            if pending_whitespace_instruction is not None:
+        if pending_whitespace_instruction is not None:
+            b_previous_was_whitespace_instruction = len(placement_instructions) >= 1 and isinstance(placement_instructions[-1], WhitespacePlacementInstruction)
+            if not b_previous_was_whitespace_instruction:
                 placement_instructions.append(pending_whitespace_instruction)
                 pending_whitespace_instruction = None
 
-            if pending_cursor_instruction is not None:
-                placement_instructions.append(pending_cursor_instruction)
-                pending_cursor_instruction = None
+        if pending_cursor_instruction is not None:
+            placement_instructions.append(pending_cursor_instruction)
+            pending_cursor_instruction = None
 
+        if len(pending_excerpts) >= 1:
             placement_instructions.append(WordPlacementInstruction(
                 excerpts=pending_excerpts,
             ))
@@ -112,6 +114,15 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
         # By convention, if there are multiple spaces, we render the first one.
         if pending_whitespace_instruction is None:
             pending_whitespace_instruction = whitespace_instruction
+
+    def add_pending_cursor(cursor_instruction: CursorPlacementInstruction):
+        nonlocal pending_cursor_instruction
+        nonlocal pending_whitespace_instruction
+
+        assert pending_whitespace_instruction is not None
+        assert pending_cursor_instruction is None
+
+        pending_cursor_instruction = cursor_instruction
 
     for text_chunk_node in paragraph_node.children:
         assert isinstance(text_chunk_node, model.TextChunkModelNode)
@@ -132,15 +143,15 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
                 remaining_text = text_after
 
                 # If the cursor is within the separator, we must deal with it later and mark it as pending.
-                # There is a similar check further below, but the '>' and '>=' are different.
+                # A similar check exists elsewhere but the '>' and '<' are different.
                 if text_chunk_node.cursor_offset is not None:
-                    b_cursor_offset_after_consumed_text = text_chunk_node.cursor_offset >= model_node_offset_before + len(text_before)
+                    b_cursor_offset_after_consumed_text = text_chunk_node.cursor_offset > model_node_offset_before + len(text_before)
                     b_cursor_offset_before_consumed_separator = text_chunk_node.cursor_offset < model_node_offset
                     if b_cursor_offset_after_consumed_text and b_cursor_offset_before_consumed_separator:
-                        pending_cursor_instruction = CursorPlacementInstruction(
+                        add_pending_cursor(CursorPlacementInstruction(
                             model_node=text_chunk_node,
                             model_offset=text_chunk_node.cursor_offset,
-                        )
+                        ))
 
                 add_pending_whitespace(WhitespacePlacementInstruction(
                     model_node=text_chunk_node,
@@ -173,15 +184,25 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
                         model_offset=model_node_offset_before + len(text_before),
                     ))
 
-        # If the cursor is within the separator, we must deal with it later and mark it as pending.
-        if text_chunk_node.cursor_offset is not None:
-            b_cursor_offset_after_consumed_text = text_chunk_node.cursor_offset > model_node_offset_before + len(text_before)
-            b_cursor_offset_before_consumed_separator = text_chunk_node.cursor_offset <= model_node_offset
-            if b_cursor_offset_after_consumed_text and b_cursor_offset_before_consumed_separator:
-                pending_cursor_instruction = CursorPlacementInstruction(
-                    model_node=text_chunk_node,
-                    model_offset=text_chunk_node.cursor_offset,
-                )
+                    # If the cursor is within the separator, we must deal with it later and mark it as pending.
+                    # A similar check exists elsewhere but the '>' and '<=' are different.
+                    if text_chunk_node.cursor_offset is not None:
+                        b_cursor_offset_after_consumed_text = text_chunk_node.cursor_offset > model_node_offset_before + len(text_before)
+                        b_cursor_offset_before_consumed_separator = text_chunk_node.cursor_offset <= model_node_offset
+                        if b_cursor_offset_after_consumed_text and b_cursor_offset_before_consumed_separator:
+                            add_pending_cursor(CursorPlacementInstruction(
+                                model_node=text_chunk_node,
+                                model_offset=text_chunk_node.cursor_offset,
+                            ))
+
+                            b_cursor_strictly_within_separator = text_chunk_node.cursor_offset < model_node_offset
+                            if b_cursor_strictly_within_separator:
+                                finish_pending_word()
+
+                                add_pending_whitespace(WhitespacePlacementInstruction(
+                                    model_node=text_chunk_node,
+                                    model_offset=text_chunk_node.cursor_offset,
+                                ))
 
     finish_pending_word()
 
