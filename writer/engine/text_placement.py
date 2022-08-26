@@ -14,26 +14,35 @@ import string
 
 import writer.engine.model as model
 
-# Invariant: Immutable after creation.
 @dataclasses.dataclass(kw_only=True, slots=True)
-class TextExcerpt:
-    model_node: "model.TextChunkModelNode"
-    model_offset: int
-    text: str
-    style_cascade: "model.ModelStyleCascade"
+class SizeMixin:
     __size: QtCore.QSizeF = None
+
+    def get_size(self):
+        raise NotImplementedError
 
     @property
     def width(self):
         if self.__size is None:
-            self.__size = self.style_cascade.font_metrics.size(0, self.text)
+            self.__size = self.get_size()
         return self.__size.width()
 
     @property
     def height(self):
         if self.__size is None:
-            self.__size = self.style_cascade.font_metrics.size(0, self.text)
-        return self.__size.width()
+            self.__size = self.get_size()
+        return self.__size.height()
+
+# Invariant: Immutable after creation.
+@dataclasses.dataclass(kw_only=True, slots=True)
+class TextExcerpt(SizeMixin):
+    model_node: "model.TextChunkModelNode"
+    model_offset: int
+    text: str
+    style_cascade: "model.ModelStyleCascade"
+
+    def get_size(self):
+        return self.style_cascade.font_metrics.size(0, self.text)
 
 # Invariant: Immutable after creation.
 @dataclasses.dataclass(kw_only=True, slots=True)
@@ -63,23 +72,13 @@ class WordPlacementInstruction(PlacementInstruction):
 #
 # Invariant: Immutable after creation.
 @dataclasses.dataclass(kw_only=True, slots=True)
-class WhitespacePlacementInstruction(PlacementInstruction):
+class WhitespacePlacementInstruction(PlacementInstruction, SizeMixin):
     model_node: "model.TextChunkModelNode"
     model_offset: "model.TextChunkModelNode"
     style_cascade: "model.ModelStyleCascade"
-    __size: QtCore.QSizeF = None
 
-    @property
-    def width(self):
-        if self.__size is None:
-            self.__size = self.style_cascade.font_metrics.size(0, " ")
-        return self.__size.width()
-
-    @property
-    def height(self):
-        if self.__size is None:
-            self.__size = self.style_cascade.font_metrics.size(0, " ")
-        return self.__size.height()
+    def get_size(self):
+        return self.style_cascade.font_metrics.size(0, " ")
 
 # Indicates that the cursor should be rendered when the next word is placed.
 # This happens if the cursor is placed at the end of a node after whitespace.
@@ -87,9 +86,13 @@ class WhitespacePlacementInstruction(PlacementInstruction):
 #
 # Invariant: Immutable after creation.
 @dataclasses.dataclass(kw_only=True, slots=True)
-class CursorPlacementInstruction(PlacementInstruction):
+class CursorPlacementInstruction(PlacementInstruction, SizeMixin):
     model_node: "model.TextChunkModelNode"
     model_offset: int
+
+    def get_size(self):
+        # The cursor does not reserve any space.
+        return QtCore.QSizeF(0, 0)
 
 # This works similar to 'str.partition'.
 # The string is split into three parts, the text before the separator, the separator and the text after.

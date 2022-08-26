@@ -77,8 +77,6 @@ class LayoutGenerator:
             current_line_instructions: list[text_placement.PlacementInstruction] = []
             current_line_width = 0.0
 
-            current_line_height = 0.0 # FIXME
-
             while len(remaining_instructions) >= 1:
                 instruction = remaining_instructions.pop(0)
 
@@ -131,6 +129,8 @@ class LayoutGenerator:
                 if len(remaining_instructions) == 0:
                     current_line_instructions.append(pending_cursor_instruction)
                     pending_cursor_instruction = None
+
+            current_line_height = sum(instruction.height for instruction in current_line_instructions)
 
             # Not enough space in this paragraph, create a new one.
             if util.approximately_greater(current_line_height, self.pending_paragraph_layout_node.get_max_remaining_height()):
