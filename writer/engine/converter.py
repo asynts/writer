@@ -26,7 +26,7 @@ class LayoutGenerator:
     def _try_place_pending_paragraph(self):
         if self.pending_paragraph_layout_node is not None:
             # Create new pending page if paragraph does not fit.
-            if util.approximately_greater(self.pending_paragraph_layout_node.get_height(), self.pending_page_layout_node.get_max_remaining_height()):
+            if util.approximately_greater(self.pending_paragraph_layout_node.get_min_height(), self.pending_page_layout_node.get_max_remaining_height()):
                 self.new_pending_page()
 
             self.pending_page_layout_node.place_child_node(self.pending_paragraph_layout_node)
