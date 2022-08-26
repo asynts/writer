@@ -99,11 +99,7 @@ def print_placement_instructions(placement_instructions: list[PlacementInstructi
         else:
             raise NotImplementedError
 
-def compute_placement_instructions_for_paragraph(
-    *,
-    paragraph_node: "model.ParagraphModelNode",
-    paragraph_style_cascade: "model.ModelStyleCascade",
-) -> list[PlacementInstruction]:
+def compute_placement_instructions_for_paragraph(paragraph_node: "model.ParagraphModelNode") -> list[PlacementInstruction]:
     placement_instructions: list[PlacementInstruction] = []
 
     pending_excerpts: list[TextExcerpt] = []
@@ -151,7 +147,13 @@ def compute_placement_instructions_for_paragraph(
     for text_chunk_node in paragraph_node.children:
         assert isinstance(text_chunk_node, model.TextChunkModelNode)
 
-        text_chunk_style_cascade = paragraph_style_cascade.copy_with(text_chunk_node.style),
+        text_chunk_style_cascade = model.ModelStyleCascade(
+            model_style_list=[
+                paragraph_node.style,
+                text_chunk_node.style,
+            ],
+            is_mutable=False,
+        )
 
         remaining_text = text_chunk_node.text
         model_node_offset = 0
