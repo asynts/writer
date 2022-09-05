@@ -688,6 +688,19 @@ class CursorLayoutNode(LayoutNode):
             COLOR_YELLOW,
         )
 
+class SpacingLayoutNode(LayoutNode):
+    __slots__ = tuple()
+
+    def __init__(self, *, parent_node: LayoutNode, fixed_width: float):
+        super().__init__(
+            name="SpacingLayoutNode",
+            parent_node=parent_node,
+            model_node=None,
+            style=LayoutStyle(
+                fixed_width=fixed_width,
+            ),
+        )
+
 class TextChunkLayoutNode(LayoutNode):
     __slots__ = (
         "_model_node",
