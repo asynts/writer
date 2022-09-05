@@ -63,7 +63,10 @@ class LayoutGenerator:
                 assert pending_cursor_instruction is None
                 pending_cursor_instruction = instruction
             elif isinstance(instruction, text_placement.WhitespacePlacementInstruction):
-                assert pending_cursor_instruction is None
+                if pending_cursor_instruction is not None:
+                    # FIXME: Place pending cursor.
+                    pass
+
                 spacing_layout_node = layout.SpacingLayoutNode(
                     parent_node=line_layout_node,
                     model_node=instruction.model_node,
@@ -79,10 +82,27 @@ class LayoutGenerator:
                     # FIXME: Place pending cursor
                     pending_cursor_instruction = None
 
-                # FIXME: Place inner cursor
+                previous_excerpt: text_placement.TextExcerpt = None
                 for excerpt in instruction.excerpts:
-                    text_layout_node = layout.TextChunkLayoutNode(
-                        text=excerpt.text,
+                    # We assume that two adjacent excerpts do not come from the same model node.
+                    # Otherwise, we would render the cursor twice if it is placed at the end of the first (which is the start of the second).
+                    if previous_excerpt is not None:
+                        assert previous_excerpt.model_node != excerpt.model_node
+
+                    # If the cursor is in the middle, we need to split the text.
+                    # For simplicity, we always split and possibly leave one node empty.
+                    split_text_offset = 0
+                    if excerpt.model_node.cursor_offset is not None:
+                        b_outside_excerpt_left = excerpt.model_node.cursor_offset < excerpt.model_offset
+                        b_outside_excerpt_right = excerpt.model_node.cursor_offset > excerpt.model_offset + len(excerpt.text)
+                        if not b_outside_excerpt_left and not b_outside_excerpt_right:
+                            split_text_offset = excerpt.model_node.cursor_offset - excerpt.model_offset
+
+                    text_before = excerpt.text[:split_text_offset]
+                    text_after = excerpt.text[split_text_offset:]
+
+                    line_layout_node.place_child_node(layout.TextChunkLayoutNode(
+                        text=text_before,
                         parent_node=line_layout_node,
                         model_node=excerpt.model_node,
                         model_node_offset=excerpt.model_offset,
@@ -90,8 +110,32 @@ class LayoutGenerator:
                             paragraph_model_node.style,
                             excerpt.model_node.style,
                         ]),
-                    )
-                    line_layout_node.place_child_node(text_layout_node)
+                    ))
+
+                    # Place cursor if required.
+                    if excerpt.model_node.cursor_offset is not None:
+                        line_layout_node.place_child_node(layout.CursorLayoutNode(
+                            parent_node=line_layout_node,
+                            model_node=excerpt.model_node,
+                            model_node_offset=excerpt.model_node.cursor_offset,
+                            style_cascade=model.ModelStyleCascade([
+                                paragraph_model_node.style,
+                                excerpt.model_node.style,
+                            ])
+                        ))
+
+                    line_layout_node.place_child_node(layout.TextChunkLayoutNode(
+                        text=text_after,
+                        parent_node=line_layout_node,
+                        model_node=excerpt.model_node,
+                        model_node_offset=excerpt.model_offset,
+                        style_cascade=model.ModelStyleCascade([
+                            paragraph_model_node.style,
+                            excerpt.model_node.style,
+                        ]),
+                    ))
+
+                    previous_excerpt = excerpt
 
         return line_layout_node
 
