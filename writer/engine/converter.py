@@ -90,7 +90,7 @@ class LayoutGenerator:
                         assert previous_excerpt.model_node != excerpt.model_node
 
                     # If the cursor is in the middle, we need to split the text.
-                    # For simplicity, we always split and possibly leave one node empty.
+                    # For simplicity, we always split.
                     split_text_offset = 0
                     b_place_cursor = False
                     if excerpt.model_node.cursor_offset is not None:
@@ -103,16 +103,17 @@ class LayoutGenerator:
                     text_before = excerpt.text[:split_text_offset]
                     text_after = excerpt.text[split_text_offset:]
 
-                    line_layout_node.place_child_node(layout.TextChunkLayoutNode(
-                        text=text_before,
-                        parent_node=line_layout_node,
-                        model_node=excerpt.model_node,
-                        model_node_offset=excerpt.model_offset,
-                        style_cascade=model.ModelStyleCascade([
-                            paragraph_model_node.style,
-                            excerpt.model_node.style,
-                        ]),
-                    ))
+                    if len(text_before) >= 1:
+                        line_layout_node.place_child_node(layout.TextChunkLayoutNode(
+                            text=text_before,
+                            parent_node=line_layout_node,
+                            model_node=excerpt.model_node,
+                            model_node_offset=excerpt.model_offset,
+                            style_cascade=model.ModelStyleCascade([
+                                paragraph_model_node.style,
+                                excerpt.model_node.style,
+                            ]),
+                        ))
 
                     # Place cursor if required.
                     if b_place_cursor:
@@ -126,16 +127,17 @@ class LayoutGenerator:
                             ])
                         ))
 
-                    line_layout_node.place_child_node(layout.TextChunkLayoutNode(
-                        text=text_after,
-                        parent_node=line_layout_node,
-                        model_node=excerpt.model_node,
-                        model_node_offset=excerpt.model_offset,
-                        style_cascade=model.ModelStyleCascade([
-                            paragraph_model_node.style,
-                            excerpt.model_node.style,
-                        ]),
-                    ))
+                    if len(text_after):
+                        line_layout_node.place_child_node(layout.TextChunkLayoutNode(
+                            text=text_after,
+                            parent_node=line_layout_node,
+                            model_node=excerpt.model_node,
+                            model_node_offset=excerpt.model_offset,
+                            style_cascade=model.ModelStyleCascade([
+                                paragraph_model_node.style,
+                                excerpt.model_node.style,
+                            ]),
+                        ))
 
                     previous_excerpt = excerpt
 
