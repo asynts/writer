@@ -92,10 +92,12 @@ class LayoutGenerator:
                     # If the cursor is in the middle, we need to split the text.
                     # For simplicity, we always split and possibly leave one node empty.
                     split_text_offset = 0
+                    b_place_cursor = False
                     if excerpt.model_node.cursor_offset is not None:
                         b_outside_excerpt_left = excerpt.model_node.cursor_offset < excerpt.model_offset
                         b_outside_excerpt_right = excerpt.model_node.cursor_offset > excerpt.model_offset + len(excerpt.text)
-                        if not b_outside_excerpt_left and not b_outside_excerpt_right:
+                        if (not b_outside_excerpt_left) and (not b_outside_excerpt_right):
+                            b_place_cursor = True
                             split_text_offset = excerpt.model_node.cursor_offset - excerpt.model_offset
 
                     text_before = excerpt.text[:split_text_offset]
@@ -113,7 +115,7 @@ class LayoutGenerator:
                     ))
 
                     # Place cursor if required.
-                    if excerpt.model_node.cursor_offset is not None:
+                    if b_place_cursor:
                         line_layout_node.place_child_node(layout.CursorLayoutNode(
                             parent_node=line_layout_node,
                             model_node=excerpt.model_node,
