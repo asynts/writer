@@ -56,7 +56,7 @@ def create_model_tree_small_document(*, b_print_document_name: bool):
 
     text_chunk = model.TextChunkModelNode(
         style=normal_text_chunk_style,
-        text="This is a paragraph. With multiple sentences in it.",
+        text="This is a paragraph. ",
         children=[],
     )
     text_chunk.make_immutable()
@@ -64,7 +64,7 @@ def create_model_tree_small_document(*, b_print_document_name: bool):
 
     text_chunk = model.TextChunkModelNode(
         style=bold_text_chunk_style,
-        text=" This is bold",
+        text=" This is bold!",
         children=[],
     )
     text_chunk.make_immutable()

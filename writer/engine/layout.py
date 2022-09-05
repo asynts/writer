@@ -493,6 +493,10 @@ class HorizontalLayoutNode(BlockLayoutNode):
         )
         occupied_by_child = child_node.get_width() + child_node.get_style().outer_spacing.x
 
+        # Ensure that '__max_remaining_width' is initialized.
+        if self.__max_remaining_width is None:
+            self.get_max_remaining_width()
+
         self._width_of_children += occupied_by_child
         self.__max_remaining_width -= occupied_by_child
         assert self.__max_remaining_width >= 0.0
@@ -691,13 +695,25 @@ class CursorLayoutNode(LayoutNode):
 class SpacingLayoutNode(LayoutNode):
     __slots__ = tuple()
 
-    def __init__(self, *, parent_node: LayoutNode, fixed_width: float):
+    def __init__(
+        self,
+        *,
+        parent_node: LayoutNode,
+        model_node: model.ModelNode,
+
+        fixed_width: float,
+
+        style_cascade: "model.ModelStyleCascade",
+    ):
+        fixed_height = style_cascade.font_metrics.height()
+
         super().__init__(
             name="SpacingLayoutNode",
             parent_node=parent_node,
-            model_node=None,
+            model_node=model_node,
             style=LayoutStyle(
                 fixed_width=fixed_width,
+                fixed_height=fixed_height,
             ),
         )
 

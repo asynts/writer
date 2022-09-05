@@ -66,7 +66,12 @@ class LayoutGenerator:
                 assert pending_cursor_instruction is None
                 spacing_layout_node = layout.SpacingLayoutNode(
                     parent_node=line_layout_node,
+                    model_node=instruction.model_node,
                     fixed_width=word_spacing,
+                    style_cascade=model.ModelStyleCascade([
+                        paragraph_model_node.style,
+                        instruction.model_node.style,
+                    ]),
                 )
                 line_layout_node.place_child_node(spacing_layout_node)
             elif isinstance(instruction, text_placement.WordPlacementInstruction):
