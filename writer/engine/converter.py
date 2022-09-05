@@ -32,6 +32,69 @@ class LayoutGenerator:
             self.pending_page_layout_node.place_child_node(self.pending_paragraph_layout_node)
             self.pending_paragraph_layout_node = None
 
+    def _generate_line_layout_node(
+        self,
+        *,
+        line_width: float,
+        line_instructions: list["text_placement.PlacementInstruction"],
+        paragraph_model_node: "model.ParagraphModelNode",
+    ) -> "layout.LayoutNode":
+        line_layout_node = layout.HorizontalLayoutNode(
+            parent_node=self.pending_paragraph_layout_node,
+            model_node=None,
+            style=layout.LayoutStyle(),
+        )
+
+        max_line_width = self.pending_paragraph_layout_node.get_max_inner_width()
+
+        nwords = 0
+        for instruction in line_instructions:
+            if isinstance(instruction, text_placement.WordPlacementInstruction):
+                nwords += 1
+
+        if nwords == 1:
+            word_spacing = None
+        else:
+            word_spacing = (max_line_width - line_width) / (nwords - 1)
+
+        pending_cursor_instruction: text_placement.CursorPlacementInstruction = None
+        for instruction in line_instructions:
+            if isinstance(instruction, text_placement.CursorPlacementInstruction):
+                assert pending_cursor_instruction is None
+                pending_cursor_instruction = instruction
+            elif isinstance(instruction, text_placement.WhitespacePlacementInstruction):
+                assert pending_cursor_instruction is None
+                spacing_layout_node = layout.SpacingLayoutNode(
+                    parent_node=line_layout_node,
+                    model_node=instruction.model_node,
+                    fixed_width=word_spacing,
+                    style_cascade=model.ModelStyleCascade([
+                        paragraph_model_node.style,
+                        instruction.model_node.style,
+                    ]),
+                )
+                line_layout_node.place_child_node(spacing_layout_node)
+            elif isinstance(instruction, text_placement.WordPlacementInstruction):
+                if pending_cursor_instruction is not None:
+                    # FIXME: Place pending cursor
+                    pending_cursor_instruction = None
+
+                # FIXME: Place inner cursor
+                for excerpt in instruction.excerpts:
+                    text_layout_node = layout.TextChunkLayoutNode(
+                        text=excerpt.text,
+                        parent_node=line_layout_node,
+                        model_node=excerpt.model_node,
+                        model_node_offset=excerpt.model_offset,
+                        style_cascade=model.ModelStyleCascade([
+                            paragraph_model_node.style,
+                            excerpt.model_node.style,
+                        ]),
+                    )
+                    line_layout_node.place_child_node(text_layout_node)
+
+        return line_layout_node
+
     def new_pending_page(self):
         self._try_place_pending_page()
 
@@ -139,14 +202,11 @@ class LayoutGenerator:
                 # We assume that the new paragraph layout node has the same width, which should be reasonable.
                 assert self.pending_paragraph_layout_node.get_max_inner_width() == max_line_width
 
-            line_layout_node = layout.HorizontalLayoutNode(
-                parent_node=self.pending_paragraph_layout_node,
-                model_node=None,
-                style=layout.LayoutStyle(),
+            line_layout_node = self._generate_line_layout_node(
+                line_width=current_line_width,
+                line_instructions=current_line_instructions,
+                paragraph_model_node=paragraph_model_node,
             )
-
-            # FIXME: Now, we need to create all the 'TextChunkLayoutNode' nodes.
-
             self.pending_paragraph_layout_node.place_child_node(line_layout_node)
 
             # We are now done with that line, however, we might carry a 'pending_cursor_instruction' into the next line.
