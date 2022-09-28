@@ -34,10 +34,4 @@ paragraph_1.add_child(model.TextChunkModelNode(text=".", style=normal_normal_tex
 
 All of this is then rendered on the screen and it is possible to click on words to delete them from the model (which then updates the layout as well):
 
-[![Screen Capture of Writer Application](Meta/Media/0004_demo-snapshot.png)](Meta/Media/0003_demo.mkv)
-
-Here is a screenshot from another document:
-
-<p align="center">
-    <img src="Meta/Media/0002_screenshot.png" width="600" alt="Screenshot from &quot;About&quot; Document" />
-</p>
+https://github.com/asynts/writer/blob/444290a1ddd6ae83779cd5c52c2713f3f56b87d0/Meta/Media/0003_demo.mkv
