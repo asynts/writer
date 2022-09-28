@@ -1,37 +1,30 @@
+# Writer
+
 ## About
 
-This is a prototype of a writer application that I want to add to Serenity OS.
+This is a word processor similar to Microsoft Word or LibreOffice Writer.
+Obviously, I only try to support the core features since I don't want to spend years reinventing the wheel.
 
--   It should be similar to Libre Office Writer or Microsoft Word, but much simpler.
+I originally started this project because I wanted to add a Writer application to Serenity OS.
+Maybe, that will still happen at some point in the future, but I no longer have plans to do so at the moment.
 
--   My goal here is to write my own layout engine, which is essentially a simplified version of CSS
-    but without a text representation to define the rules.
+The problem is, that this whole thing is much more challenging than expected.
+I thought that I could simply create a wrapper for a web browser and thus use HTML/CSS for rendering.
+Then I would write some C++ code that deals with all the interaction logic and connects to LibWeb and the file system.
+
+However, I quickly realized that this would not work, because of paging.
+Paging is the process of taking the text and deciding on which page it should be rendered.
+This is a chicken-egg problem where the layout can infulence the structure of the page, which itself infuences the layout.
+
+Since CSS is not capable of modifying the DOM and the support for CSS3-REGIONS was removed from browsers, there is no way to get this working.
+There are workarounds, but I ultimately decided to create my own rendering engine ditching the web browser entirely.
+I stated working on a prototype in Python, which became this project.
 
 ## Demo
 
-This is in an early state of development, however, I do have a prototype working.
-The following code is used to describe what should be presented on the screen:
+*This is in an early state of development.
+Most of the basic functionality is there but it's extremely buggy and some key features are missing.*
 
-```python
-model_tree = model.DocumentModelNode()
-
-paragraph_1 = model_tree.add_child(model.ParagraphModelNode(style=heading_paragraph_style))
-paragraph_1.add_child(model.TextChunkModelNode(text="This  is a", style=normal_heading_text_chunk_style))
-paragraph_1.add_child(model.TextChunkModelNode(text=" heading.", style=normal_heading_text_chunk_style))
-
-paragraph_2 = model_tree.add_child(model.ParagraphModelNode(style=normal_paragraph_style))
-paragraph_2.add_child(model.TextChunkModelNode(text="This is a normal paragraph, but ", style=normal_normal_text_chunk_style))
-paragraph_2.add_child(model.TextChunkModelNode(text="this", style=bold_normal_text_chunk_style))
-paragraph_2.add_child(model.TextChunkModelNode(text=" has some highlight applied to it.", style=normal_normal_text_chunk_style))
-
-paragraph_1 = model_tree.add_child(model.ParagraphModelNode(style=normal_paragraph_style))
-paragraph_1.add_child(model.TextChunkModelNode(text="Here is another paragraph which is much longer than the ", style=normal_normal_text_chunk_style))
-paragraph_1.add_child(model.TextChunkModelNode(text="previous ", style=bold_normal_text_chunk_style))
-paragraph_1.add_child(model.TextChunkModelNode(text="one. On top of that, the formatting is all ", style=normal_normal_text_chunk_style))
-paragraph_1.add_child(model.TextChunkModelNode(text="over the place", style=bold_normal_text_chunk_style))
-paragraph_1.add_child(model.TextChunkModelNode(text=".", style=normal_normal_text_chunk_style))
-```
-
-All of this is then rendered on the screen and it is possible to click on words to delete them from the model (which then updates the layout as well):
+*In the demo, the cursor is sometimes flickering due to a rendering bug that I am working to resolve.*
 
 https://user-images.githubusercontent.com/31994781/192720179-6e014be6-9ca7-4e91-aca0-d2edbc03a5fe.mp4
