@@ -34,4 +34,4 @@ paragraph_1.add_child(model.TextChunkModelNode(text=".", style=normal_normal_tex
 
 All of this is then rendered on the screen and it is possible to click on words to delete them from the model (which then updates the layout as well):
 
-[![Screen Capture of Writer Applicatoin](Meta/Media/0004_demo-snapshot.png)](Meta/Media/0003_demo.mp4?raw=true)
+https://user-images.githubusercontent.com/31994781/192720179-6e014be6-9ca7-4e91-aca0-d2edbc03a5fe.mp4
