@@ -593,7 +593,7 @@ class PageLayoutNode(VerticalLayoutNode):
             style=LayoutStyle(
                 fixed_height=header_height,
 
-                background_color=COLOR_GREEN,
+                background_color=COLOR_WHITE,
             ),
         )
 
@@ -603,7 +603,7 @@ class PageLayoutNode(VerticalLayoutNode):
 
             style=LayoutStyle(
                 fixed_height=content_height,
-                background_color=COLOR_BLUE,
+                background_color=COLOR_WHITE,
                 padding_spacing=Spacing(left=20, right=20, top=20, bottom=20),
             ),
         )
@@ -616,7 +616,7 @@ class PageLayoutNode(VerticalLayoutNode):
 
             style=LayoutStyle(
                 fixed_height=footer_height,
-                background_color=COLOR_RED,
+                background_color=COLOR_WHITE,
             ),
         )
 
@@ -685,7 +685,7 @@ class CursorLayoutNode(LayoutNode):
                 2,
                 self.get_absolute_height() + 4,
             ),
-            COLOR_YELLOW,
+            COLOR_BLUE,
         )
 
 class TextChunkLayoutNode(LayoutNode):
