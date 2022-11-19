@@ -167,11 +167,3 @@ class NodePath:
             raise NodeNotFound
 
         return visit_node(root_node, remaining_key_list=self._key_list)
-
-# Splits a list when it encounters a sentinel, returns a partition of the input list.
-def partition_with_sentinel(list_: list, *, sentinel: any):
-    for index in range(len(list_)):
-        if list_[index] == sentinel:
-            return list_[:index], list_[index:index+1], list_[index+1:]
-
-    return list_, [], []

@@ -105,6 +105,7 @@ class Window(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
 
+        # FIXME: This really shouldn't be a global variable.
         layout.dots_per_cm = self.screen().logicalDotsPerInch() / 2.54
 
         self._writerWidget = WriterWidget()
@@ -133,6 +134,7 @@ class Window(QtWidgets.QMainWindow):
         self._edit_redo_action.setShortcut(QtGui.QKeySequence("Ctrl+Y"))
         self.setMenuBar(menubar)
 
+        # FIXME: This should not be a global variable.
         history.global_history_manager.notify_on_history_change(self.on_history_changed)
         self.on_history_changed()
 
