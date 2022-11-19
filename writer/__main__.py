@@ -127,8 +127,10 @@ class Window(QtWidgets.QMainWindow):
         edit_menu = menubar.addMenu("Edit")
         self._edit_undo_action = edit_menu.addAction("Undo")
         self._edit_undo_action.triggered.connect(self.on_edit_undo_action)
+        self._edit_undo_action.setShortcut(QtGui.QKeySequence("Ctrl+Z"))
         self._edit_redo_action = edit_menu.addAction("Redo")
         self._edit_redo_action.triggered.connect(self.on_edit_redo_action)
+        self._edit_redo_action.setShortcut(QtGui.QKeySequence("Ctrl+Y"))
         self.setMenuBar(menubar)
 
         history.global_history_manager.notify_on_history_change(self.on_history_changed)

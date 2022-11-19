@@ -3,7 +3,7 @@
 ## About
 
 This is a word processor similar to Microsoft Word or LibreOffice Writer.
-Obviously, I only try to support the core features since I don't want to spend years reinventing the wheel.
+My goal is to support the core features without getting tied up in details.
 
 I originally started this project because I wanted to add a Writer application to Serenity OS.
 Maybe, that will still happen at some point in the future, but I no longer have plans to do so at the moment.
