@@ -10,12 +10,10 @@ import writer.engine.tree as tree
 import writer.engine.converter
 import writer.engine.history as history
 import writer.engine.events as events
+import writer.engine.converter as converter
 
 from . import example
 
-
-def create_layout_tree(model_tree: model.DocumentModelNode):
-    return writer.engine.converter.generate_layout_for_model(model_tree)
 
 class WriterWidget(QtWidgets.QWidget):
     def __init__(self):
@@ -26,27 +24,32 @@ class WriterWidget(QtWidgets.QWidget):
 
         self._layout_tree = None
 
-        history.global_history_manager = history.HistoryManager(
+        self.history_manager = history.HistoryManager(
             model_tree=example.create_model_tree(),
         )
 
-        history.global_history_manager.notify_on_history_change(self.on_history_change)
+        self.history_manager.notify_on_history_change(self.on_history_change)
 
         self.build_layout_tree()
 
     def build_layout_tree(self):
         before_ns = time.perf_counter_ns()
-        self._layout_tree = create_layout_tree(history.global_history_manager.get_model_tree())
+        self._layout_tree = converter.generate_layout_for_model(
+            self.history_manager.get_model_tree(),
+            history_manager=self.history_manager,
+        )
         after_ns = time.perf_counter_ns()
 
         events.validate_parent_hierachy_event(
-            model_tree=history.global_history_manager.get_model_tree(),
+            model_tree=self.history_manager.get_model_tree(),
             layout_tree=self._layout_tree,
+            history_manager=self.history_manager,
         )
 
         events.validate_cursor_unique_event(
-            model_tree=history.global_history_manager.get_model_tree(),
+            model_tree=self.history_manager.get_model_tree(),
             layout_tree=self._layout_tree,
+            history_manager=self.history_manager,
         )
 
         print(f"Rebuild  {after_ns - before_ns:>14}ns ({int((after_ns - before_ns) / (1000 * 1000)):>10}ms)")
@@ -77,8 +80,9 @@ class WriterWidget(QtWidgets.QWidget):
         if events.mouse_click_event(
             absolute_x=event.position().x(),
             absolute_y=event.position().y(),
-            model_tree=history.global_history_manager.get_model_tree(),
-            layout_tree=self._layout_tree
+            model_tree=self.history_manager.get_model_tree(),
+            layout_tree=self._layout_tree,
+            history_manager=self.history_manager,
         ):
             print("Focus set.")
             self.setFocus(QtCore.Qt.FocusReason.MouseFocusReason)
@@ -92,13 +96,14 @@ class WriterWidget(QtWidgets.QWidget):
 
         if events.key_press_event(
             event=event,
-            model_tree=history.global_history_manager.get_model_tree(),
+            model_tree=self.history_manager.get_model_tree(),
             layout_tree=self._layout_tree,
+            history_manager=self.history_manager,
         ):
             event.accept()
 
         print(">>>")
-        print(history.global_history_manager.get_model_tree().dump(), end="")
+        print(self.history_manager.get_model_tree().dump(), end="")
         print("<<<")
 
 class Window(QtWidgets.QMainWindow):
@@ -134,8 +139,7 @@ class Window(QtWidgets.QMainWindow):
         self._edit_redo_action.setShortcut(QtGui.QKeySequence("Ctrl+Y"))
         self.setMenuBar(menubar)
 
-        # FIXME: This should not be a global variable.
-        history.global_history_manager.notify_on_history_change(self.on_history_changed)
+        self._writerWidget.history_manager.notify_on_history_change(self.on_history_changed)
         self.on_history_changed()
 
         self.setCentralWidget(self._scrollArea)
@@ -144,14 +148,14 @@ class Window(QtWidgets.QMainWindow):
         self.show()
 
     def on_history_changed(self):
-        self._edit_undo_action.setEnabled(history.global_history_manager.is_undo_possible())
-        self._edit_redo_action.setEnabled(history.global_history_manager.is_redo_possible())
+        self._edit_undo_action.setEnabled(self._writerWidget.history_manager.is_undo_possible())
+        self._edit_redo_action.setEnabled(self._writerWidget.history_manager.is_redo_possible())
 
     def on_edit_undo_action(self):
-        history.global_history_manager.undo()
+        self._writerWidget.history_manager.undo()
 
     def on_edit_redo_action(self):
-        history.global_history_manager.redo()
+        self._writerWidget.history_manager.redo()
 
 def main():
     app = QtWidgets.QApplication(sys.argv)

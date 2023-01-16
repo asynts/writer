@@ -7,7 +7,7 @@ import writer.engine.model as model
 import writer.engine.layout as layout
 import writer.engine.tree as tree
 
-def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.LayoutNode):
+def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.LayoutNode, history_manager: history.HistoryManager):
     # FIXME: We are a bit inconsistent here.
     #        If we reference a node it should always belong to the current tree, otherwise, we should look it up again.
 
@@ -24,7 +24,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
         new_node.make_immutable()
         new_model_tree = cursor_path.replace(new_node, root_node=new_model_tree)
 
-        history.global_history_manager.update_model_tree(new_model_tree=new_model_tree)
+        history_manager.update_model_tree(new_model_tree=new_model_tree)
         return True
 
     # We are at the start of a text chunk, is there a preceding text chunk?
@@ -51,7 +51,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
         new_node.make_immutable()
         new_model_tree = new_node
 
-        history.global_history_manager.update_model_tree(new_model_tree=new_model_tree)
+        history_manager.update_model_tree(new_model_tree=new_model_tree)
         return True
     else:
         parent_path = cursor_path.parent_path(root_node=new_model_tree)
@@ -91,18 +91,24 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
             new_node.make_immutable()
             new_model_tree = parent_parent_path.replace(new_node, root_node=new_model_tree)
 
-            history.global_history_manager.update_model_tree(new_model_tree=new_model_tree)
+            history_manager.update_model_tree(new_model_tree=new_model_tree)
             return True
 
     return False
 
-def key_press_event(*, event: QtGui.QKeyEvent, model_tree: model.DocumentModelNode, layout_tree: layout.LayoutNode):
+def key_press_event(
+    *,
+    event: QtGui.QKeyEvent,
+    model_tree: model.DocumentModelNode,
+    layout_tree: layout.LayoutNode,
+    history_manager: history.HistoryManager
+):
     # Ignore key press events when no cursor is placed.
     if model_tree.cursor_node_path is None:
         return False
 
     if event.key() == QtCore.Qt.Key.Key_Backspace:
-        return backspace_event(model_tree=model_tree, layout_tree=layout_tree)
+        return backspace_event(model_tree=model_tree, layout_tree=layout_tree, history_manager=history_manager)
 
     # Ignore key press events for unprintable characters.
     if not event.text().isprintable():
@@ -116,7 +122,7 @@ def key_press_event(*, event: QtGui.QKeyEvent, model_tree: model.DocumentModelNo
     new_node.make_immutable()
     new_model_tree = model_tree.cursor_node_path.replace(new_node, root_node=new_model_tree)
 
-    history.global_history_manager.update_model_tree(new_model_tree=new_model_tree)
+    history_manager.update_model_tree(new_model_tree=new_model_tree)
 
     return True
 
@@ -128,7 +134,14 @@ def key_press_event(*, event: QtGui.QKeyEvent, model_tree: model.DocumentModelNo
 #
 # Invariant: When we mutate the model tree in the layout node hooks, the layout tree remains valid and keeps referencing the same model nodes.
 #            This is important for the algorithm to finish properly.
-def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model.DocumentModelNode, layout_tree: layout.LayoutNode):
+def mouse_click_event(
+    *,
+    absolute_x: float,
+    absolute_y: float,
+    model_tree: model.DocumentModelNode,
+    layout_tree: layout.LayoutNode,
+    history_manager: history.HistoryManager
+):
     # FIXME: Maybe I could rewrite this as a coroutine?
     #        Just spit out the next sensible layout node with the model tree position.
 
@@ -185,7 +198,7 @@ def mouse_click_event(*, absolute_x: float, absolute_y: float, model_tree: model
 # Layout nodes can reference model nodes.
 # This "event" verifies that the layout tree is consistent with the model tree.
 # If a model node has a parent, the same parent can be discovered in the layout tree.
-def validate_parent_hierachy_event(*, model_tree: "model.DocumentModelNode", layout_tree: "layout.LayoutNode"):
+def validate_parent_hierachy_event(*, model_tree: "model.DocumentModelNode", layout_tree: "layout.LayoutNode", history_manager: history.HistoryManager):
     model_node_to_parents: typing.Dict[model.ModelNode, list[model.ModelNode]] = {}
 
     # First, we find the parents for each model node.
@@ -223,7 +236,7 @@ def validate_parent_hierachy_event(*, model_tree: "model.DocumentModelNode", lay
     return True
 
 # There must only be one
-def validate_cursor_unique_event(*, model_tree: "model.DocumentModelNode", layout_tree: "layout.LayoutNode"):
+def validate_cursor_unique_event(*, model_tree: "model.DocumentModelNode", layout_tree: "layout.LayoutNode", history_manager: history.HistoryManager):
     b_cursor_seen = False
     key_list: list[int] = []
     def visit_model_node(*, model_node: model.ModelNode):

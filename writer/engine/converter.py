@@ -3,10 +3,16 @@ import writer.engine.layout as layout
 import writer.engine.style as style
 import writer.engine.util as util
 import writer.engine.text_placement as text_placement
+import writer.engine.history as history
 
 class LayoutGenerator:
-    def __init__(self, document_model_node: model.DocumentModelNode):
+    def __init__(self, *, document_model_node: model.DocumentModelNode, history_manager: history.HistoryManager):
+        self.layout_dependencies = layout.LayoutDependencies(
+            history_manager=history_manager,
+        )
+
         self.document_layout_node = layout.VerticalLayoutNode(
+            dependencies=self.layout_dependencies,
             parent_node=None,
             model_node=document_model_node,
             style=style.LayoutStyle(),
@@ -40,6 +46,7 @@ class LayoutGenerator:
         paragraph_model_node: "model.ParagraphModelNode",
     ) -> "layout.LayoutNode":
         line_layout_node = layout.HorizontalLayoutNode(
+            dependencies=self.layout_dependencies,
             parent_node=self.pending_paragraph_layout_node,
             model_node=None,
             style=layout.LayoutStyle(),
@@ -68,6 +75,7 @@ class LayoutGenerator:
                     pass
 
                 spacing_layout_node = layout.SpacingLayoutNode(
+                    dependencies=self.layout_dependencies,
                     parent_node=line_layout_node,
                     model_node=instruction.model_node,
                     fixed_width=word_spacing,
@@ -105,6 +113,7 @@ class LayoutGenerator:
 
                     if len(text_before) >= 1:
                         line_layout_node.place_child_node(layout.TextChunkLayoutNode(
+                            dependencies=self.layout_dependencies,
                             text=text_before,
                             parent_node=line_layout_node,
                             model_node=excerpt.model_node,
@@ -118,6 +127,7 @@ class LayoutGenerator:
                     # Place cursor if required.
                     if b_place_cursor:
                         line_layout_node.place_child_node(layout.CursorLayoutNode(
+                            dependencies=self.layout_dependencies,
                             parent_node=line_layout_node,
                             model_node=excerpt.model_node,
                             model_node_offset=excerpt.model_node.cursor_offset,
@@ -129,6 +139,7 @@ class LayoutGenerator:
 
                     if len(text_after):
                         line_layout_node.place_child_node(layout.TextChunkLayoutNode(
+                            dependencies=self.layout_dependencies,
                             text=text_after,
                             parent_node=line_layout_node,
                             model_node=excerpt.model_node,
@@ -147,6 +158,7 @@ class LayoutGenerator:
         self._try_place_pending_page()
 
         self.pending_page_layout_node = layout.VerticalLayoutNode(
+            dependencies=self.layout_dependencies,
             parent_node=self.document_layout_node,
             model_node=None,
             style=style.LayoutStyle(
@@ -166,6 +178,7 @@ class LayoutGenerator:
         assert self.pending_paragraph_layout_node is None
 
         self.pending_paragraph_layout_node = layout.VerticalLayoutNode(
+            dependencies=self.layout_dependencies,
             parent_node=self.pending_page_layout_node,
             model_node=paragraph_model_node,
             style=layout.LayoutStyle(
@@ -270,8 +283,11 @@ class LayoutGenerator:
 
         return self.document_layout_node
 
-def generate_layout_for_model(document_model_node: model.DocumentModelNode) -> layout.LayoutNode:
-    layout_generator = LayoutGenerator(document_model_node)
+def generate_layout_for_model(document_model_node: model.DocumentModelNode, *, history_manager: history.HistoryManager) -> layout.LayoutNode:
+    layout_generator = LayoutGenerator(
+        document_model_node=document_model_node,
+        history_manager=history_manager,
+    )
 
     for paragraph_model_node in document_model_node.children:
         assert isinstance(paragraph_model_node, model.ParagraphModelNode)

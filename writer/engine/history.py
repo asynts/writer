@@ -51,7 +51,3 @@ class HistoryManager:
         self.__model_tree = self.__model_tree_after.pop()
 
         self.on_history_change()
-
-# Initialized by main.
-# FIXME: Find a better way to achieve this.
-global_history_manager: HistoryManager = None

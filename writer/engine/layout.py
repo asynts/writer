@@ -1,6 +1,7 @@
 import enum
 import functools
-from re import M
+
+from dataclasses import dataclass
 
 from PyQt6 import QtGui, QtCore
 from PyQt6.QtGui import QColor
@@ -56,6 +57,12 @@ class Phase(enum.Enum):
             return False
         return self.value.__ge__(__o.value)
 
+# We don't want to inject a ton of things individually into each layout node.
+# Therefore, we group it all together and then pass that object around.
+@dataclass
+class LayoutDependencies:
+    history_manager: history.HistoryManager
+
 class LayoutNode:
     __slots__ = (
         "__phase",
@@ -72,15 +79,19 @@ class LayoutNode:
         "__absolute_y",
         "_absolute_width",
         "_absolute_height",
+        "dependencies",
     )
 
     def __init__(
         self,
         *,
+        dependencies: LayoutDependencies,
         name: str,
         parent_node: "LayoutNode",
         model_node: "model.ModelNode",
         style: LayoutStyle):
+
+        self.dependencies = dependencies
 
         # The parent node needs to be extremely careful now.
         # We assume that the avaliable space does not change while we are associated.
@@ -659,13 +670,22 @@ class CursorLayoutNode(LayoutNode):
         "_model_node_offset",
     )
 
-    def __init__(self, *, parent_node: LayoutNode, model_node: "model.TextChunkModelNode", model_node_offset: int, style_cascade: "model.ModelStyleCascade"):
+    def __init__(
+        self,
+        *,
+        dependencies: LayoutDependencies,
+        parent_node: LayoutNode,
+        model_node: "model.TextChunkModelNode",
+        model_node_offset: int,
+        style_cascade: "model.ModelStyleCascade"
+    ):
         assert isinstance(model_node, model.TextChunkModelNode)
         assert model_node.cursor_offset is not None
 
         rendered_size = style_cascade.font_metrics.size(0, "")
 
         super().__init__(
+            dependencies=dependencies,
             name="CursorLayoutNode",
             parent_node=parent_node,
             model_node=model_node,
@@ -698,6 +718,7 @@ class SpacingLayoutNode(LayoutNode):
     def __init__(
         self,
         *,
+        dependencies: LayoutDependencies,
         parent_node: LayoutNode,
         model_node: model.ModelNode,
 
@@ -708,6 +729,7 @@ class SpacingLayoutNode(LayoutNode):
         fixed_height = style_cascade.font_metrics.height()
 
         super().__init__(
+            dependencies=dependencies,
             name="SpacingLayoutNode",
             parent_node=parent_node,
             model_node=model_node,
@@ -728,6 +750,7 @@ class TextChunkLayoutNode(LayoutNode):
     def __init__(
         self,
         *,
+        dependencies: LayoutDependencies,
         text: str,
         parent_node: LayoutNode,
 
@@ -741,6 +764,7 @@ class TextChunkLayoutNode(LayoutNode):
         rendered_size = style_cascade.font_metrics.size(0, text)
 
         super().__init__(
+            dependencies=dependencies,
             name="TextChunkLayoutNode",
             parent_node=parent_node,
             model_node=model_node,
@@ -774,7 +798,7 @@ class TextChunkLayoutNode(LayoutNode):
 
     # Override.
     def on_mouse_click(self, *, relative_x: float, relative_y: float, path: tree.NodePath):
-        new_model_tree = history.global_history_manager.get_model_tree()
+        new_model_tree = self.dependencies.history_manager.get_model_tree()
 
         # Remove the cursor from the the previously selected node.
         previous_cursor_path = new_model_tree.cursor_node_path
@@ -797,7 +821,7 @@ class TextChunkLayoutNode(LayoutNode):
         new_node.make_immutable()
         new_model_tree = new_node
 
-        history.global_history_manager.update_model_tree(new_model_tree=new_model_tree)
+        self.dependencies.history_manager.update_model_tree(new_model_tree=new_model_tree)
 
         return True
 

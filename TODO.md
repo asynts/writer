@@ -2,6 +2,8 @@
 
 ### Next Up
 
+-   Do some dependency injection to avoid global variables.
+
 -   Create some clear documentation about how the cursor is tracked and how we deal with it.
 
 ### Backlog
