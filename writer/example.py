@@ -33,96 +33,43 @@ def create_model_tree_small_document(*, b_print_document_name: bool):
         children=[],
     )
 
-    paragraph = model.ParagraphModelNode(
-        style=heading_paragraph_style,
-        children=[],
-    )
+    model_tree.append_child(create_paragraph_subtree(
+        text="Aenean rutrum ipsum sed egestas tempus. Nam dignissim ex eget vehicula dignissim. Donec ac placerat nisl. Quisque interdum magna enim, nec pharetra tellus ornare facilisis. Phasellus rutrum vel felis non convallis. Donec efficitur enim nisi, eu pharetra dui ultrices gravida. Cras pharetra sit amet felis eu rutrum. Nulla mollis egestas ligula a rutrum. Cras ut velit pharetra, bibendum erat sed, vestibulum lectus. Cras placerat eleifend enim sed feugiat. Nunc laoreet tellus at auctor pellentesque. Nam tincidunt arcu nec ex semper, vel posuere nibh euismod. Proin id libero porttitor lectus luctus luctus.",
+        paragraph_style=normal_paragraph_style,
+        text_chunk_style=normal_text_chunk_style,
+    ))
 
-    text_chunk = model.TextChunkModelNode(
-        style=normal_text_chunk_style,
-        text="Title",
-        children=[],
-    )
-    text_chunk.make_immutable()
-    paragraph.append_child(text_chunk)
+    model_tree.append_child(create_paragraph_subtree(
+        text="Ut viverra, elit vel tincidunt molestie, diam dolor pellentesque magna, eget vehicula nunc dui at ex. Ut ipsum urna, mollis ac rutrum ac, aliquet vitae purus. Vestibulum at neque quis turpis malesuada volutpat et eget elit. Duis sodales sagittis lacus, a viverra nisl porta in. Maecenas eget eros sapien. Sed rutrum ultrices elementum. Nam vestibulum feugiat nisl, ut feugiat mauris vehicula et. Donec ornare, lacus a sodales sodales, ante lectus molestie nisi, eu interdum metus nunc sit amet ante. In sed placerat arcu.",
+        paragraph_style=normal_paragraph_style,
+        text_chunk_style=normal_text_chunk_style,
+    ))
 
-    paragraph.make_immutable()
-    model_tree.append_child(paragraph)
+    model_tree.append_child(create_paragraph_subtree(
+        text="Cras vulputate sodales mauris at tincidunt. Quisque vel interdum magna. Nunc fringilla et quam at pellentesque. Praesent rutrum erat sit amet facilisis vehicula. Curabitur odio lacus, pulvinar a dui sed, gravida euismod ante. Mauris pellentesque elit ac lectus placerat, in mollis ante hendrerit. Donec ullamcorper euismod orci sit amet auctor. Curabitur a tristique urna, a bibendum dolor. Donec egestas iaculis mi sit amet vehicula. Suspendisse vitae est non sem gravida suscipit. Pellentesque interdum turpis ex, nec convallis felis auctor vel. Pellentesque eget convallis quam, id finibus mi. Morbi faucibus condimentum enim ut rhoncus.",
+        paragraph_style=normal_paragraph_style,
+        text_chunk_style=normal_text_chunk_style,
+    ))
 
-    paragraph = model.ParagraphModelNode(
-        style=normal_paragraph_style,
-        children=[],
-    )
+    model_tree.append_child(create_paragraph_subtree(
+        text="Nulla lacinia consequat ex ac tempus. Sed a nisi sit amet risus ullamcorper feugiat. Phasellus ac lectus vestibulum, lacinia erat a, tristique elit. Sed dictum lorem dictum feugiat molestie. Aenean gravida urna sit amet tellus cursus, ut facilisis ex dapibus. Suspendisse potenti. Sed porttitor metus ex, at finibus nisi ullamcorper vitae.",
+        paragraph_style=normal_paragraph_style,
+        text_chunk_style=normal_text_chunk_style,
+    ))
 
-    text_chunk = model.TextChunkModelNode(
-        style=normal_text_chunk_style,
-        text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. In luctus erat nec felis scelerisque luctus. Nunc vel leo maximus, lobortis libero at, interdum arcu. In mattis felis eget elit aliquam, nec dignissim nunc euismod. Interdum et malesuada fames ac ante ipsum primis in faucibus. Donec et arcu pretium, pharetra ligula a, condimentum mauris. Aenean vestibulum, ante id facilisis consequat, leo elit sollicitudin nisi, eget congue purus lacus et sem. Vivamus eros lectus, vulputate vitae dui sit amet, mattis fermentum magna. Morbi laoreet ipsum ut magna varius ullamcorper. Nullam non hendrerit ligula. Maecenas bibendum purus sapien, id tempus metus condimentum eget. Sed sagittis, odio in laoreet lobortis, turpis dolor congue orci, vitae dictum lacus purus vehicula diam. Vivamus vehicula pharetra facilisis.",
-        children=[],
-    )
-    text_chunk.make_immutable()
-    paragraph.append_child(text_chunk)
+    model_tree.append_child(create_paragraph_subtree(
+        text="ugue, vitae dictum elit consequat sed. Ut vitae consectetur augue. Vivamus malesuada consequat diam ut bibendum. Pellentesque eu nisl et erat dignissim venenatis. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Mauris consectetur convallis magna id condimentum. Nullam quis odio convallis, vulputate eros volutpat, sagittis augue. Mauris ornare mi ipsum, vulputate iaculis quam convallis eget. Mauris aliquet tortor velit, id rutrum lacus tempus sed. Sed fermentum tortor ut scelerisque imperdiet. Etiam efficitur maximus mauris, a cursus elit viverra vel.",
+        paragraph_style=normal_paragraph_style,
+        text_chunk_style=normal_text_chunk_style,
+    ))
 
-    text_chunk = model.TextChunkModelNode(
-        style=bold_text_chunk_style,
-        text=" This is bold! ",
-        children=[],
-    )
-    text_chunk.make_immutable()
-    paragraph.append_child(text_chunk)
-
-    text_chunk = model.TextChunkModelNode(
-        style=normal_text_chunk_style,
-        text="Phasellus risus nisi, fermentum a finibus porttitor, molestie eu sem. Fusce ac aliquam nunc. Maecenas tincidunt quis magna id facilisis. Ut non lorem metus. Sed et mollis turpis. Maecenas ullamcorper interdum turpis, vitae consectetur enim fringilla in. Maecenas sagittis nec ante viverra vulputate. Aenean quis justo justo. Maecenas consectetur, nulla quis ultrices posuere, nunc urna congue risus, nec egestas odio ante id nibh. Vivamus rhoncus at risus sit amet sagittis. Nunc egestas dui eget interdum tincidunt.",
-        children=[],
-    )
-    text_chunk.make_immutable()
-    paragraph.append_child(text_chunk)
-
-    text_chunk = model.TextChunkModelNode(
-        style=normal_text_chunk_style,
-        text="Duis molestie consectetur consectetur. Duis eu elementum erat. Ut dapibus volutpat tortor, id finibus ligula lobortis nec. In ullamcorper a massa vitae fringilla. Maecenas purus ipsum, molestie in felis a, efficitur condimentum turpis. Vivamus vel nulla id orci elementum ornare in non nunc. Nam at sodales risus, vitae auctor mauris. Pellentesque eu semper sapien. Cras sit amet libero justo. Curabitur viverra augue id eros elementum, quis varius nibh pretium. Vivamus fringilla bibendum arcu. Aliquam efficitur elit in vulputate mattis. Mauris dapibus semper arcu non dignissim. Mauris pharetra, metus ut pulvinar venenatis, metus augue accumsan lacus, ac consectetur lectus lacus in massa.",
-        children=[],
-    )
-    text_chunk.make_immutable()
-    paragraph.append_child(text_chunk)
-
-    text_chunk = model.TextChunkModelNode(
-        style=normal_text_chunk_style,
-        text="Duis molestie consectetur consectetur. Duis eu elementum erat. Ut dapibus volutpat tortor, id finibus ligula lobortis nec. In ullamcorper a massa vitae fringilla. Maecenas purus ipsum, molestie in felis a, efficitur condimentum turpis. Vivamus vel nulla id orci elementum ornare in non nunc. Nam at sodales risus, vitae auctor mauris. Pellentesque eu semper sapien. Cras sit amet libero justo. Curabitur viverra augue id eros elementum, quis varius nibh pretium. Vivamus fringilla bibendum arcu. Aliquam efficitur elit in vulputate mattis. Mauris dapibus semper arcu non dignissim. Mauris pharetra, metus ut pulvinar venenatis, metus augue accumsan lacus, ac consectetur lectus lacus in massa.",
-        children=[],
-    )
-    text_chunk.make_immutable()
-    paragraph.append_child(text_chunk)
-
-    text_chunk = model.TextChunkModelNode(
-        style=normal_text_chunk_style,
-        text="Duis molestie consectetur consectetur. Duis eu elementum erat. Ut dapibus volutpat tortor, id finibus ligula lobortis Ut dapibus volutpat tortor, id finibus ligula lobortis Ut dapibus volutpat tortor, id finibus ligula lobortis Ut ",
-        children=[],
-    )
-    text_chunk.make_immutable()
-    paragraph.append_child(text_chunk)
-
-    paragraph.make_immutable()
-    model_tree.append_child(paragraph)
-
-    paragraph = model.ParagraphModelNode(
-        style=normal_paragraph_style,
-        children=[],
-    )
-
-    text_chunk = model.TextChunkModelNode(
-        style=normal_text_chunk_style,
-        text="Duis molestie consectetur consectetur. Duis eu elementum erat. Ut dapibus volutpat tortor, id finibus ligula lobortis Ut dapibus volutpat tortor, id finibus ligula lobortis Ut dapibus volutpat tortor, id finibus ligula lobortis Ut ",
-        children=[],
-    )
-    text_chunk.make_immutable()
-    paragraph.append_child(text_chunk)
-
-    paragraph.make_immutable()
-    model_tree.append_child(paragraph)
+    model_tree.append_child(create_paragraph_subtree(
+        text="Aliquam mi augue, maximus eu magna a, tincidunt suscipit sapien. Nam feugiat congue mauris. Phasellus vehicula justo vitae libero semper, eleifend pulvinar metus sodales. Cras et cursus magna. Curabitur facilisis id odio vestibulum dapibus. Vivamus et tempus ipsum. Quisque fringilla nec est quis varius.",
+        paragraph_style=normal_paragraph_style,
+        text_chunk_style=normal_text_chunk_style,
+    ))
 
     model_tree.make_immutable()
-
     return model_tree
 
 def create_paragraph_subtree(
@@ -142,10 +89,9 @@ def create_paragraph_subtree(
         children=[],
     )
     text_chunk.make_immutable()
-
     paragraph.append_child(text_chunk)
-    paragraph.make_immutable()
 
+    paragraph.make_immutable()
     return paragraph
 
 def create_model_tree_study(*, b_print_document_name: bool):
