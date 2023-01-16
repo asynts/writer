@@ -22,15 +22,6 @@ COLOR_YELLOW = QColor(255, 255, 0)
 
 b_draw_debug_text_outline = False
 
-# This is initialized on startup by Qt.
-dots_per_cm = None
-
-def cm_to_pixel(value: float):
-    assert dots_per_cm is not None
-
-    # This is a bit arbitrary, since this depends on the display resolution.
-    return dots_per_cm * value
-
 # There are several phases a layout node can be in.
 @functools.total_ordering
 class Phase(enum.Enum):
@@ -57,11 +48,20 @@ class Phase(enum.Enum):
             return False
         return self.value.__ge__(__o.value)
 
+@dataclass(kw_only=True, frozen=True)
+class DisplayInformation:
+    dots_per_cm: float
+
+    def cm_to_pixel(self, value: float):
+        # This is a bit arbitrary, since this depends on the display resolution.
+        return self.dots_per_cm * value
+
 # We don't want to inject a ton of things individually into each layout node.
 # Therefore, we group it all together and then pass that object around.
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class LayoutDependencies:
     history_manager: history.HistoryManager
+    display_information: DisplayInformation
 
 class LayoutNode:
     __slots__ = (
@@ -576,15 +576,16 @@ class PageLayoutNode(VerticalLayoutNode):
         "__footer_node",
     )
 
-    def __init__(self, *, parent_node: "LayoutNode"):
+    def __init__(self, *, parent_node: "LayoutNode", dependencies: LayoutDependencies):
         super().__init__(
+            dependencies=dependencies,
             name="PageLayoutNode",
             parent_node=parent_node,
             model_node=None,
 
             style=LayoutStyle(
-                fixed_width=cm_to_pixel(21.0),
-                fixed_height=cm_to_pixel(29.7),
+                fixed_width=dependencies.display_information.cm_to_pixel(21.0),
+                fixed_height=dependencies.display_information.cm_to_pixel(29.7),
 
                 background_color=COLOR_WHITE,
                 border_color=COLOR_BLACK,
@@ -595,8 +596,8 @@ class PageLayoutNode(VerticalLayoutNode):
         )
 
         total_height = self.get_max_inner_height()
-        header_height = cm_to_pixel(1.9)
-        footer_height = cm_to_pixel(3.67)
+        header_height = dependencies.display_information.cm_to_pixel(1.9)
+        footer_height = dependencies.display_information.cm_to_pixel(3.67)
         content_height = total_height - header_height - footer_height
 
         self.__header_node = VerticalLayoutNode(

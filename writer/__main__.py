@@ -23,6 +23,10 @@ class WriterWidget(QtWidgets.QWidget):
 
         self._layout_tree = None
 
+        self.display_information = layout.DisplayInformation(
+            dots_per_cm=self.screen().logicalDotsPerInch() / 2.54,
+        )
+
         self.history_manager = history.HistoryManager(
             model_tree=example.create_model_tree(),
         )
@@ -36,6 +40,7 @@ class WriterWidget(QtWidgets.QWidget):
         self._layout_tree = converter.generate_layout_for_model(
             self.history_manager.get_model_tree(),
             history_manager=self.history_manager,
+            display_information=self.display_information,
         )
         after_ns = time.perf_counter_ns()
 
@@ -108,9 +113,6 @@ class WriterWidget(QtWidgets.QWidget):
 class Window(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
-
-        # FIXME: This really shouldn't be a global variable.
-        layout.dots_per_cm = self.screen().logicalDotsPerInch() / 2.54
 
         self._writerWidget = WriterWidget()
 

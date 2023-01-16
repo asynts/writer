@@ -6,9 +6,18 @@ import writer.engine.text_placement as text_placement
 import writer.engine.history as history
 
 class LayoutGenerator:
-    def __init__(self, *, document_model_node: model.DocumentModelNode, history_manager: history.HistoryManager):
+    def __init__(
+        self,
+        *,
+        document_model_node: model.DocumentModelNode,
+        history_manager: history.HistoryManager,
+        display_information: layout.DisplayInformation
+    ):
+        self.display_information = display_information
+
         self.layout_dependencies = layout.LayoutDependencies(
             history_manager=history_manager,
+            display_information=display_information,
         )
 
         self.document_layout_node = layout.VerticalLayoutNode(
@@ -162,15 +171,20 @@ class LayoutGenerator:
             parent_node=self.document_layout_node,
             model_node=None,
             style=style.LayoutStyle(
-                fixed_width=layout.cm_to_pixel(21.0),
-                fixed_height=layout.cm_to_pixel(29.7),
+                fixed_width=self.display_information.cm_to_pixel(21.0),
+                fixed_height=self.display_information.cm_to_pixel(29.7),
 
                 background_color=layout.COLOR_WHITE,
                 border_color=layout.COLOR_BLACK,
 
                 border_spacing=layout.Spacing(left=1.0, right=1.0, top=1.0, bottom=1.0),
                 margin_spacing=layout.Spacing(top=10.0, bottom=10.0),
-                padding_spacing=layout.Spacing(left=20.0, right=20.0, top=layout.cm_to_pixel(1.9), bottom=layout.cm_to_pixel(3.67)),
+                padding_spacing=layout.Spacing(
+                    left=20.0,
+                    right=20.0,
+                    top=self.display_information.cm_to_pixel(1.9),
+                    bottom=self.display_information.cm_to_pixel(3.67)
+                ),
             ),
         )
 
@@ -283,10 +297,16 @@ class LayoutGenerator:
 
         return self.document_layout_node
 
-def generate_layout_for_model(document_model_node: model.DocumentModelNode, *, history_manager: history.HistoryManager) -> layout.LayoutNode:
+def generate_layout_for_model(
+    document_model_node: model.DocumentModelNode,
+    *,
+    history_manager: history.HistoryManager,
+    display_information: layout.DisplayInformation,
+) -> layout.LayoutNode:
     layout_generator = LayoutGenerator(
         document_model_node=document_model_node,
         history_manager=history_manager,
+        display_information=display_information,
     )
 
     for paragraph_model_node in document_model_node.children:
