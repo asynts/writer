@@ -106,10 +106,6 @@ class WriterWidget(QtWidgets.QWidget):
         ):
             event.accept()
 
-        print(">>>")
-        print(self.history_manager.get_model_tree().dump(), end="")
-        print("<<<")
-
 class Window(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
@@ -132,12 +128,10 @@ class Window(QtWidgets.QMainWindow):
         menubar = QtWidgets.QMenuBar()
         file_menu = menubar.addMenu("File")
         edit_menu = menubar.addMenu("Edit")
-        self._edit_undo_action = edit_menu.addAction("Undo")
+        self._edit_undo_action = edit_menu.addAction("Undo", "Ctrl+Z")
         self._edit_undo_action.triggered.connect(self.on_edit_undo_action)
-        self._edit_undo_action.setShortcut(QtGui.QKeySequence("Ctrl+Z"))
-        self._edit_redo_action = edit_menu.addAction("Redo")
+        self._edit_redo_action = edit_menu.addAction("Redo", "Ctrl+Y")
         self._edit_redo_action.triggered.connect(self.on_edit_redo_action)
-        self._edit_redo_action.setShortcut(QtGui.QKeySequence("Ctrl+Y"))
         self.setMenuBar(menubar)
 
         self._writerWidget.history_manager.notify_on_history_change(self.on_history_changed)
