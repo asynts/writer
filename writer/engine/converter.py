@@ -47,6 +47,8 @@ class LayoutGenerator:
             self.pending_page_layout_node.place_child_node(self.pending_paragraph_layout_node)
             self.pending_paragraph_layout_node = None
 
+    # This function assumes that all the line instructions fit in one line.
+    # The caller needs to verify that.
     def _generate_line_layout_node(
         self,
         *,
@@ -61,105 +63,35 @@ class LayoutGenerator:
             style=layout.LayoutStyle(),
         )
 
-        max_line_width = self.pending_paragraph_layout_node.get_max_inner_width()
-
-        nwords = 0
-        for instruction in line_instructions:
-            if isinstance(instruction, text_placement.WordPlacementInstruction):
-                nwords += 1
-
-        if nwords == 1:
-            word_spacing = None
-        else:
-            word_spacing = (max_line_width - line_width) / (nwords - 1)
-
-        pending_cursor_instruction: text_placement.CursorPlacementInstruction = None
         for instruction in line_instructions:
             if isinstance(instruction, text_placement.CursorPlacementInstruction):
-                assert pending_cursor_instruction is None
-                pending_cursor_instruction = instruction
+                # FIXME: Place the cursor here.
+                #        Or delay the placement.
+                pass
             elif isinstance(instruction, text_placement.WhitespacePlacementInstruction):
-                if pending_cursor_instruction is not None:
-                    # FIXME: Place pending cursor.
-                    pass
-
-                spacing_layout_node = layout.SpacingLayoutNode(
+                line_layout_node.place_child_node(layout.SpacingLayoutNode(
                     dependencies=self.layout_dependencies,
                     parent_node=line_layout_node,
                     model_node=instruction.model_node,
-                    fixed_width=word_spacing,
+                    fixed_width=instruction.width,
                     style_cascade=model.ModelStyleCascade([
                         paragraph_model_node.style,
                         instruction.model_node.style,
-                    ]),
-                )
-                line_layout_node.place_child_node(spacing_layout_node)
+                    ])
+                ))
             elif isinstance(instruction, text_placement.WordPlacementInstruction):
-                if pending_cursor_instruction is not None:
-                    # FIXME: Place pending cursor
-                    pending_cursor_instruction = None
-
-                previous_excerpt: text_placement.TextExcerpt = None
                 for excerpt in instruction.excerpts:
-                    # We assume that two adjacent excerpts do not come from the same model node.
-                    # Otherwise, we would render the cursor twice if it is placed at the end of the first (which is the start of the second).
-                    if previous_excerpt is not None:
-                        assert previous_excerpt.model_node != excerpt.model_node
-
-                    # If the cursor is in the middle, we need to split the text.
-                    # For simplicity, we always split.
-                    split_text_offset = 0
-                    b_place_cursor = False
-                    if excerpt.model_node.cursor_offset is not None:
-                        b_outside_excerpt_left = excerpt.model_node.cursor_offset < excerpt.model_offset
-                        b_outside_excerpt_right = excerpt.model_node.cursor_offset > excerpt.model_offset + len(excerpt.text)
-                        if (not b_outside_excerpt_left) and (not b_outside_excerpt_right):
-                            b_place_cursor = True
-                            split_text_offset = excerpt.model_node.cursor_offset - excerpt.model_offset
-
-                    text_before = excerpt.text[:split_text_offset]
-                    text_after = excerpt.text[split_text_offset:]
-
-                    if len(text_before) >= 1:
-                        line_layout_node.place_child_node(layout.TextChunkLayoutNode(
-                            dependencies=self.layout_dependencies,
-                            text=text_before,
-                            parent_node=line_layout_node,
-                            model_node=excerpt.model_node,
-                            model_node_offset=excerpt.model_offset,
-                            style_cascade=model.ModelStyleCascade([
-                                paragraph_model_node.style,
-                                excerpt.model_node.style,
-                            ]),
-                        ))
-
-                    # Place cursor if required.
-                    if b_place_cursor:
-                        line_layout_node.place_child_node(layout.CursorLayoutNode(
-                            dependencies=self.layout_dependencies,
-                            parent_node=line_layout_node,
-                            model_node=excerpt.model_node,
-                            model_node_offset=excerpt.model_node.cursor_offset,
-                            style_cascade=model.ModelStyleCascade([
-                                paragraph_model_node.style,
-                                excerpt.model_node.style,
-                            ])
-                        ))
-
-                    if len(text_after):
-                        line_layout_node.place_child_node(layout.TextChunkLayoutNode(
-                            dependencies=self.layout_dependencies,
-                            text=text_after,
-                            parent_node=line_layout_node,
-                            model_node=excerpt.model_node,
-                            model_node_offset=excerpt.model_offset,
-                            style_cascade=model.ModelStyleCascade([
-                                paragraph_model_node.style,
-                                excerpt.model_node.style,
-                            ]),
-                        ))
-
-                    previous_excerpt = excerpt
+                    # FIXME: If the cursor is in the middle, we need to split the text node.
+                    line_layout_node.place_child_node(layout.TextChunkLayoutNode(
+                        dependencies=self.layout_dependencies,
+                        text=excerpt.text,
+                        parent_node=line_layout_node,
+                        model_node=excerpt.model_node,
+                        model_node_offset=excerpt.model_offset,
+                        style_cascade=excerpt.style_cascade,
+                    ))
+            else:
+                raise AssertionError
 
         return line_layout_node
 

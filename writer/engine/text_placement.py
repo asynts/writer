@@ -78,6 +78,8 @@ class WhitespacePlacementInstruction(PlacementInstruction, SizeMixin):
     style_cascade: "model.ModelStyleCascade"
 
     def get_size(self):
+        # FIXME: Currently, we merge spaces here.
+        #        I think we should stop doing that.
         return self.style_cascade.font_metrics.size(0, " ")
 
 # Indicates that the cursor should be rendered when the next word is placed.
