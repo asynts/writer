@@ -94,6 +94,30 @@ def create_model_tree_small_document(*, b_print_document_name: bool):
     text_chunk.make_immutable()
     paragraph.append_child(text_chunk)
 
+    text_chunk = model.TextChunkModelNode(
+        style=normal_text_chunk_style,
+        text="Duis molestie consectetur consectetur. Duis eu elementum erat. Ut dapibus volutpat tortor, id finibus ligula lobortis Ut dapibus volutpat tortor, id finibus ligula lobortis Ut dapibus volutpat tortor, id finibus ligula lobortis Ut ",
+        children=[],
+    )
+    text_chunk.make_immutable()
+    paragraph.append_child(text_chunk)
+
+    paragraph.make_immutable()
+    model_tree.append_child(paragraph)
+
+    paragraph = model.ParagraphModelNode(
+        style=normal_paragraph_style,
+        children=[],
+    )
+
+    text_chunk = model.TextChunkModelNode(
+        style=normal_text_chunk_style,
+        text="Duis molestie consectetur consectetur. Duis eu elementum erat. Ut dapibus volutpat tortor, id finibus ligula lobortis Ut dapibus volutpat tortor, id finibus ligula lobortis Ut dapibus volutpat tortor, id finibus ligula lobortis Ut ",
+        children=[],
+    )
+    text_chunk.make_immutable()
+    paragraph.append_child(text_chunk)
+
     paragraph.make_immutable()
     model_tree.append_child(paragraph)
 
