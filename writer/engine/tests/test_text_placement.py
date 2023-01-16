@@ -59,12 +59,14 @@ cases = [
                         model_node=None,
                         model_offset=0,
                         text="foo",
+                        style_cascade=None,
                     ),
                 ],
             ),
             text_placement.WhitespacePlacementInstruction(
                 model_node=None,
                 model_offset=3,
+                style_cascade=None,
             ),
             text_placement.WordPlacementInstruction(
                 excerpts=[
@@ -72,6 +74,7 @@ cases = [
                         model_node=None,
                         model_offset=0,
                         text="bar",
+                        style_cascade=None,
                     ),
                 ],
             ),
@@ -109,17 +112,20 @@ cases = [
                         model_node=None,
                         model_offset=0,
                         text="fo",
+                        style_cascade=None,
                     ),
                     text_placement.TextExcerpt(
                         model_node=None,
                         model_offset=0,
                         text="o",
+                        style_cascade=None,
                     ),
                 ],
             ),
             text_placement.WhitespacePlacementInstruction(
                 model_node=None,
                 model_offset=1,
+                style_cascade=None,
             ),
             text_placement.WordPlacementInstruction(
                 excerpts=[
@@ -127,6 +133,7 @@ cases = [
                         model_node=None,
                         model_offset=1,
                         text="bar",
+                        style_cascade=None,
                     ),
                 ],
             ),
@@ -158,12 +165,14 @@ cases = [
                         model_node=None,
                         model_offset=0,
                         text="foo",
+                        style_cascade=None,
                     ),
                 ],
             ),
             text_placement.WhitespacePlacementInstruction(
                 model_node=None,
                 model_offset=0,
+                style_cascade=None,
             ),
             text_placement.WordPlacementInstruction(
                 excerpts=[
@@ -171,6 +180,7 @@ cases = [
                         model_node=None,
                         model_offset=1,
                         text="bar",
+                        style_cascade=None,
                     ),
                 ],
             ),
@@ -202,12 +212,14 @@ cases = [
                         model_node=None,
                         model_offset=0,
                         text="foo",
+                        style_cascade=None,
                     ),
                 ],
             ),
             text_placement.WhitespacePlacementInstruction(
                 model_node=None,
                 model_offset=3,
+                style_cascade=None,
             ),
             text_placement.CursorPlacementInstruction(
                 model_node=None,
@@ -216,6 +228,7 @@ cases = [
             text_placement.WhitespacePlacementInstruction(
                 model_node=None,
                 model_offset=0,
+                style_cascade=None,
             ),
             text_placement.WordPlacementInstruction(
                 excerpts=[
@@ -223,6 +236,7 @@ cases = [
                         model_node=None,
                         model_offset=1,
                         text="bar",
+                        style_cascade=None,
                     ),
                 ],
             ),
@@ -248,12 +262,14 @@ cases = [
                         model_node=None,
                         model_offset=0,
                         text="foo",
+                        style_cascade=None,
                     ),
                 ],
             ),
             text_placement.WhitespacePlacementInstruction(
                 model_node=None,
                 model_offset=3,
+                style_cascade=None,
             ),
             text_placement.CursorPlacementInstruction(
                 model_node=None,
@@ -262,6 +278,7 @@ cases = [
             text_placement.WhitespacePlacementInstruction(
                 model_node=None,
                 model_offset=4,
+                style_cascade=None,
             ),
             text_placement.WordPlacementInstruction(
                 excerpts=[
@@ -269,6 +286,7 @@ cases = [
                         model_node=None,
                         model_offset=5,
                         text="bar",
+                        style_cascade=None,
                     ),
                 ],
             ),
@@ -294,12 +312,14 @@ cases = [
                         model_node=None,
                         model_offset=0,
                         text="foo",
+                        style_cascade=None,
                     ),
                 ],
             ),
             text_placement.WhitespacePlacementInstruction(
                 model_node=None,
                 model_offset=3,
+                style_cascade=None,
             ),
             text_placement.CursorPlacementInstruction(
                 model_node=None,
@@ -327,12 +347,14 @@ cases = [
                         model_node=None,
                         model_offset=0,
                         text="foo",
+                        style_cascade=None,
                     ),
                 ],
             ),
             text_placement.WhitespacePlacementInstruction(
                 model_node=None,
                 model_offset=3,
+                style_cascade=None,
             ),
         ],
     ),

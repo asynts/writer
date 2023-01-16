@@ -7,7 +7,6 @@ from PyQt6 import QtWidgets, QtGui, QtCore
 import writer.engine.layout as layout
 import writer.engine.model as model
 import writer.engine.tree as tree
-import writer.engine.converter
 import writer.engine.history as history
 import writer.engine.events as events
 import writer.engine.converter as converter

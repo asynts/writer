@@ -720,7 +720,7 @@ class SpacingLayoutNode(LayoutNode):
         *,
         dependencies: LayoutDependencies,
         parent_node: LayoutNode,
-        model_node: model.ModelNode,
+        model_node: "model.ModelNode",
 
         fixed_width: float,
 
