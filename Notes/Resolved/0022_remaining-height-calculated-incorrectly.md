@@ -41,6 +41,8 @@ After a while, we start putting every line into a new paragraph.
     AssertionError
     ```
 
+    -   We also crash with the whole book, I suspect, for the same reason.
+
 -   The inside of the page doesn't seem to be large enough.
     Maybe that's an unrelated issue.
 
@@ -66,3 +68,13 @@ After a while, we start putting every line into a new paragraph.
 -   I suspect, that we are somewhere calculating the width and height incorrectly.
 
 -   I suspect, that we are caching old values that should not be cached.
+
+-   Maybe we get a negative value somewhere?
+
+-   I suspect that margin or padding isn't considered.
+
+### Result
+
+-   I used `sum` instead of `max` when computing the maximum height of a given line.
+    After resolving that issue, paragraphs are no longer split incorrectly.
+    The issue with crashing when a new page is needed still persists.

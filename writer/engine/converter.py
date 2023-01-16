@@ -200,7 +200,7 @@ class LayoutGenerator:
                     current_line_instructions.append(pending_cursor_instruction)
                     pending_cursor_instruction = None
 
-            current_line_height = sum(instruction.height for instruction in current_line_instructions)
+            current_line_height = max(instruction.height for instruction in current_line_instructions)
 
             # Not enough space in this paragraph, create a new one.
             if util.approximately_greater(current_line_height, self.pending_paragraph_layout_node.get_max_remaining_height()):

@@ -122,8 +122,8 @@ class LayoutNode:
         self._relative_y: int = None
 
         # How much space is needed to fit all children.
-        self._width_of_children = 0
-        self._height_of_children = 0
+        self._width_of_children = 0.0
+        self._height_of_children = 0.0
 
         # Style applied to this node.
         self.__style = style
