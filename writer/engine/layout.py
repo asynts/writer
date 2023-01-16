@@ -308,6 +308,14 @@ class LayoutNode:
         else:
             return self._height_of_children + self.get_style().inner_spacing.y
 
+    def get_min_outer_height(self) -> float:
+        assert self.get_phase() <= Phase.PHASE_2_PLACED
+        return self.get_min_height() + self.get_style().outer_spacing.y
+
+    def get_min_outer_width(self) -> float:
+        assert self.get_phase() <= Phase.PHASE_2_PLACED
+        return self.get_min_width() + self.get_style().outer_spacing.x
+
     def get_height(self) -> float:
         if self._absolute_height is not None:
             assert self.get_phase() == Phase.PHASE_3_FINAL
