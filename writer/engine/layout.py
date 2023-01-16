@@ -160,6 +160,11 @@ class LayoutNode:
         # The parent node needs to be extremely careful now.
         self.__parent_node.on_child_associated(self)
 
+    def clear_parent(self):
+        assert self.get_phase() == Phase.PHASE_1_CREATED
+        self.__parent_node.on_child_dissociated(self)
+        self.__parent_node = None
+
     def on_reused_with_new_parent(self, *, parent_node: "LayoutNode"):
         assert self.get_phase() >= Phase.PHASE_2_PLACED
         self.__absolute_x = None

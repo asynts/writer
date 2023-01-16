@@ -42,7 +42,11 @@ class LayoutGenerator:
         if self.pending_paragraph_layout_node is not None:
             # Create new pending page if paragraph does not fit.
             if util.approximately_greater(self.pending_paragraph_layout_node.get_min_height(), self.pending_page_layout_node.get_max_remaining_height()):
+                # We need to be very careful, because we have a pending paragraph node.
+                # There is an invariant that states that nodes can't be placed if there are associated children.
+                self.pending_paragraph_layout_node.clear_parent()
                 self.new_pending_page()
+                self.pending_paragraph_layout_node.set_parent(self.pending_page_layout_node)
 
             self.pending_page_layout_node.place_child_node(self.pending_paragraph_layout_node)
             self.pending_paragraph_layout_node = None
@@ -121,7 +125,7 @@ class LayoutGenerator:
         )
 
     def new_pending_paragraph(self, *, paragraph_model_node: model.ParagraphModelNode):
-        assert self.pending_paragraph_layout_node is None
+        self._try_place_pending_paragraph()
 
         self.pending_paragraph_layout_node = layout.VerticalLayoutNode(
             dependencies=self.layout_dependencies,
@@ -204,7 +208,6 @@ class LayoutGenerator:
 
             # Not enough space in this paragraph, create a new one.
             if util.approximately_greater(current_line_height, self.pending_paragraph_layout_node.get_max_remaining_height()):
-                self._try_place_pending_paragraph()
                 self.new_pending_paragraph(paragraph_model_node=paragraph_model_node)
 
                 # We assume that the new paragraph layout node has the same width, which should be reasonable.

@@ -76,10 +76,21 @@ We crash when we add enough text that we need a second page.
 
 -   The same issue occurs when I add a new paragraph that is completely moved to the next page.
 
-### Tasks
+-   There is another related issue, where we split a paragraph before moving it to the new page.
+    Thus we end up with a lonely paragraph on the next page.
 
--   Read through the architecture documentation.
+### Tasks
 
 -   Figure out how `on_placed_in_node` works with all the `__associated_child_node` stuff.
 
 ### Theories
+
+-   I think we are trying to place the page node when the paragraph node is still pending.
+
+### Results
+
+-   We called `_try_place_pending_page` in `_try_place_pending_paragraph`.
+    This didn't work because the pending paragraph was still associated with the page.
+
+    Luckily, there was an assertion that caught this error.
+    Now, we are explicitly clearing the parent and then setting it to the new pending page.

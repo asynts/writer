@@ -83,6 +83,8 @@ To manage the complexity, layout nodes go through several phases that determine 
 
     -   Layout nodes in this phase may be reused.
 
+    -   Layout nodes can not be permanently assigned if they have a pending child node.
+
 -   Third, if all nodes in the tree are in the second phase, then we start caching absolute information in the nodes.
 
     -   This is done lazily and some nodes will never enter this phase.
