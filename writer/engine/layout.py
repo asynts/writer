@@ -20,7 +20,8 @@ COLOR_BLUE = QColor(0, 0, 255)
 COLOR_PINK = QColor(255, 53, 184)
 COLOR_YELLOW = QColor(255, 255, 0)
 
-b_draw_debug_text_outline = False
+b_draw_debug_text_outline = True
+b_draw_block_outlines = True
 
 # There are several phases a layout node can be in.
 @functools.total_ordering
@@ -461,6 +462,14 @@ class BlockLayoutNode(LayoutNode):
 
     def place_child_node(self, child_node: LayoutNode):
         raise AssertionError
+
+    # Override.
+    def paint_decoration(self, *, painter: QtGui.QPainter):
+        super().paint_decoration(painter=painter)
+
+        if b_draw_block_outlines:
+            painter.setPen(COLOR_BLUE)
+            painter.drawRect(self.get_inner_qrect())
 
 class HorizontalLayoutNode(BlockLayoutNode):
     __slots__ = (

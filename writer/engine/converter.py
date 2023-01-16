@@ -204,6 +204,7 @@ class LayoutGenerator:
 
             # Not enough space in this paragraph, create a new one.
             if util.approximately_greater(current_line_height, self.pending_paragraph_layout_node.get_max_remaining_height()):
+                self._try_place_pending_paragraph()
                 self.new_pending_paragraph(paragraph_model_node=paragraph_model_node)
 
                 # We assume that the new paragraph layout node has the same width, which should be reasonable.
