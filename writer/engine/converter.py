@@ -5,279 +5,151 @@ import writer.engine.util as util
 import writer.engine.text_placement as text_placement
 import writer.engine.history as history
 
-def generate_layout_for_document(
-    document_model_node: "model.DocumentModelNode",
-    *,
-    history_manager: "history.HistoryManager",
-    display_information: "layout.DisplayInformation"
-):
-    # FIXME: I should be able to remove this from 'layout'.
-    dependencies = layout.LayoutDependencies(
-        history_manager=history_manager,
-        display_information=display_information,
+def new_page_layout_node(
+    *
+    dependencies: "layout.LayoutDependencies",
+    document_layout_node: "layout.VerticalLayoutNode",
+) -> "layout.VerticalLayoutNode":
+    return layout.VerticalLayoutNode(
+        dependencies=dependencies,
+        parent_node=document_layout_node,
+        model_node=None,
+        style=style.LayoutStyle(
+            fixed_width=dependencies.display_information.cm_to_pixel(21.0),
+            fixed_height=dependencies.display_information.cm_to_pixel(29.7),
+
+            background_color=layout.COLOR_WHITE,
+            border_color=layout.COLOR_BLACK,
+
+            border_spacing=layout.Spacing(left=1.0, right=1.0, top=1.0, bottom=1.0),
+            margin_spacing=layout.Spacing(top=10.0, bottom=10.0),
+            padding_spacing=layout.Spacing(
+                left=20.0,
+                right=20.0,
+                top=dependencies.display_information.cm_to_pixel(1.9),
+                bottom=dependencies.display_information.cm_to_pixel(3.67)
+            ),
+        ),
     )
 
-    def new_page_layout_node():
-        return layout.VerticalLayoutNode(
-            dependencies=dependencies,
-            parent_node=None,
-            model_node=None,
-            style=style.LayoutStyle(
-                fixed_width=display_information.cm_to_pixel(21.0),
-                fixed_height=display_information.cm_to_pixel(29.7),
+# Paragraphs belong to a page but can be re-parented.
+def new_paragraph_layout_node(
+    *,
+    paragraph_model_node: "model.ParagraphModelNode",
+    page_layout_node: "layout.VerticalLayoutNode",
+    dependencies: "layout.LayoutDependencies",
+):
+    return layout.VerticalLayoutNode(
+        dependencies=dependencies,
+        parent_node=page_layout_node,
+        model_node=paragraph_model_node,
+        style=layout.LayoutStyle(
+            margin_spacing=layout.Spacing(bottom=10.0),
+        ),
+    )
 
-                background_color=layout.COLOR_WHITE,
-                border_color=layout.COLOR_BLACK,
+# Assumes that the provided instructions fit into the line.
+def new_line_layout_node(
+    *,
+    line_instruction_group: list["text_placement.PlacementInstruction"],
 
-                border_spacing=layout.Spacing(left=1.0, right=1.0, top=1.0, bottom=1.0),
-                margin_spacing=layout.Spacing(top=10.0, bottom=10.0),
-                padding_spacing=layout.Spacing(
-                    left=20.0,
-                    right=20.0,
-                    top=display_information.cm_to_pixel(1.9),
-                    bottom=display_information.cm_to_pixel(3.67)
-                ),
-            ),
-        )
-
-    def new_paragraph_layout_node(*, paragraph_model_node: "model.ParagraphModelNode"):
-        return layout.VerticalLayoutNode(
-            dependencies=dependencies,
-            parent_node=None,
-            model_node=paragraph_model_node,
-            style=layout.LayoutStyle(
-                margin_spacing=layout.Spacing(bottom=10.0),
-            ),
-        )
-
-    def place_paragraph(
-        paragraph_model_node: "model.ParagraphModelNode",
-        *,
-        page_layout_node: "layout.VerticalLayoutNode",
-    ):
-        # FIXME: This requires assigning a temporary parent 'page_layout_node'.
-        paragraph_layout_node = new_paragraph_layout_node(paragraph_model_node=paragraph_model_node)
-
-        instructions = text_placement.compute_placement_instructions_for_paragraph(paragraph_model_node)
-
-        line_instruction_groups = text_placement.group_instructions_by_line(
-            instructions=instructions,
-            max_width=paragraph_layout_node.get_max_inner_width(),
-        )
-
-        for line_instruction_group in line_instruction_groups:
-            line_height = max(instruction.height for instruction in line_instruction_group)
-
-            # If this line doesn't fit into the current paragraph.
-            if util.approximately_greater(paragraph_layout_node.get_min_outer_height() + line_height, page_layout_node.get_max_remaining_height()):
-                # If the paragraph is empty.
-                if util.approximately_equal(paragraph_layout_node.get_min_inner_height(), 0.00):
-                    paragraph_layout_node.clear_parent()
-
-
-    def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode, *, pending_page_layout_node: layout.VerticalLayoutNode):
-        remaining_instructions = text_placement.compute_placement_instructions_for_paragraph(paragraph_model_node)
-            # Not enough space in this paragraph, create a new one.
-            if util.approximately_greater(current_line_height, self.pending_paragraph_layout_node.get_max_remaining_height()):
-                self.new_pending_paragraph(paragraph_model_node=paragraph_model_node)
-
-                # We assume that the new paragraph layout node has the same width, which should be reasonable.
-                assert self.pending_paragraph_layout_node.get_max_inner_width() == max_line_width
-
-            line_layout_node = self._generate_line_layout_node(
-                line_width=current_line_width,
-                line_instructions=current_line_instructions,
-                paragraph_model_node=paragraph_model_node,
-            )
-            self.pending_paragraph_layout_node.place_child_node(line_layout_node)
-
-            # We are now done with that line, however, we might carry a 'pending_cursor_instruction' into the next line.
-            continue
-
-        self._try_place_pending_paragraph()
+    # FIXME: This should be included in the 'excerpt' (add it to 'WhitespacePlacementInstruction').
+    paragraph_model_node: "model.ParagraphModelNode",
+):
+    # FIXME
+    pass
 
 class LayoutGenerator:
     def __init__(
         self,
         *,
-        document_model_node: model.DocumentModelNode,
-        history_manager: history.HistoryManager,
-        display_information: layout.DisplayInformation
+        document_model_node: "model.DocumentModelNode",
+        history_manager: "history.HistoryManager",
+        display_information: "layout.DisplayInformation",
     ):
-        self.display_information = display_information
+        self.document_model_node = document_model_node
 
-        self.layout_dependencies = layout.LayoutDependencies(
+        # FIXME: This should be constructed by the caller.
+        self.dependencies = layout.LayoutDependencies(
             history_manager=history_manager,
             display_information=display_information,
         )
 
         self.document_layout_node = layout.VerticalLayoutNode(
-            dependencies=self.layout_dependencies,
+            dependencies=self.dependencies,
             parent_node=None,
             model_node=document_model_node,
             style=style.LayoutStyle(),
         )
 
-    # This function assumes that all the line instructions fit in one line.
-    # The caller needs to verify that.
-    def _generate_line_layout_node(
-        self,
-        *,
-        line_width: float,
-        line_instructions: list["text_placement.PlacementInstruction"],
-        paragraph_model_node: "model.ParagraphModelNode",
-        pending_page_layout_node: "layout.VerticalLayoutNode",
-        pending_paragraph_layout_node: "layout.VerticalLayoutNode",
-    ) -> "layout.LayoutNode":
-        line_layout_node = layout.HorizontalLayoutNode(
-            dependencies=self.layout_dependencies,
-            parent_node=pending_paragraph_layout_node,
-            model_node=None,
-            style=layout.LayoutStyle(),
+        self.page_layout_node = new_page_layout_node(
+            document_layout_node=self.document_layout_node,
+            dependencies=self.dependencies,
         )
 
-        for instruction in line_instructions:
-            if isinstance(instruction, text_placement.CursorPlacementInstruction):
-                # FIXME: Place the cursor here.
-                #        Or delay the placement.
-                pass
-            elif isinstance(instruction, text_placement.WhitespacePlacementInstruction):
-                line_layout_node.place_child_node(layout.SpacingLayoutNode(
-                    dependencies=self.layout_dependencies,
-                    parent_node=line_layout_node,
-                    model_node=instruction.model_node,
-                    fixed_width=instruction.width,
-                    style_cascade=model.ModelStyleCascade([
-                        paragraph_model_node.style,
-                        instruction.model_node.style,
-                    ])
-                ))
-            elif isinstance(instruction, text_placement.WordPlacementInstruction):
-                for excerpt in instruction.excerpts:
-                    # FIXME: If the cursor is in the middle, we need to split the text node.
-                    line_layout_node.place_child_node(layout.TextChunkLayoutNode(
-                        dependencies=self.layout_dependencies,
-                        text=excerpt.text,
-                        parent_node=line_layout_node,
-                        model_node=excerpt.model_node,
-                        model_node_offset=excerpt.model_offset,
-                        style_cascade=excerpt.style_cascade,
-                    ))
-            else:
-                raise AssertionError
+    # Creates new pages when needed.
+    def place_paragraph(
+        self,
+        paragraph_model_node: "model.ParagraphModelNode",
+    ):
+        paragraph_layout_node = new_paragraph_layout_node(
+            paragraph_model_node=paragraph_model_node,
+            page_layout_node=self.page_layout_node,
+            dependencies=self.dependencies,
+        )
+        line_width = paragraph_layout_node.get_max_inner_width()
 
-        return line_layout_node
+        instructions = text_placement.compute_placement_instructions_for_paragraph(paragraph_model_node)
 
-    def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode, *, pending_page_layout_node: layout.VerticalLayoutNode):
-        remaining_instructions = text_placement.compute_placement_instructions_for_paragraph(paragraph_model_node)
+        line_instruction_groups = text_placement.group_instructions_by_line(
+            instructions=instructions,
+            line_width=line_width,
+        )
 
-        pending_cursor_instruction: text_placement.CursorPlacementInstruction = None
-        while len(remaining_instructions) >= 1:
-            # Place one line at a time.
+        for line_instruction_group in line_instruction_groups:
+            line_height = max(instruction.height for instruction in line_instruction_group)
 
-            max_line_width = self.pending_paragraph_layout_node.get_max_inner_width()
+            b_overflows_paragraph = util.approximately_greater(
+                paragraph_layout_node.get_min_outer_height() + line_height,
+                self.page_layout_node.get_max_remaining_height(),
+            )
+            if b_overflows_paragraph:
+                b_paragraph_empty = util.approximately_equal(paragraph_layout_node.get_min_inner_height(), 0.00)
+                if b_paragraph_empty:
+                    # Create new page and reparent paragraph to it.
 
-            current_line_instructions: list[text_placement.PlacementInstruction] = []
-            current_line_width = 0.0
+                    paragraph_layout_node.clear_parent()
 
-            while len(remaining_instructions) >= 1:
-                instruction = remaining_instructions.pop(0)
+                    self.document_layout_node.place_child_node(self.page_layout_node)
+                    self.page_layout_node = new_page_layout_node(
+                        dependencies=self.dependencies,
+                        document_layout_node=self.document_layout_node,
+                    )
 
-                if isinstance(instruction, text_placement.WordPlacementInstruction):
-                    if util.approximately_less(current_line_width + instruction.width, max_line_width):
-                        # Place cursor if necessary.
-                        if pending_cursor_instruction is not None:
-                            current_line_instructions.append(pending_cursor_instruction)
-                            pending_cursor_instruction = None
-
-                        # Word does fit in the current line, continue.
-                        current_line_instructions.append(instruction)
-                        current_line_width += instruction.width
-                        continue
-                    else:
-                        # Word does not fit in current line, break.
-                        remaining_instructions.insert(0, instruction)
-                        break
-                elif isinstance(instruction, text_placement.WhitespacePlacementInstruction):
-                    if util.approximately_less(current_line_width + instruction.width, max_line_width):
-                        # Place cursor if necessary.
-                        if pending_cursor_instruction is not None:
-                            current_line_instructions.append(pending_cursor_instruction)
-                            pending_cursor_instruction = None
-
-                        # Whitespace does fit in the current line, continue.
-                        current_line_instructions.append(instruction)
-                        current_line_width += instruction.width
-                    else:
-                        if pending_cursor_instruction is None:
-                            # Whitespace does not fit in current line, break.
-                            # But we do not queue it again, since a new line is essentially whitespace.
-                            break
-                        else:
-                            # Whitespace does not fit in current line, break.
-                            # But we do queue again, because the cursor will otherwise be rendered incorrectly.
-                            remaining_instructions.insert(0, instruction)
-                            break
-                elif isinstance(instruction, text_placement.CursorPlacementInstruction):
-                    assert pending_cursor_instruction is None
-
-                    # Cursor can always be placed, but delay placement.
-                    pending_cursor_instruction = instruction
-                    continue
+                    paragraph_layout_node.set_parent(self.page_layout_node)
                 else:
-                    raise AssertionError
+                    # Place paragraph and create new paragraph on next page.
 
-            if pending_cursor_instruction is not None:
-                # It can happen, that the cursor is placed at the very end.
-                if len(remaining_instructions) == 0:
-                    current_line_instructions.append(pending_cursor_instruction)
-                    pending_cursor_instruction = None
+                    self.page_layout_node.place_child_node(paragraph_layout_node)
+                    self.page_layout_node = new_page_layout_node()
+                    paragraph_layout_node = new_paragraph_layout_node(
+                        paragraph_model_node=paragraph_model_node,
+                        page_layout_node=self.page_layout_node,
+                        dependencies=self.dependencies,
+                    )
 
-            current_line_height = max(instruction.height for instruction in current_line_instructions)
-
-            self.new_pending_paragraph(paragraph_model_node=paragraph_model_node)
-
-            # Not enough space in this paragraph, create a new one.
-            if util.approximately_greater(current_line_height, self.pending_paragraph_layout_node.get_max_remaining_height()):
-                self.new_pending_paragraph(paragraph_model_node=paragraph_model_node)
-
-                # We assume that the new paragraph layout node has the same width, which should be reasonable.
-                assert self.pending_paragraph_layout_node.get_max_inner_width() == max_line_width
-
-            line_layout_node = self._generate_line_layout_node(
-                line_width=current_line_width,
-                line_instructions=current_line_instructions,
+            line_layout_node = new_line_layout_node(
+                line_instruction_group=line_instruction_group,
                 paragraph_model_node=paragraph_model_node,
             )
-            self.pending_paragraph_layout_node.place_child_node(line_layout_node)
+            paragraph_layout_node.place_child_node(line_layout_node)
 
-            # We are now done with that line, however, we might carry a 'pending_cursor_instruction' into the next line.
-            continue
+        self.page_layout_node.place_child_node(paragraph_layout_node)
 
-        self._try_place_pending_paragraph()
-
-    def finalize(self) -> layout.LayoutNode:
-        self._try_place_pending_paragraph()
-        self._try_place_pending_page()
+    def generate(self) -> "layout.VerticalLayoutNode":
+        for paragraph_model_node in self.document_model_node.children:
+            assert isinstance(paragraph_model_node, model.ParagraphModelNode)
+            self.place_paragraph(paragraph_model_node=paragraph_model_node)
 
         self.document_layout_node.on_placed_in_node(relative_x=0, relative_y=0)
-
         return self.document_layout_node
-
-def generate_layout_for_model(
-    document_model_node: model.DocumentModelNode,
-    *,
-    history_manager: history.HistoryManager,
-    display_information: layout.DisplayInformation,
-) -> layout.LayoutNode:
-    layout_generator = LayoutGenerator(
-        document_model_node=document_model_node,
-        history_manager=history_manager,
-        display_information=display_information,
-    )
-
-    for paragraph_model_node in document_model_node.children:
-        assert isinstance(paragraph_model_node, model.ParagraphModelNode)
-        layout_generator.place_paragraph(paragraph_model_node)
-
-    return layout_generator.finalize()

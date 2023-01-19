@@ -275,3 +275,7 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
     finish_pending_word()
 
     return placement_instructions
+
+def group_instructions_by_line(*, instructions: list[PlacementInstruction], line_width: float):
+    # FIXME
+    pass

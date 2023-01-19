@@ -37,11 +37,11 @@ class WriterWidget(QtWidgets.QWidget):
 
     def build_layout_tree(self):
         before_ns = time.perf_counter_ns()
-        self._layout_tree = converter.generate_layout_for_model(
-            self.history_manager.get_model_tree(),
+        self._layout_tree = converter.LayoutGenerator(
+            document_model_node=self.history_manager.get_model_tree(),
             history_manager=self.history_manager,
             display_information=self.display_information,
-        )
+        ).generate()
         after_ns = time.perf_counter_ns()
 
         events.validate_parent_hierachy_event(
