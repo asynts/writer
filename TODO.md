@@ -1,18 +1,27 @@
 ### Current
 
-### Next Up
+### Done
 
 -   Do some dependency injection to avoid global variables.
 
--   Create some clear documentation about how the cursor is tracked and how we deal with it.
+### Next Up
 
-### Backlog
+-   Implement the cursor properly.
+
+    -   Create some clear documentation about how the cursor is tracked and how we deal with it.
+
+    -   Where does the cursor get it's style from?
+        The text before or after it?
+
+        The style should be choosen by `text_placement` not later.
+
+        -   Look how LibreOffice does it.
+
+### Features
+
+### Tweaks
 
 -   I could cache the word groups in the model paragraph nodes.
-
--   Get rid of global `global_history_manager` variable.
-
-    -   On that node, I should add some sort of `Engine` class that contains all the other stuff.
 
 -   I should add a ton of helper methods to `tree.Position` like `Position.previous_sibling`.
     That should make interactions with the model tree significantly easier.
@@ -20,3 +29,7 @@
 -   Create a lossless video to show of the project.
 
 -   Update the README file to present the current state of the application.
+
+-   Currently, we merge spaces when creating `WhitespacePlacementInstruction`.
+
+-   The document should be defined in terms of millimeters or points and should then be sampled into pixels.
