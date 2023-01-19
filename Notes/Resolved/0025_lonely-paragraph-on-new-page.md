@@ -50,3 +50,5 @@ When a paragraph overflows we place the first overflowing line on the next page 
 
 -   It could happen that we create a new paragraph in `new_pending_paragraph` and it already overflows the page because of the padding.
     I have not yet addressed this issue.
+
+-   I did a major rewrite of `converter.py` and this solved the issue as a side product.

@@ -6,7 +6,7 @@ import writer.engine.text_placement as text_placement
 import writer.engine.history as history
 
 def new_page_layout_node(
-    *
+    *,
     dependencies: "layout.LayoutDependencies",
     document_layout_node: "layout.VerticalLayoutNode",
 ) -> "layout.VerticalLayoutNode":
@@ -55,9 +55,49 @@ def new_line_layout_node(
 
     # FIXME: This should be included in the 'excerpt' (add it to 'WhitespacePlacementInstruction').
     paragraph_model_node: "model.ParagraphModelNode",
+
+    dependencies: "layout.LayoutDependencies",
+
+    paragraph_layout_node: "layout.VerticalLayoutNode",
 ):
-    # FIXME
-    pass
+    line_layout_node = layout.HorizontalLayoutNode(
+        dependencies=dependencies,
+        parent_node=paragraph_layout_node,
+        model_node=None,
+        style=layout.LayoutStyle(),
+    )
+
+    for instruction in line_instruction_group:
+        if isinstance(instruction, text_placement.CursorPlacementInstruction):
+            # FIXME: Place the cursor here.
+            #        Or delay the placement.
+            pass
+        elif isinstance(instruction, text_placement.WhitespacePlacementInstruction):
+            line_layout_node.place_child_node(layout.SpacingLayoutNode(
+                dependencies=dependencies,
+                parent_node=line_layout_node,
+                model_node=instruction.model_node,
+                fixed_width=instruction.width,
+                style_cascade=model.ModelStyleCascade([
+                    paragraph_model_node.style,
+                    instruction.model_node.style,
+                ])
+            ))
+        elif isinstance(instruction, text_placement.WordPlacementInstruction):
+            for excerpt in instruction.excerpts:
+                # FIXME: If the cursor is in the middle, we need to split the text node.
+                line_layout_node.place_child_node(layout.TextChunkLayoutNode(
+                    dependencies=dependencies,
+                    text=excerpt.text,
+                    parent_node=line_layout_node,
+                    model_node=excerpt.model_node,
+                    model_node_offset=excerpt.model_offset,
+                    style_cascade=excerpt.style_cascade,
+                ))
+        else:
+            raise AssertionError
+
+    return line_layout_node
 
 class LayoutGenerator:
     def __init__(
@@ -97,13 +137,13 @@ class LayoutGenerator:
             page_layout_node=self.page_layout_node,
             dependencies=self.dependencies,
         )
-        line_width = paragraph_layout_node.get_max_inner_width()
+        max_line_width = paragraph_layout_node.get_max_inner_width()
 
         instructions = text_placement.compute_placement_instructions_for_paragraph(paragraph_model_node)
 
         line_instruction_groups = text_placement.group_instructions_by_line(
             instructions=instructions,
-            line_width=line_width,
+            max_line_width=max_line_width,
         )
 
         for line_instruction_group in line_instruction_groups:
@@ -131,7 +171,12 @@ class LayoutGenerator:
                     # Place paragraph and create new paragraph on next page.
 
                     self.page_layout_node.place_child_node(paragraph_layout_node)
-                    self.page_layout_node = new_page_layout_node()
+                    self.document_layout_node.place_child_node(self.page_layout_node)
+
+                    self.page_layout_node = new_page_layout_node(
+                        dependencies=self.dependencies,
+                        document_layout_node=self.document_layout_node,
+                    )
                     paragraph_layout_node = new_paragraph_layout_node(
                         paragraph_model_node=paragraph_model_node,
                         page_layout_node=self.page_layout_node,
@@ -141,6 +186,8 @@ class LayoutGenerator:
             line_layout_node = new_line_layout_node(
                 line_instruction_group=line_instruction_group,
                 paragraph_model_node=paragraph_model_node,
+                dependencies=self.dependencies,
+                paragraph_layout_node=paragraph_layout_node,
             )
             paragraph_layout_node.place_child_node(line_layout_node)
 
@@ -151,5 +198,7 @@ class LayoutGenerator:
             assert isinstance(paragraph_model_node, model.ParagraphModelNode)
             self.place_paragraph(paragraph_model_node=paragraph_model_node)
 
+        self.document_layout_node.place_child_node(self.page_layout_node)
         self.document_layout_node.on_placed_in_node(relative_x=0, relative_y=0)
+
         return self.document_layout_node

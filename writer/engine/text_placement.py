@@ -13,6 +13,9 @@ import dataclasses
 import string
 
 import writer.engine.model as model
+import writer.engine.text_placement as text_placement
+import writer.engine.util as util
+
 
 @dataclasses.dataclass(kw_only=True, slots=True)
 class SizeMixin:
@@ -276,6 +279,66 @@ def compute_placement_instructions_for_paragraph(paragraph_node: "model.Paragrap
 
     return placement_instructions
 
-def group_instructions_by_line(*, instructions: list[PlacementInstruction], line_width: float):
-    # FIXME
-    pass
+def group_instructions_by_line(*, instructions: list[PlacementInstruction], max_line_width: float):
+    instructions = instructions[:]
+    pending_cursor_instruction: text_placement.CursorPlacementInstruction = None
+
+    # Place one line at a time.
+    while len(instructions) >= 1:
+        current_line_instructions: list[text_placement.PlacementInstruction] = []
+        current_line_width = 0.0
+
+        while len(instructions) >= 1:
+            instruction = instructions.pop(0)
+
+            if isinstance(instruction, text_placement.WordPlacementInstruction):
+                if util.approximately_less(current_line_width + instruction.width, max_line_width):
+                    # Place cursor if necessary.
+                    if pending_cursor_instruction is not None:
+                        current_line_instructions.append(pending_cursor_instruction)
+                        pending_cursor_instruction = None
+
+                    # Word does fit in the current line, continue.
+                    current_line_instructions.append(instruction)
+                    current_line_width += instruction.width
+                    continue
+                else:
+                    # Word does not fit in current line, break.
+                    instructions.insert(0, instruction)
+                    break
+            elif isinstance(instruction, text_placement.WhitespacePlacementInstruction):
+                if util.approximately_less(current_line_width + instruction.width, max_line_width):
+                    # Place cursor if necessary.
+                    if pending_cursor_instruction is not None:
+                        current_line_instructions.append(pending_cursor_instruction)
+                        pending_cursor_instruction = None
+
+                    # Whitespace does fit in the current line, continue.
+                    current_line_instructions.append(instruction)
+                    current_line_width += instruction.width
+                else:
+                    if pending_cursor_instruction is None:
+                        # Whitespace does not fit in current line, break.
+                        # But we do not queue it again, since a new line is essentially whitespace.
+                        break
+                    else:
+                        # Whitespace does not fit in current line, break.
+                        # But we do queue again, because the cursor will otherwise be rendered incorrectly.
+                        instructions.insert(0, instruction)
+                        break
+            elif isinstance(instruction, text_placement.CursorPlacementInstruction):
+                assert pending_cursor_instruction is None
+
+                # Cursor can always be placed, but delay placement.
+                pending_cursor_instruction = instruction
+                continue
+            else:
+                raise AssertionError
+
+        if pending_cursor_instruction is not None:
+            # It can happen, that the cursor is placed at the very end.
+            if len(instructions) == 0:
+                current_line_instructions.append(pending_cursor_instruction)
+                pending_cursor_instruction = None
+
+        yield current_line_instructions
