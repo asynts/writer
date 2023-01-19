@@ -28,9 +28,6 @@ class LayoutGenerator:
         )
 
         # Invariant: There is always a pending page until 'self.finalize' is called.
-        #
-        # Invariant: The pending paragraph always fits on the current page.
-        #            FIXME: My code doesn't correctly enforce this yet.
         self.pending_page_layout_node: layout.VerticalLayoutNode = None
         self.new_pending_page()
 
@@ -43,8 +40,13 @@ class LayoutGenerator:
 
     def _try_place_pending_paragraph(self):
         if self.pending_paragraph_layout_node is not None:
-            # The pending paragraph always fits on the current page.
-            assert util.approximately_less(self.pending_paragraph_layout_node.get_min_outer_height(), self.pending_page_layout_node.get_max_remaining_height())
+            # Create new pending page if paragraph does not fit.
+            if util.approximately_greater(self.pending_paragraph_layout_node.get_min_height(), self.pending_page_layout_node.get_max_remaining_height()):
+                # We need to be very careful, because we have a pending paragraph node.
+                # There is an invariant that states that nodes can't be placed if there are associated children.
+                self.pending_paragraph_layout_node.clear_parent()
+                self.new_pending_page()
+                self.pending_paragraph_layout_node.set_parent(self.pending_page_layout_node)
 
             self.pending_page_layout_node.place_child_node(self.pending_paragraph_layout_node)
             self.pending_paragraph_layout_node = None
@@ -134,9 +136,6 @@ class LayoutGenerator:
             ),
         )
 
-        # FIXME: It could happen that the padding already overflows the page.
-        #        Then we would have to re-parent the paragraph to the next page.
-
     def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode):
         remaining_instructions = text_placement.compute_placement_instructions_for_paragraph(paragraph_model_node)
 
@@ -207,16 +206,9 @@ class LayoutGenerator:
 
             current_line_height = max(instruction.height for instruction in current_line_instructions)
 
-            # Ensure we have enough space for this paragraph.
+            # Not enough space in this paragraph, create a new one.
             if util.approximately_greater(current_line_height, self.pending_paragraph_layout_node.get_max_remaining_height()):
-                if util.approximately_equal(self.pending_paragraph_layout_node.get_min_inner_height(), 0.00):
-                    # If the pending paragraph is empty, create new page and re-parent.
-                    self.pending_paragraph_layout_node.clear_parent()
-                    self.new_pending_page()
-                    self.pending_paragraph_layout_node.set_parent(self.pending_page_layout_node)
-                else:
-                    # Otherwise, create new paragraph.
-                    self.new_pending_paragraph(paragraph_model_node=paragraph_model_node)
+                self.new_pending_paragraph(paragraph_model_node=paragraph_model_node)
 
                 # We assume that the new paragraph layout node has the same width, which should be reasonable.
                 assert self.pending_paragraph_layout_node.get_max_inner_width() == max_line_width
