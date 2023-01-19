@@ -5,6 +5,97 @@ import writer.engine.util as util
 import writer.engine.text_placement as text_placement
 import writer.engine.history as history
 
+def generate_layout_for_document(
+    document_model_node: "model.DocumentModelNode",
+    *,
+    history_manager: "history.HistoryManager",
+    display_information: "layout.DisplayInformation"
+):
+    # FIXME: I should be able to remove this from 'layout'.
+    dependencies = layout.LayoutDependencies(
+        history_manager=history_manager,
+        display_information=display_information,
+    )
+
+    def new_page_layout_node():
+        return layout.VerticalLayoutNode(
+            dependencies=dependencies,
+            parent_node=None,
+            model_node=None,
+            style=style.LayoutStyle(
+                fixed_width=display_information.cm_to_pixel(21.0),
+                fixed_height=display_information.cm_to_pixel(29.7),
+
+                background_color=layout.COLOR_WHITE,
+                border_color=layout.COLOR_BLACK,
+
+                border_spacing=layout.Spacing(left=1.0, right=1.0, top=1.0, bottom=1.0),
+                margin_spacing=layout.Spacing(top=10.0, bottom=10.0),
+                padding_spacing=layout.Spacing(
+                    left=20.0,
+                    right=20.0,
+                    top=display_information.cm_to_pixel(1.9),
+                    bottom=display_information.cm_to_pixel(3.67)
+                ),
+            ),
+        )
+
+    def new_paragraph_layout_node(*, paragraph_model_node: "model.ParagraphModelNode"):
+        return layout.VerticalLayoutNode(
+            dependencies=dependencies,
+            parent_node=None,
+            model_node=paragraph_model_node,
+            style=layout.LayoutStyle(
+                margin_spacing=layout.Spacing(bottom=10.0),
+            ),
+        )
+
+    def place_paragraph(
+        paragraph_model_node: "model.ParagraphModelNode",
+        *,
+        page_layout_node: "layout.VerticalLayoutNode",
+    ):
+        # FIXME: This requires assigning a temporary parent 'page_layout_node'.
+        paragraph_layout_node = new_paragraph_layout_node(paragraph_model_node=paragraph_model_node)
+
+        instructions = text_placement.compute_placement_instructions_for_paragraph(paragraph_model_node)
+
+        line_instruction_groups = text_placement.group_instructions_by_line(
+            instructions=instructions,
+            max_width=paragraph_layout_node.get_max_inner_width(),
+        )
+
+        for line_instruction_group in line_instruction_groups:
+            line_height = max(instruction.height for instruction in line_instruction_group)
+
+            # If this line doesn't fit into the current paragraph.
+            if util.approximately_greater(paragraph_layout_node.get_min_outer_height() + line_height, page_layout_node.get_max_remaining_height()):
+                # If the paragraph is empty.
+                if util.approximately_equal(paragraph_layout_node.get_min_inner_height(), 0.00):
+                    paragraph_layout_node.clear_parent()
+
+
+    def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode, *, pending_page_layout_node: layout.VerticalLayoutNode):
+        remaining_instructions = text_placement.compute_placement_instructions_for_paragraph(paragraph_model_node)
+            # Not enough space in this paragraph, create a new one.
+            if util.approximately_greater(current_line_height, self.pending_paragraph_layout_node.get_max_remaining_height()):
+                self.new_pending_paragraph(paragraph_model_node=paragraph_model_node)
+
+                # We assume that the new paragraph layout node has the same width, which should be reasonable.
+                assert self.pending_paragraph_layout_node.get_max_inner_width() == max_line_width
+
+            line_layout_node = self._generate_line_layout_node(
+                line_width=current_line_width,
+                line_instructions=current_line_instructions,
+                paragraph_model_node=paragraph_model_node,
+            )
+            self.pending_paragraph_layout_node.place_child_node(line_layout_node)
+
+            # We are now done with that line, however, we might carry a 'pending_cursor_instruction' into the next line.
+            continue
+
+        self._try_place_pending_paragraph()
+
 class LayoutGenerator:
     def __init__(
         self,
@@ -27,30 +118,6 @@ class LayoutGenerator:
             style=style.LayoutStyle(),
         )
 
-        # Invariant: There is always a pending page until 'self.finalize' is called.
-        self.pending_page_layout_node: layout.VerticalLayoutNode = None
-        self.new_pending_page()
-
-        self.pending_paragraph_layout_node: layout.VerticalLayoutNode = None
-
-    def _try_place_pending_page(self):
-        if self.pending_page_layout_node is not None:
-            self.document_layout_node.place_child_node(self.pending_page_layout_node)
-            self.pending_page_layout_node = None
-
-    def _try_place_pending_paragraph(self):
-        if self.pending_paragraph_layout_node is not None:
-            # Create new pending page if paragraph does not fit.
-            if util.approximately_greater(self.pending_paragraph_layout_node.get_min_height(), self.pending_page_layout_node.get_max_remaining_height()):
-                # We need to be very careful, because we have a pending paragraph node.
-                # There is an invariant that states that nodes can't be placed if there are associated children.
-                self.pending_paragraph_layout_node.clear_parent()
-                self.new_pending_page()
-                self.pending_paragraph_layout_node.set_parent(self.pending_page_layout_node)
-
-            self.pending_page_layout_node.place_child_node(self.pending_paragraph_layout_node)
-            self.pending_paragraph_layout_node = None
-
     # This function assumes that all the line instructions fit in one line.
     # The caller needs to verify that.
     def _generate_line_layout_node(
@@ -59,10 +126,12 @@ class LayoutGenerator:
         line_width: float,
         line_instructions: list["text_placement.PlacementInstruction"],
         paragraph_model_node: "model.ParagraphModelNode",
+        pending_page_layout_node: "layout.VerticalLayoutNode",
+        pending_paragraph_layout_node: "layout.VerticalLayoutNode",
     ) -> "layout.LayoutNode":
         line_layout_node = layout.HorizontalLayoutNode(
             dependencies=self.layout_dependencies,
-            parent_node=self.pending_paragraph_layout_node,
+            parent_node=pending_paragraph_layout_node,
             model_node=None,
             style=layout.LayoutStyle(),
         )
@@ -99,50 +168,10 @@ class LayoutGenerator:
 
         return line_layout_node
 
-    def new_pending_page(self):
-        self._try_place_pending_page()
-
-        self.pending_page_layout_node = layout.VerticalLayoutNode(
-            dependencies=self.layout_dependencies,
-            parent_node=self.document_layout_node,
-            model_node=None,
-            style=style.LayoutStyle(
-                fixed_width=self.display_information.cm_to_pixel(21.0),
-                fixed_height=self.display_information.cm_to_pixel(29.7),
-
-                background_color=layout.COLOR_WHITE,
-                border_color=layout.COLOR_BLACK,
-
-                border_spacing=layout.Spacing(left=1.0, right=1.0, top=1.0, bottom=1.0),
-                margin_spacing=layout.Spacing(top=10.0, bottom=10.0),
-                padding_spacing=layout.Spacing(
-                    left=20.0,
-                    right=20.0,
-                    top=self.display_information.cm_to_pixel(1.9),
-                    bottom=self.display_information.cm_to_pixel(3.67)
-                ),
-            ),
-        )
-
-    def new_pending_paragraph(self, *, paragraph_model_node: model.ParagraphModelNode):
-        self._try_place_pending_paragraph()
-
-        self.pending_paragraph_layout_node = layout.VerticalLayoutNode(
-            dependencies=self.layout_dependencies,
-            parent_node=self.pending_page_layout_node,
-            model_node=paragraph_model_node,
-            style=layout.LayoutStyle(
-                margin_spacing=layout.Spacing(bottom=10.0),
-            ),
-        )
-
-    def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode):
+    def place_paragraph(self, paragraph_model_node: model.ParagraphModelNode, *, pending_page_layout_node: layout.VerticalLayoutNode):
         remaining_instructions = text_placement.compute_placement_instructions_for_paragraph(paragraph_model_node)
 
-        self.new_pending_paragraph(paragraph_model_node=paragraph_model_node)
-
         pending_cursor_instruction: text_placement.CursorPlacementInstruction = None
-
         while len(remaining_instructions) >= 1:
             # Place one line at a time.
 
@@ -205,6 +234,8 @@ class LayoutGenerator:
                     pending_cursor_instruction = None
 
             current_line_height = max(instruction.height for instruction in current_line_instructions)
+
+            self.new_pending_paragraph(paragraph_model_node=paragraph_model_node)
 
             # Not enough space in this paragraph, create a new one.
             if util.approximately_greater(current_line_height, self.pending_paragraph_layout_node.get_max_remaining_height()):
