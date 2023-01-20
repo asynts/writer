@@ -21,7 +21,8 @@ COLOR_PINK = QColor(255, 53, 184)
 COLOR_YELLOW = QColor(255, 255, 0)
 
 b_draw_debug_text_outline = True
-b_draw_block_outlines = True
+b_draw_block_outlines = False
+b_draw_inner_block_outlines = True
 
 # There are several phases a layout node can be in.
 @functools.total_ordering
@@ -356,8 +357,8 @@ class LayoutNode:
         return self.get_qrect().adjusted(
             self.get_style().inner_spacing.left,
             self.get_style().inner_spacing.top,
-            -self.get_style().inner_spacing.x,
-            -self.get_style().inner_spacing.y,
+            -self.get_style().inner_spacing.right,
+            -self.get_style().inner_spacing.bottom,
         )
 
     def paint_background(self, *, painter: QtGui.QPainter):
@@ -482,6 +483,10 @@ class BlockLayoutNode(LayoutNode):
 
         if b_draw_block_outlines:
             painter.setPen(COLOR_BLUE)
+            painter.drawRect(self.get_qrect())
+
+        if b_draw_inner_block_outlines:
+            painter.setPen(COLOR_GREEN)
             painter.drawRect(self.get_inner_qrect())
 
 class HorizontalLayoutNode(BlockLayoutNode):
