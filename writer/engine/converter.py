@@ -69,9 +69,18 @@ def new_line_layout_node(
 
     for instruction in line_instruction_group:
         if isinstance(instruction, text_placement.CursorPlacementInstruction):
-            # FIXME: Place the cursor here.
-            #        Or delay the placement.
-            pass
+            # FIXME: Are there situations where we want to delay the placement?
+
+            line_layout_node.place_child_node(layout.CursorLayoutNode(
+                dependencies=dependencies,
+                parent_node=line_layout_node,
+                model_node=instruction.model_node,
+                model_node_offset=instruction.model_offset,
+                style_cascade=model.ModelStyleCascade([
+                    paragraph_model_node.style,
+                    instruction.model_node.style,
+                ]),
+            ))
         elif isinstance(instruction, text_placement.WhitespacePlacementInstruction):
             line_layout_node.place_child_node(layout.SpacingLayoutNode(
                 dependencies=dependencies,
@@ -85,13 +94,48 @@ def new_line_layout_node(
             ))
         elif isinstance(instruction, text_placement.WordPlacementInstruction):
             for excerpt in instruction.excerpts:
-                # FIXME: If the cursor is in the middle, we need to split the text node.
+                if excerpt.model_node.cursor_offset is None:
+                    b_cursor_in_excerpt = False
+                else:
+                    # We want to be able to place the cursor at the begining and end of the excerpt.
+                    # Thus 'excerpt.model_offset==len(excerpt.text)' is inside the excerpt.
+                    b_cursor_before_excerpt = excerpt.model_node.cursor_offset < excerpt.model_offset
+                    b_cursor_after_excerpt = excerpt.model_node.cursor_offset > excerpt.model_offset + len(excerpt.text)
+
+                    b_cursor_in_excerpt = (not b_cursor_before_excerpt) and (not b_cursor_after_excerpt)
+
+                if b_cursor_in_excerpt:
+                    split_offset = excerpt.model_node.cursor_offset - excerpt.model_offset
+                else:
+                    split_offset = 0
+
+                # In order to render the cursor in the middle, we need to split the text chunk at the cursor location.
+                # The cursor is placed inbetween them.
+                if b_cursor_in_excerpt:
+                    line_layout_node.place_child_node(layout.TextChunkLayoutNode(
+                        dependencies=dependencies,
+                        text=excerpt.text[:split_offset],
+                        parent_node=line_layout_node,
+                        model_node=excerpt.model_node,
+                        model_node_offset=excerpt.model_offset,
+                        style_cascade=excerpt.style_cascade,
+                    ))
+                    line_layout_node.place_child_node(layout.CursorLayoutNode(
+                        dependencies=dependencies,
+                        parent_node=line_layout_node,
+                        model_node=excerpt.model_node,
+                        model_node_offset=excerpt.model_offset + split_offset,
+                        style_cascade=excerpt.style_cascade,
+                    ))
+
+                # If the cursor isn't in the excerpt, then 'split_offset==0'.
+                # Thus the entire excerpt is contained in this node.
                 line_layout_node.place_child_node(layout.TextChunkLayoutNode(
                     dependencies=dependencies,
-                    text=excerpt.text,
+                    text=excerpt.text[split_offset:],
                     parent_node=line_layout_node,
                     model_node=excerpt.model_node,
-                    model_node_offset=excerpt.model_offset,
+                    model_node_offset=excerpt.model_offset + split_offset,
                     style_cascade=excerpt.style_cascade,
                 ))
         else:
