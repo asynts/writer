@@ -40,6 +40,9 @@ To manage the complexity, model nodes go through several phases that determine w
 
 -   It is not possible for model nodes to have mutable child nodes.
 
+-   Text chunks must not be empty unless the cursor is placed in them.
+    When the cursor is moved, this invariant needs to be enforced.
+
 ### Layout Tree
 
 Primary Files:
@@ -142,3 +145,8 @@ Processing events is not trivial due to the rather complex layout and model tree
 
     -   The model tree may be modified, by creating a new tree, however, cached values must not be invalidated.
         Note, that new values may be cached implicitly.
+
+-   We must enforce the invariant that text chunks must not be empty unless they contain the cursor.
+
+-   Events return true if the event has been handled.
+    This can be used to delegate events from other events.

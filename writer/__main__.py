@@ -53,7 +53,11 @@ class WriterWidget(QtWidgets.QWidget):
         events.validate_cursor_unique_event(
             model_tree=self.history_manager.get_model_tree(),
             layout_tree=self._layout_tree,
-            history_manager=self.history_manager,
+        )
+
+        events.validate_no_empty_text_chunks(
+            model_tree=self.history_manager.get_model_tree(),
+            layout_tree=self._layout_tree,
         )
 
         print(f"Rebuild  {after_ns - before_ns:>14}ns ({int((after_ns - before_ns) / (1000 * 1000)):>10}ms)")

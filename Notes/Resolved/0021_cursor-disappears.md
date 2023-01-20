@@ -82,3 +82,7 @@ Sometimes when I remove something with `Key_Backspace`, the cursor is no longer 
 
     -   If the cursor is inbetween spacing, we add spacing before and after.
         We can add an empty `WordPlacementInstruction` to avoid dealing with this elsewhere.
+
+### Results
+
+-   I am not sure to which extend this is still applicable after the `converter` rewrite.

@@ -235,8 +235,7 @@ def validate_parent_hierachy_event(*, model_tree: "model.DocumentModelNode", lay
 
     return True
 
-# There must only be one
-def validate_cursor_unique_event(*, model_tree: "model.DocumentModelNode", layout_tree: "layout.LayoutNode", history_manager: history.HistoryManager):
+def validate_cursor_unique_event(*, model_tree: "model.DocumentModelNode", layout_tree: "layout.LayoutNode"):
     b_cursor_seen = False
     key_list: list[int] = []
     def visit_model_node(*, model_node: model.ModelNode):
@@ -257,6 +256,20 @@ def validate_cursor_unique_event(*, model_tree: "model.DocumentModelNode", layou
             visit_model_node(model_node=child_node)
 
         key_list.pop()
+
+    visit_model_node(model_node=model_tree)
+
+    return True
+
+def validate_no_empty_text_chunks(*, model_tree: "model.DocumentModelNode", layout_tree: "layout.LayoutNode"):
+    def visit_model_node(*, model_node: model.ModelNode):
+        if isinstance(model_node, model.TextChunkModelNode):
+            b_is_non_empty = (len(model_node.text) >= 0)
+            b_has_cursor = (model_node.cursor_offset is not None)
+            assert b_is_non_empty or b_has_cursor
+
+        for child_node in model_node.children:
+            visit_model_node(model_node=child_node)
 
     visit_model_node(model_node=model_tree)
 
