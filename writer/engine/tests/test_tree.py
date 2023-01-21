@@ -79,3 +79,30 @@ def default_tree():
     node_a.make_immutable()
 
     return node_a
+
+def test_immutable_raises_exception():
+    node_1 = tree.Node(children=[])
+    node_1.make_immutable()
+
+    node_2 = tree.Node(children=[])
+    node_2.append_child(node_1)
+    node_2.make_immutable()
+
+    node_3 = tree.Node(children=[])
+    node_3.make_immutable()
+
+    with pytest.raises(AssertionError):
+        node_3.append_child(node_1)
+
+def test_mutable_copy_does_not_influence_source():
+    node_1 = tree.Node(children=[])
+    node_1.make_immutable()
+
+    node_2 = tree.Node(children=[])
+    node_2.make_immutable()
+
+    node_3 = node_1.make_mutable_copy()
+    node_3.append_child(node_2)
+
+    assert len(node_3.children) == 1
+    assert len(node_1.children) == 0

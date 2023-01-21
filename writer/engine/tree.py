@@ -41,7 +41,7 @@ class Node:
 
     # Virtual.
     def make_mutable_copy(self):
-        copy_ = copy.copy(self)
+        copy_ = copy.deepcopy(self)
         copy_.__is_mutable = True
         return copy_
 
