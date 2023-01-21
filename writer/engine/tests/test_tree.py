@@ -1,5 +1,7 @@
 import pytest
 
+from dataclasses import dataclass
+
 import writer.engine.tree as tree
 
 
@@ -22,8 +24,14 @@ class NamedNode(tree.Node):
     def name(self):
         return self.__name
 
+@dataclass
+class TreeFixture:
+    tree: NamedNode
+    lookup_node: dict[str, NamedNode]
+    lookup_key: dict[str, int]
+
 @pytest.fixture
-def default_tree():
+def fixture_default_tree():
     # <node name="a">
     #     <node name="b">
     #         <node name="c" />
@@ -78,7 +86,29 @@ def default_tree():
     )
     node_a.make_immutable()
 
-    return node_a
+    tree = node_a
+    lookup_node = {
+        "a": node_a,
+        "b": node_b,
+        "c": node_c,
+        "d": node_d,
+        "e": node_e,
+        "f": node_f,
+    }
+    lookup_key = {
+        "a": node_a.key,
+        "b": node_b.key,
+        "c": node_c.key,
+        "d": node_d.key,
+        "e": node_e.key,
+        "f": node_f.key,
+    }
+
+    return TreeFixture(
+        tree=tree,
+        lookup_node=lookup_node,
+        lookup_key=lookup_key,
+    )
 
 def test_immutable_raises_exception():
     node_1 = tree.Node(children=[])
@@ -106,3 +136,36 @@ def test_mutable_copy_does_not_influence_source():
 
     assert len(node_3.children) == 1
     assert len(node_1.children) == 0
+
+def test_lookup_root_node(fixture_default_tree: TreeFixture):
+    node_path = tree.NodePath([
+        fixture_default_tree.lookup_key["a"],
+    ])
+
+    assert node_path.lookup(root_node=fixture_default_tree.tree) is fixture_default_tree.lookup_node["a"]
+
+def test_lookup_nested_node_1(fixture_default_tree: TreeFixture):
+    node_path = tree.NodePath([
+        fixture_default_tree.lookup_key["a"],
+        fixture_default_tree.lookup_key["b"],
+        fixture_default_tree.lookup_key["d"],
+    ])
+
+    assert node_path.lookup(root_node=fixture_default_tree.tree) is fixture_default_tree.lookup_node["d"]
+
+def test_lookup_nested_node_2(fixture_default_tree: TreeFixture):
+    node_path = tree.NodePath([
+        fixture_default_tree.lookup_key["a"],
+        fixture_default_tree.lookup_key["e"],
+    ])
+
+    assert node_path.lookup(root_node=fixture_default_tree.tree) is fixture_default_tree.lookup_node["e"]
+
+def test_lookup_invalid_path(fixture_default_tree: TreeFixture):
+    node_path = tree.NodePath([
+        fixture_default_tree.lookup_key["a"],
+        fixture_default_tree.lookup_key["d"],
+    ])
+
+    with pytest.raises(tree.NodeNotFound):
+        node_path.lookup(root_node=fixture_default_tree.tree)
