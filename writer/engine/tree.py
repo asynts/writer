@@ -111,6 +111,35 @@ class NodePath:
 
         return visit_node(root_node, remaining_key_list=self._key_list)
 
+    def remove(self, *, root_node: Node) -> Node:
+        def visit_node(node: Node, *, remaining_key_list: list[int]):
+            assert len(remaining_key_list) >= 2
+            assert remaining_key_list[0] == node.key
+
+            for child_index, child_node in enumerate(node.children):
+                if child_node.key == remaining_key_list[1]:
+                    patched_child_node = visit_node(child_node, remaining_key_list=remaining_key_list[1:]),
+
+                    patched_node = node.make_mutable_copy()
+                    if patched_child_node is not None:
+                        patched_node.children = [
+                            *patched_node.children[:child_index],
+                            visit_node(child_node, remaining_key_list=remaining_key_list[1:]),
+                            *patched_node.children[child_index+1:],
+                        ]
+                    else:
+                        patched_node.children = [
+                            *patched_node.children[:child_index],
+                            # skip child
+                            *patched_node.children[child_index+1:],
+                        ]
+                    patched_node.make_immutable()
+                    return patched_node
+
+            raise NodeNotFound
+
+        return visit_node(root_node, remaining_key_list=self._key_list)
+
     def replace(self, new_node: Node, *, root_node: Node) -> Node:
         def visit_node(node: Node, *, remaining_key_list: list[int]):
             assert len(remaining_key_list) >= 1

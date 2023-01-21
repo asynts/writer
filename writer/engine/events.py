@@ -11,10 +11,13 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
     # FIXME: We are a bit inconsistent here.
     #        If we reference a node it should always belong to the current tree, otherwise, we should look it up again.
 
-    new_model_tree = model_tree
-
+    # If cursor is not placed, exit early.
     cursor_path = model_tree.cursor_node_path
+    if cursor_path is None:
+        return True
     cursor_node = cursor_path.lookup(root_node=model_tree)
+
+    new_model_tree = model_tree
 
     # If are in the middle of a text chunk, delete character before cursor.
     if cursor_node.cursor_offset >= 1:
@@ -39,11 +42,15 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
         new_node.make_immutable()
         new_model_tree = previous_path.replace(new_node, root_node=new_model_tree)
 
-        # Remove cursor from current node.
-        new_node = cursor_node.make_mutable_copy()
-        new_node.cursor_offset = None
-        new_node.make_immutable()
-        new_model_tree = cursor_path.replace(new_node, root_node=new_model_tree)
+        if len(cursor_node.text) == 0:
+            # Empty nodes must not exist unless they contain the cursor.
+            new_model_tree = cursor_path.remove(root_node=new_model_tree)
+        else:
+            # Remove cursor from non-empty node.
+            new_node = cursor_node.make_mutable_copy()
+            new_node.cursor_offset = None
+            new_node.make_immutable()
+            new_model_tree = cursor_path.replace(new_node, root_node=new_model_tree)
 
         # Update the reference to the new cursor node.
         new_node = new_model_tree.make_mutable_copy()
@@ -66,8 +73,10 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
             last_chunk_path = prev_paragraph_path.child_path(last_chunk_node, root_node=new_model_tree)
 
             # Remove last character of last text chunk of previous paragarph.
+            # Place the cursor at the end of that text chunk.
             new_node = last_chunk_node.make_mutable_copy()
             new_node.text = new_node.text[:-1]
+            new_node.cursor_offset = len(new_node.text)
             new_node.make_immutable()
             new_model_tree = last_chunk_path.replace(new_node, root_node=new_model_tree)
 
