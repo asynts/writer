@@ -194,10 +194,20 @@ def test_lookup_nested_node_2(fixture_default_tree: TreeFixture):
 
     assert node_path.lookup(root_node=fixture_default_tree.root_node) is fixture_default_tree.lookup_node["e"]
 
-def test_lookup_invalid_path(fixture_default_tree: TreeFixture):
+def test_lookup_not_found(fixture_default_tree: TreeFixture):
     node_path = tree.NodePath([
         fixture_default_tree.lookup_key["a"],
         fixture_default_tree.lookup_key["d"],
+    ])
+
+    with pytest.raises(tree.NodeNotFound):
+        node_path.lookup(root_node=fixture_default_tree.root_node)
+
+def test_lookup_not_found_root(fixture_default_tree: TreeFixture):
+    node_path = tree.NodePath([
+        123,
+        fixture_default_tree.lookup_key["b"],
+        fixture_default_tree.lookup_key["c"],
     ])
 
     with pytest.raises(tree.NodeNotFound):
@@ -389,10 +399,10 @@ def test_replace_not_found(fixture_default_tree: TreeFixture, fixture_node_y: tr
     with pytest.raises(tree.NodeNotFound):
         node_path.replace(fixture_node_y, root_node=fixture_default_tree.root_node)
 
-# def test_replace_not_found_root(fixture_default_tree: TreeFixture, fixture_node_y: tree.Node):
-#     node_path = tree.NodePath([
-#         123,
-#     ])
+def test_replace_not_found_root(fixture_default_tree: TreeFixture, fixture_node_y: tree.Node):
+    node_path = tree.NodePath([
+        123,
+    ])
 
-#     with pytest.raises(tree.NodeNotFound):
-#         node_path.replace(fixture_node_y, root_node=fixture_default_tree.root_node)
+    with pytest.raises(tree.NodeNotFound):
+        node_path.replace(fixture_node_y, root_node=fixture_default_tree.root_node)

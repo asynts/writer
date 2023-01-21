@@ -96,6 +96,9 @@ class NodePath:
         self._key_list = key_list
 
     def lookup(self, *, root_node: Node) -> Node:
+        if self._key_list[0] != root_node.key:
+            raise NodeNotFound
+
         def visit_node(node: Node, *, remaining_key_list: list[int]):
             assert len(remaining_key_list) >= 1
             assert remaining_key_list[0] == node.key
@@ -141,6 +144,9 @@ class NodePath:
         return visit_node(root_node, remaining_key_list=self._key_list)
 
     def replace(self, new_node: Node, *, root_node: Node) -> Node:
+        if self._key_list[0] != root_node.key:
+            raise NodeNotFound
+
         def visit_node(node: Node, *, remaining_key_list: list[int]):
             assert len(remaining_key_list) >= 1
             assert remaining_key_list[0] == node.key
