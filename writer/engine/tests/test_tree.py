@@ -563,3 +563,43 @@ def test_remove_root(fixture_default_tree: TreeFixture):
 
     with pytest.raises(AssertionError):
         node_path.fork_and_remove(root_node=fixture_default_tree.root_node)
+
+def test_eq():
+    node_path_1 = tree.NodePath([ 1, 2, 3 ])
+    node_path_2 = tree.NodePath([ 1, 2, 4 ])
+    node_path_3 = tree.NodePath([ 1, 2, 3 ])
+
+    assert node_path_1 != node_path_2
+    assert node_path_1 == node_path_3
+
+def test_get_path_to_parent(fixture_default_tree: TreeFixture):
+    node_path_1 = tree.NodePath([
+        fixture_default_tree.lookup_key["a"],
+        fixture_default_tree.lookup_key["b"],
+    ])
+    node_path_2 = tree.NodePath([
+        fixture_default_tree.lookup_key["a"],
+    ])
+
+    assert node_path_1.get_path_to_parent(root_node=fixture_default_tree.root_node) == node_path_2
+
+def test_get_path_to_parent_root(fixture_default_tree: TreeFixture):
+    node_path = tree.NodePath([
+        fixture_default_tree.lookup_key["a"],
+    ])
+
+    with pytest.raises(AssertionError):
+        node_path.get_path_to_parent(root_node=fixture_default_tree.root_node)
+
+def test_get_path_to_child(fixture_default_tree: TreeFixture):
+    node_path_1 = tree.NodePath([
+        fixture_default_tree.lookup_key["a"],
+    ])
+    node_path_2 = tree.NodePath([
+        fixture_default_tree.lookup_key["a"],
+        fixture_default_tree.lookup_key["b"],
+    ])
+
+    assert node_path_1.get_path_to_child(fixture_default_tree.lookup_node["b"], root_node=fixture_default_tree.root_node) == node_path_2
+
+# FIXME: Test previous sibling.

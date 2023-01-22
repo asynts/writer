@@ -83,8 +83,6 @@ class Node:
         assert self.is_mutable
         self.__children = value
 
-# FIXME: There is tons of redundancy in this function.
-#        Many of these functions could be implemented by a single complex function.
 class NodePath:
     __slots__ = (
         "_key_list",
@@ -94,6 +92,12 @@ class NodePath:
         assert isinstance(key_list, list)
         assert len(key_list) >= 1
         self._key_list = key_list
+
+    def __eq__(self, other_node_path: object) -> bool:
+        if not isinstance(other_node_path, NodePath):
+            return False
+
+        return self._key_list == other_node_path._key_list
 
     def lookup(self, *, root_node: Node) -> Node:
         if self._key_list[0] != root_node.key:
@@ -160,11 +164,11 @@ class NodePath:
 
         return visit_node(root_node, remaining_key_list=self._key_list)
 
-    def parent_path(self, *, root_node: Node) -> "NodePath":
+    def get_path_to_parent(self, *, root_node: Node) -> "NodePath":
         assert len(self._key_list) >= 2
         return NodePath(self._key_list[:-1])
 
-    def child_path(self, child_node: Node, *, root_node: Node) -> "NodePath":
+    def get_path_to_child(self, child_node: Node, *, root_node: Node) -> "NodePath":
         return NodePath(self._key_list + [child_node.key])
 
     def previous_sibling_path(self, *, root_node: Node) -> "NodePath":

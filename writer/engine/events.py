@@ -61,7 +61,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
         history_manager.update_model_tree(new_model_tree=new_model_tree)
         return True
     else:
-        parent_path = cursor_path.parent_path(root_node=new_model_tree)
+        parent_path = cursor_path.get_path_to_parent(root_node=new_model_tree)
         parent_node = parent_path.lookup(root_node=new_model_tree)
 
         # We are at the start of a paragraph, is there a preceding paragraph?
@@ -70,7 +70,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
             prev_paragraph_node = prev_paragraph_path.lookup(root_node=new_model_tree)
 
             last_chunk_node = prev_paragraph_node.children[-1]
-            last_chunk_path = prev_paragraph_path.child_path(last_chunk_node, root_node=new_model_tree)
+            last_chunk_path = prev_paragraph_path.get_path_to_child(last_chunk_node, root_node=new_model_tree)
 
             # Remove last character of last text chunk of previous paragarph.
             # Place the cursor at the end of that text chunk.
@@ -82,7 +82,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
 
             # Update the reference to the cursor.
             new_node = new_model_tree.make_mutable_copy()
-            new_node.cursor_node_path = prev_paragraph_path.child_path(cursor_node, root_node=new_model_tree)
+            new_node.cursor_node_path = prev_paragraph_path.get_path_to_child(cursor_node, root_node=new_model_tree)
             new_node.make_immutable()
             new_model_tree = new_node
 
@@ -93,7 +93,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
             new_model_tree = prev_paragraph_path.fork_and_replace(new_node, root_node=new_model_tree)
 
             # Delete the following paragraph.
-            parent_parent_path = parent_path.parent_path(root_node=new_model_tree)
+            parent_parent_path = parent_path.get_path_to_parent(root_node=new_model_tree)
             parent_parent_node = parent_parent_path.lookup(root_node=new_model_tree)
             new_node = parent_parent_node.make_mutable_copy()
             new_node.children.remove(parent_node)
