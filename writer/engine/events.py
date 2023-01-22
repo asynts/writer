@@ -93,10 +93,11 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
             new_model_tree = prev_paragraph_path.fork_and_replace(new_node, root_node=new_model_tree)
 
             # Delete the following paragraph.
+            # We have to be careful because the identitiy of 'parent_node' has changed.
             parent_parent_path = parent_path.get_path_to_parent(root_node=new_model_tree)
             parent_parent_node = parent_parent_path.lookup(root_node=new_model_tree)
             new_node = parent_parent_node.make_mutable_copy()
-            new_node.children.remove(parent_node)
+            new_node.children = list(filter(lambda item: item.key != parent_node.key, new_node.children))
             new_node.make_immutable()
             new_model_tree = parent_parent_path.fork_and_replace(new_node, root_node=new_model_tree)
 
