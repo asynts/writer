@@ -20,9 +20,9 @@ COLOR_BLUE = QColor(0, 0, 255)
 COLOR_PINK = QColor(255, 53, 184)
 COLOR_YELLOW = QColor(255, 255, 0)
 
-b_draw_debug_text_outline = True
+b_draw_debug_text_outline = False
 b_draw_block_outlines = False
-b_draw_inner_block_outlines = True
+b_draw_inner_block_outlines = False
 
 # There are several phases a layout node can be in.
 @functools.total_ordering

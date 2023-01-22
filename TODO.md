@@ -2,8 +2,6 @@
 
 ### Done
 
--   Do some dependency injection to avoid global variables.
-
 ### Next Up
 
 -   Implement the cursor properly.
@@ -19,6 +17,21 @@
 
 ### Features
 
+-   Add supports for the remaining input methods.
+    Before doing that I should think about simplifying and testing the `events` module.
+
+    -   Delete.
+
+    -   Enter.
+
+    -   Cursor Left.
+
+    -   Cursor Right.
+
+    -   (Cursor Up.)
+
+    -   (Cursor Down.)
+
 ### Tweaks
 
 -   I could cache the word groups in the model paragraph nodes.
@@ -28,8 +41,8 @@
 
 -   Create a lossless video to show of the project.
 
--   Update the README file to present the current state of the application.
-
 -   Currently, we merge spaces when creating `WhitespacePlacementInstruction`.
 
 -   The document should be defined in terms of millimeters or points and should then be sampled into pixels.
+
+-   Reuse the layout nodes from the previous render.

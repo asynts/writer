@@ -1,12 +1,26 @@
-### Next Version
+## Version 0.2.0
 
--   We need to be able to keep references to other nodes in the model tree that do not break when the children are changed.
-    The key here is to add a unique identifier to each node that is not changed when we copy it for changes.
+This release was primarily focused on fixing bugs and rewriting some of the code.
 
--   We need to be able to make multiple changes to the model tree, this can be done by keeping references in some places.
-    Not sure exactly how this will turn out.
+### Added Features
 
-### Version 0.1.0
+-   Separate word placement algorithm into `text_placement` module.
+
+-   Use dependency injection to avoid global variables.
+
+-   Add unit tests to `tree` module.
+
+-   Add keyboard shortcuts for undo and redo.
+
+### Removed Features
+
+-   We only support deletion using backspace and insertion using normal keys.
+    I simply have not yet updated the code with the new logic.
+
+-   We no longer reuse the layout nodes for normal paragraphs from the previous render.
+    This should be simple to add back in.
+
+## Version 0.1.0
 
 -   We are able to take a model tree that represents a document and convert it
     into a layout tree that can be rendered.
