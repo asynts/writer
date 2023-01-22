@@ -171,7 +171,11 @@ class NodePath:
     def get_path_to_child(self, child_node: Node, *, root_node: Node) -> "NodePath":
         return NodePath(self._key_list + [child_node.key])
 
-    def previous_sibling_path(self, *, root_node: Node) -> "NodePath":
+    def get_path_to_previous_sibling(self, *, root_node: Node) -> "NodePath":
+        # The root node does not have siblings.
+        if len(self._key_list) == 1:
+            return None
+
         def visit_node(node: Node, *, remaining_key_list: list[int]):
             assert len(remaining_key_list) >= 1
             assert remaining_key_list[0] == node.key

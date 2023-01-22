@@ -31,7 +31,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
         return True
 
     # We are at the start of a text chunk, is there a preceding text chunk?
-    previous_path = cursor_path.previous_sibling_path(root_node=new_model_tree)
+    previous_path = cursor_path.get_path_to_previous_sibling(root_node=new_model_tree)
     if previous_path is not None:
         previous_node = previous_path.lookup(root_node=new_model_tree)
 
@@ -65,7 +65,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
         parent_node = parent_path.lookup(root_node=new_model_tree)
 
         # We are at the start of a paragraph, is there a preceding paragraph?
-        prev_paragraph_path = parent_path.previous_sibling_path(root_node=new_model_tree)
+        prev_paragraph_path = parent_path.get_path_to_previous_sibling(root_node=new_model_tree)
         if prev_paragraph_path is not None:
             prev_paragraph_node = prev_paragraph_path.lookup(root_node=new_model_tree)
 

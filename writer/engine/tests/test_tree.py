@@ -602,4 +602,29 @@ def test_get_path_to_child(fixture_default_tree: TreeFixture):
 
     assert node_path_1.get_path_to_child(fixture_default_tree.lookup_node["b"], root_node=fixture_default_tree.root_node) == node_path_2
 
-# FIXME: Test previous sibling.
+def test_get_path_to_previous_sibling_exists(fixture_default_tree: TreeFixture):
+    node_path_1 = tree.NodePath([
+        fixture_default_tree.lookup_key["a"],
+        fixture_default_tree.lookup_key["e"],
+    ])
+    node_path_2 = tree.NodePath([
+        fixture_default_tree.lookup_key["a"],
+        fixture_default_tree.lookup_key["b"],
+    ])
+
+    assert node_path_1.get_path_to_previous_sibling(root_node=fixture_default_tree.root_node) == node_path_2
+
+def test_get_path_to_previous_sibling_not_exists(fixture_default_tree: TreeFixture):
+    node_path = tree.NodePath([
+        fixture_default_tree.lookup_key["a"],
+        fixture_default_tree.lookup_key["b"],
+    ])
+
+    assert node_path.get_path_to_previous_sibling(root_node=fixture_default_tree.root_node) is None
+
+def test_get_path_to_previous_sibling_root(fixture_default_tree: TreeFixture):
+    node_path = tree.NodePath([
+        fixture_default_tree.lookup_key["a"],
+    ])
+
+    assert node_path.get_path_to_previous_sibling(root_node=fixture_default_tree.root_node) is None
