@@ -105,6 +105,24 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
 
     return False
 
+# Similar to implementation in QLineEdit:
+# https://github.com/qt/qtbase/blob/7689d4ad2f673317af432aae498da74d13703126/src/gui/text/qinputcontrol.cpp#L21-L53
+def should_ignore_key_event(event: QtGui.QKeyEvent):
+    if event.text() == "":
+        return True
+
+    char = event.text()[0]
+
+    b_ctrl_modifier = event.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier
+    b_ctrl_shift_modifier = event.modifiers() == (QtCore.Qt.KeyboardModifier.ControlModifier | QtCore.Qt.KeyboardModifier.ShiftModifier)
+    if b_ctrl_modifier or b_ctrl_shift_modifier:
+        return True
+
+    if not char.isprintable():
+        return True
+
+    return False
+
 def key_press_event(
     *,
     event: QtGui.QKeyEvent,
@@ -119,9 +137,10 @@ def key_press_event(
     if event.key() == QtCore.Qt.Key.Key_Backspace:
         return backspace_event(model_tree=model_tree, layout_tree=layout_tree, history_manager=history_manager)
 
-    # Ignore key press events for unprintable characters.
-    if not event.text().isprintable():
+    if should_ignore_key_event(event):
         return False
+
+    assert event.key() != QtCore.Qt.Key.Key_Control
 
     new_model_tree = model_tree
 
