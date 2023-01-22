@@ -739,13 +739,13 @@ class TextChunkLayoutNode(LayoutNode):
             new_node.cursor_offset = None
             new_node.make_immutable()
 
-            new_model_tree = previous_cursor_path.replace(new_node, root_node=new_model_tree)
+            new_model_tree = previous_cursor_path.fork_and_replace(new_node, root_node=new_model_tree)
 
         # Place the cursor in the current layout node.
         new_node = self.get_model_node().make_mutable_copy()
         new_node.cursor_offset = self._offset_into_model_node(relative_x=relative_x)
         new_node.make_immutable()
-        new_model_tree = path.replace(new_node, root_node=new_model_tree)
+        new_model_tree = path.fork_and_replace(new_node, root_node=new_model_tree)
 
         # Update the reference that the document node keeps on the node with the cursor in it.
         new_node = new_model_tree.make_mutable_copy()

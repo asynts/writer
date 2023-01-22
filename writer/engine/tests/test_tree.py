@@ -224,7 +224,7 @@ def test_replace_root(fixture_default_tree: TreeFixture):
     )
     new_node.make_immutable()
 
-    new_root_node = node_path.replace(new_node, root_node=fixture_default_tree.root_node)
+    new_root_node = node_path.fork_and_replace(new_node, root_node=fixture_default_tree.root_node)
 
     assert new_root_node.is_equivalent_to(new_node)
 
@@ -314,7 +314,7 @@ def test_replace_nested_1(fixture_default_tree: TreeFixture, fixture_nested_1_tr
         fixture_default_tree.lookup_key["e"],
     ])
 
-    new_root_node = node_path.replace(fixture_node_x, root_node=fixture_default_tree.root_node)
+    new_root_node = node_path.fork_and_replace(fixture_node_x, root_node=fixture_default_tree.root_node)
 
     assert fixture_nested_1_tree.root_node.is_equivalent_to(new_root_node)
 
@@ -382,7 +382,7 @@ def test_replace_nested_2(fixture_default_tree: TreeFixture, fixture_nested_2_tr
         fixture_default_tree.lookup_key["b"],
     ])
 
-    new_root_node = node_path.replace(fixture_node_y, root_node=fixture_default_tree.root_node)
+    new_root_node = node_path.fork_and_replace(fixture_node_y, root_node=fixture_default_tree.root_node)
 
     print(fixture_nested_2_tree.root_node.dump())
     print(new_root_node.dump())
@@ -397,7 +397,7 @@ def test_replace_not_found(fixture_default_tree: TreeFixture, fixture_node_y: tr
     ])
 
     with pytest.raises(tree.NodeNotFound):
-        node_path.replace(fixture_node_y, root_node=fixture_default_tree.root_node)
+        node_path.fork_and_replace(fixture_node_y, root_node=fixture_default_tree.root_node)
 
 def test_replace_not_found_root(fixture_default_tree: TreeFixture, fixture_node_y: tree.Node):
     node_path = tree.NodePath([
@@ -405,7 +405,7 @@ def test_replace_not_found_root(fixture_default_tree: TreeFixture, fixture_node_
     ])
 
     with pytest.raises(tree.NodeNotFound):
-        node_path.replace(fixture_node_y, root_node=fixture_default_tree.root_node)
+        node_path.fork_and_replace(fixture_node_y, root_node=fixture_default_tree.root_node)
 
 @pytest.fixture
 def fixture_remove_leaf():
@@ -484,7 +484,7 @@ def test_remove_leaf(fixture_default_tree: TreeFixture, fixture_remove_leaf: Tre
         fixture_default_tree.lookup_key["c"],
     ])
 
-    new_root_node = node_path.remove(root_node=fixture_default_tree.root_node)
+    new_root_node = node_path.fork_and_remove(root_node=fixture_default_tree.root_node)
 
     assert fixture_remove_leaf.root_node.is_equivalent_to(new_root_node)
 
@@ -552,7 +552,7 @@ def test_remove_parent(fixture_default_tree: TreeFixture, fixture_remove_parent:
         fixture_default_tree.lookup_key["e"],
     ])
 
-    new_root_node = node_path.remove(root_node=fixture_default_tree.root_node)
+    new_root_node = node_path.fork_and_remove(root_node=fixture_default_tree.root_node)
 
     assert fixture_remove_parent.root_node.is_equivalent_to(new_root_node)
 
@@ -562,4 +562,4 @@ def test_remove_root(fixture_default_tree: TreeFixture):
     ])
 
     with pytest.raises(AssertionError):
-        node_path.remove(root_node=fixture_default_tree.root_node)
+        node_path.fork_and_remove(root_node=fixture_default_tree.root_node)

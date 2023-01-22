@@ -25,7 +25,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
         new_node.text = new_node.text[:new_node.cursor_offset-1] + new_node.text[new_node.cursor_offset:]
         new_node.cursor_offset -= 1
         new_node.make_immutable()
-        new_model_tree = cursor_path.replace(new_node, root_node=new_model_tree)
+        new_model_tree = cursor_path.fork_and_replace(new_node, root_node=new_model_tree)
 
         history_manager.update_model_tree(new_model_tree=new_model_tree)
         return True
@@ -40,17 +40,17 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
         new_node.text = new_node.text[:-1]
         new_node.cursor_offset = len(new_node.text)
         new_node.make_immutable()
-        new_model_tree = previous_path.replace(new_node, root_node=new_model_tree)
+        new_model_tree = previous_path.fork_and_replace(new_node, root_node=new_model_tree)
 
         if len(cursor_node.text) == 0:
             # Empty nodes must not exist unless they contain the cursor.
-            new_model_tree = cursor_path.remove(root_node=new_model_tree)
+            new_model_tree = cursor_path.fork_and_remove(root_node=new_model_tree)
         else:
             # Remove cursor from non-empty node.
             new_node = cursor_node.make_mutable_copy()
             new_node.cursor_offset = None
             new_node.make_immutable()
-            new_model_tree = cursor_path.replace(new_node, root_node=new_model_tree)
+            new_model_tree = cursor_path.fork_and_replace(new_node, root_node=new_model_tree)
 
         # Update the reference to the new cursor node.
         new_node = new_model_tree.make_mutable_copy()
@@ -78,7 +78,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
             new_node.text = new_node.text[:-1]
             new_node.cursor_offset = len(new_node.text)
             new_node.make_immutable()
-            new_model_tree = last_chunk_path.replace(new_node, root_node=new_model_tree)
+            new_model_tree = last_chunk_path.fork_and_replace(new_node, root_node=new_model_tree)
 
             # Update the reference to the cursor.
             new_node = new_model_tree.make_mutable_copy()
@@ -90,7 +90,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
             new_node = prev_paragraph_node.make_mutable_copy()
             new_node.children += parent_node.children
             new_node.make_immutable()
-            new_model_tree = prev_paragraph_path.replace(new_node, root_node=new_model_tree)
+            new_model_tree = prev_paragraph_path.fork_and_replace(new_node, root_node=new_model_tree)
 
             # Delete the following paragraph.
             parent_parent_path = parent_path.parent_path(root_node=new_model_tree)
@@ -98,7 +98,7 @@ def backspace_event(*, model_tree: model.DocumentModelNode, layout_tree: layout.
             new_node = parent_parent_node.make_mutable_copy()
             new_node.children.remove(parent_node)
             new_node.make_immutable()
-            new_model_tree = parent_parent_path.replace(new_node, root_node=new_model_tree)
+            new_model_tree = parent_parent_path.fork_and_replace(new_node, root_node=new_model_tree)
 
             history_manager.update_model_tree(new_model_tree=new_model_tree)
             return True
@@ -129,7 +129,7 @@ def key_press_event(
     new_node.text = new_node.text[:new_node.cursor_offset] + event.text() + new_node.text[new_node.cursor_offset:]
     new_node.cursor_offset += 1
     new_node.make_immutable()
-    new_model_tree = model_tree.cursor_node_path.replace(new_node, root_node=new_model_tree)
+    new_model_tree = model_tree.cursor_node_path.fork_and_replace(new_node, root_node=new_model_tree)
 
     history_manager.update_model_tree(new_model_tree=new_model_tree)
 

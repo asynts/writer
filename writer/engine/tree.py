@@ -114,16 +114,16 @@ class NodePath:
 
         return visit_node(root_node, remaining_key_list=self._key_list)
 
-    def remove(self, *, root_node: Node) -> Node:
+    def fork_and_remove(self, *, root_node: Node) -> Node:
         # Don't allow the root node to be removed.
         assert len(self._key_list) >= 2
 
-        return self._replace_or_remove(None, root_node=root_node)
+        return self._fork_and_replace_or_remove(None, root_node=root_node)
 
-    def replace(self, new_node: Node, *, root_node: Node) -> Node:
-        return self._replace_or_remove(new_node, root_node=root_node)
+    def fork_and_replace(self, new_node: Node, *, root_node: Node) -> Node:
+        return self._fork_and_replace_or_remove(new_node, root_node=root_node)
 
-    def _replace_or_remove(self, new_node: Node, *, root_node: Node) -> Node:
+    def _fork_and_replace_or_remove(self, new_node: Node, *, root_node: Node) -> Node:
         if self._key_list[0] != root_node.key:
             raise NodeNotFound
 
