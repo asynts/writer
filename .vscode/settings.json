@@ -10,4 +10,7 @@
 
     "editor.tabSize": 4,
     "editor.detectIndentation": false,
+
+    "terminal.integrated.persistentSessionReviveProcess": "never",
+    "terminal.integrated.enablePersistentSessions": false,
 }
