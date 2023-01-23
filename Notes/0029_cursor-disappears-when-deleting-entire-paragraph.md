@@ -86,5 +86,3 @@
     I think this is an artifact of the justified print thing that I tried to do.
 
 ### Theories
-
--   I suspect that there is a similar issue at the end of the paragraph.

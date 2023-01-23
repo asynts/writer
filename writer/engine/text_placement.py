@@ -7,6 +7,8 @@
 
 # FIXME: Provide some examples where weird things need to happen.
 
+# FIXME: I should consider re-writing this code for normal (non-justified) print.
+
 from PyQt6 import QtCore
 
 import dataclasses
