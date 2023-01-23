@@ -358,6 +358,41 @@ cases = [
             ),
         ],
     ),
+    # [7]
+    Case(
+        input_=model.ParagraphModelNode(
+            style=None,
+            children=[
+                model.TextChunkModelNode(
+                    style=None,
+                    children=[],
+                    text=" hello",
+                    cursor_offset=0,
+                ),
+            ],
+        ),
+        expected=[
+            text_placement.CursorPlacementInstruction(
+                model_node=None,
+                model_offset=0,
+            ),
+            text_placement.WhitespacePlacementInstruction(
+                model_node=None,
+                model_offset=0,
+                style_cascade=None,
+            ),
+            text_placement.WordPlacementInstruction(
+                excerpts=[
+                    text_placement.TextExcerpt(
+                        model_node=None,
+                        model_offset=1,
+                        text="hello",
+                        style_cascade=None,
+                    ),
+                ],
+            ),
+        ],
+    ),
 ]
 
 @pytest.fixture(params=cases)
